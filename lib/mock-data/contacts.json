@@ -1,0 +1,80 @@
+[
+  {
+    "id": "contact-001",
+    "name": "Marcus Webb",
+    "initials": "MW",
+    "company": "Peachtree Realty Group",
+    "role": "Senior Broker",
+    "score": 92,
+    "lastActivityType": "Lunch",
+    "lastActivityDate": "2026-03-11",
+    "tags": ["high-value", "commercial", "buckhead"],
+    "spend": 387,
+    "closings": 8
+  },
+  {
+    "id": "contact-002",
+    "name": "Lisa Thornton",
+    "initials": "LT",
+    "company": "Thornton & Associates Realty",
+    "role": "Principal Broker",
+    "score": 78,
+    "lastActivityType": "Pop-by",
+    "lastActivityDate": "2026-03-10",
+    "tags": ["residential", "referral-source"],
+    "spend": 210,
+    "closings": 5
+  },
+  {
+    "id": "contact-003",
+    "name": "Derek Okafor",
+    "initials": "DO",
+    "company": "Okafor Properties LLC",
+    "role": "Owner / Broker",
+    "score": 65,
+    "lastActivityType": "Coffee",
+    "lastActivityDate": "2026-03-07",
+    "tags": ["luxury", "new-contact", "growth"],
+    "spend": 18,
+    "closings": 1
+  },
+  {
+    "id": "contact-004",
+    "name": "Jennifer Hartley",
+    "initials": "JH",
+    "company": "Hartley Homes",
+    "role": "Realtor",
+    "score": 84,
+    "lastActivityType": "Closing Gift",
+    "lastActivityDate": "2026-03-06",
+    "tags": ["residential", "loyal", "social-media-active"],
+    "spend": 320,
+    "closings": 6
+  },
+  {
+    "id": "contact-005",
+    "name": "Brendan Mills",
+    "initials": "BM",
+    "company": "Compass Real Estate – Atlanta",
+    "role": "Team Lead",
+    "score": 88,
+    "lastActivityType": "Lunch",
+    "lastActivityDate": "2026-03-05",
+    "tags": ["high-value", "team-lead", "multi-listing"],
+    "spend": 496,
+    "closings": 12
+  },
+  {
+    "id": "contact-006",
+    "name": "Priya Nair",
+    "initials": "PN",
+    "company": "Nair & Associates",
+    "role": "Associate Broker",
+    "score": 71,
+    "lastActivityType": "Call",
+    "lastActivityDate": "2026-03-04",
+    "tags": ["residential", "out-of-state-buyers"],
+    "spend": 55,
+    "closings": 3
+  }
+]

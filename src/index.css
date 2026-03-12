@@ -5,12 +5,207 @@
   padding: 0;
 }
 
+/* FieldIQ Design Tokens */
+:root {
+  --fiq-gold: #c4a574;
+  --fiq-gold-light: #d4b584;
+  --fiq-gold-dark: #a68751;
+  --fiq-gold-border: rgba(196, 165, 116, 0.19);
+
+  /* Light mode */
+  --fiq-bg: #fafaf9;
+  --fiq-bg-card: #ffffff;
+  --fiq-bg-surface: #f5f3ef;
+  --fiq-bg-sidebar: #fafafa;
+  --fiq-bg-nav: #000000;
+  --fiq-text-heading: #000000;
+  --fiq-text-body: #3f3f46;
+  --fiq-text-muted: #71717a;
+  --fiq-border: #e4e4e7;
+
+  /* Button */
+  --fiq-btn-bg: #000000;
+  --fiq-btn-text: #fafaf9;
+}
+
+[data-theme="dark"] {
+  --fiq-bg: #0f0f0f;
+  --fiq-bg-card: #171717;
+  --fiq-bg-surface: #1a1a1a;
+  --fiq-bg-sidebar: #0a0a0a;
+  --fiq-bg-nav: #000000;
+  --fiq-text-heading: #ffffff;
+  --fiq-text-body: #d4d4d8;
+  --fiq-text-muted: #a1a1aa;
+  --fiq-border: #1f1f1f;
+
+  --fiq-btn-bg: #c4a574;
+  --fiq-btn-text: #000000;
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   line-height: 1.6;
   color: #374151;
   background-color: #f9fafb;
 }
+
+/* FieldIQ Utility Classes */
+.fiq-bg { background-color: var(--fiq-bg); }
+.fiq-bg-card { background-color: var(--fiq-bg-card); }
+.fiq-bg-surface { background-color: var(--fiq-bg-surface); }
+.fiq-bg-sidebar { background-color: var(--fiq-bg-sidebar); }
+.fiq-bg-nav { background-color: var(--fiq-bg-nav); }
+.fiq-text-heading { color: var(--fiq-text-heading); }
+.fiq-text-body { color: var(--fiq-text-body); }
+.fiq-text-muted { color: var(--fiq-text-muted); }
+.fiq-text-gold { color: var(--fiq-gold); }
+.fiq-border { border-color: var(--fiq-border); }
+.fiq-btn { background-color: var(--fiq-btn-bg); color: var(--fiq-btn-text); }
+.fiq-sidebar-border { border-right: 1px solid var(--fiq-border); }
+.fiq-card-border { border: 1px solid var(--fiq-border); }
+.fiq-gold-bar { background-color: var(--fiq-gold); }
+.fiq-font-inter { font-family: 'Inter', sans-serif; }
+.fiq-font-playfair { font-family: 'Playfair Display', serif; }
+.fiq-nav-active { border-left: 2px solid var(--fiq-gold); }
+.fiq-badge-gold {
+  border: 1px solid var(--fiq-gold);
+  color: var(--fiq-gold);
+}
+.fiq-avatar-gold { background-color: var(--fiq-gold); color: #000; }
+.fiq-theme-pill {
+  background-color: #1a1a1a;
+  border-radius: 9999px;
+}
+.fiq-login-card-border {
+  border-top: 2px solid var(--fiq-gold);
+  border-left: 1px solid var(--fiq-border);
+  border-right: 1px solid var(--fiq-border);
+  border-bottom: 1px solid var(--fiq-border);
+}
+[data-theme="dark"] .fiq-login-card-border {
+  border-top: 2px solid var(--fiq-gold);
+  border-left: 1px solid #333333;
+  border-right: 1px solid #333333;
+  border-bottom: 1px solid #333333;
+}
+[data-theme="dark"] .fiq-input-bg { background-color: #1a1a1a; border-color: #333333; color: #d4d4d8; }
+.fiq-input-bg { background-color: #ffffff; border-color: #e4e4e7; color: #000; }
+.fiq-sso-btn { background-color: transparent; border: 1px solid var(--fiq-border); color: var(--fiq-text-body); }
+[data-theme="dark"] .fiq-sso-btn { border-color: #3f3f46; color: #d4d4d8; }
+.fiq-overdue { color: #d97706; }
+.fiq-success { color: #16a34a; }
+.fiq-agent-card-bg { background-color: var(--fiq-bg-surface); }
+
+/* FieldIQ Status badges */
+.fiq-badge-follow-up {
+  background-color: rgba(196,165,116,0.15);
+  color: var(--fiq-gold);
+  border: 1px solid rgba(196,165,116,0.35);
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+.fiq-badge-lapsed {
+  background-color: rgba(239,68,68,0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239,68,68,0.3);
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+.fiq-badge-complete {
+  background-color: rgba(34,197,94,0.1);
+  color: #16a34a;
+  border: 1px solid rgba(34,197,94,0.25);
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+/* Day pill styles for streak card */
+.fiq-day-pill-active {
+  background-color: var(--fiq-gold);
+  color: #000;
+  border-radius: 9999px;
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; font-weight: 600;
+}
+.fiq-day-pill-inactive {
+  background-color: var(--fiq-bg-surface);
+  color: var(--fiq-text-muted);
+  border-radius: 9999px;
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem;
+}
+
+/* Additional gap utilities */
+.gap-2 { gap: 0.5rem; }
+.gap-3 { gap: 0.75rem; }
+.gap-8 { gap: 2rem; }
+.gap-12 { gap: 3rem; }
+.gap-16 { gap: 4rem; }
+
+/* Additional padding utilities */
+.px-5 { padding-left: 1.25rem; padding-right: 1.25rem; }
+.py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+.p-5 { padding: 1.25rem; }
+.pt-6 { padding-top: 1.5rem; }
+.pb-4 { padding-bottom: 1rem; }
+.pl-4 { padding-left: 1rem; }
+
+/* Additional width/height */
+.w-1 { width: 0.25rem; }
+.w-2 { width: 0.5rem; }
+.w-7 { width: 1.75rem; }
+.w-9 { width: 2.25rem; }
+.w-36 { width: 9rem; }
+.w-40 { width: 10rem; }
+.w-48 { width: 12rem; }
+.w-56 { width: 14rem; }
+.w-64 { width: 16rem; }
+.h-7 { height: 1.75rem; }
+.h-9 { height: 2.25rem; }
+.h-11 { height: 2.75rem; }
+.h-screen-no-nav { height: calc(100vh - 56px); }
+.max-h-full { max-height: 100%; }
+.overflow-y-auto { overflow-y: auto; }
+.overflow-x-hidden { overflow-x: hidden; }
+
+/* Letter spacing */
+.tracking-widest { letter-spacing: 0.1em; }
+.tracking-wide { letter-spacing: 0.05em; }
+
+/* Additional text sizes */
+.text-2xs { font-size: 0.65rem; line-height: 1rem; }
+
+/* Flex utilities */
+.flex-shrink-0 { flex-shrink: 0; }
+.flex-grow { flex-grow: 1; }
+
+/* Additional margin */
+.ml-auto { margin-left: auto; }
+.mr-auto { margin-right: auto; }
+.mt-0 { margin-top: 0; }
+.mb-0 { margin-bottom: 0; }
+.ml-2 { margin-left: 0.5rem; }
+.mr-2 { margin-right: 0.5rem; }
+.ml-1 { margin-left: 0.25rem; }
+
+/* Sticky/top positioning */
+.top-0 { top: 0; }
+.z-10 { z-index: 10; }
+.z-20 { z-index: 20; }
+.inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+
+/* Hover for FieldIQ nav items */
+.hover\:fiq-bg-surface:hover { background-color: var(--fiq-bg-surface); }
+
+/* Sidebar scroll */
+.sidebar-scroll { overflow-y: auto; scrollbar-width: none; }
+.sidebar-scroll::-webkit-scrollbar { display: none; }
 
 /* Utility Classes */
 .min-h-screen { min-height: 100vh; }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Users, Calendar, BarChart3, Plus, Camera, MapPin, Clock, User, Building, ChevronLeft, ChevronRight, Bell, Search, Filter, Download, Eye, Edit, Trash2, CheckCircle, AlertCircle, TrendingUp, Target, Award, DollarSign, Percent, Mic, MicOff, Square } from 'lucide-react';
+import { Users, Calendar, BarChart3, Plus, Camera, MapPin, Clock, User, Building, ChevronLeft, ChevronRight, Bell, Search, Filter, Download, Eye, Edit, Trash2, CheckCircle, AlertCircle, TrendingUp, Target, Award, DollarSign, Percent, Mic, MicOff, Square, LayoutDashboard, Activity, Heart, Settings, HelpCircle, Sun, Moon, ChevronDown } from 'lucide-react';
 
 const SalesTrackerApp = () => {
   const [currentView, setCurrentView] = useState('login');
@@ -8,6 +8,14 @@ const SalesTrackerApp = () => {
   const [notifications, setNotifications] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
+  const [theme, setTheme] = useState('dark');
+
+  // Apply theme to document
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
 
   // Speech-to-Text functionality
   const useSpeechToText = () => {
@@ -619,43 +627,271 @@ const SalesTrackerApp = () => {
     return () => clearTimeout(timer);
   }, [userRole, meetings.length]);
 
-  // Enhanced Login Screen
-  const LoginScreen = () => (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-indigo-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-            <BarChart3 className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">TIMEBOX</h1>
-          <p className="text-gray-600">Smart sales activity tracking & pipeline management</p>
-        </div>
-        
-        <div className="space-y-4">
+  // FieldIQ Login Screen
+  const LoginScreen = () => {
+    const [email, setEmail] = useState('you@agency.com');
+    const [password, setPassword] = useState('••••••••••');
+    const [showPassword, setShowPassword] = useState(false);
+    const isDark = theme === 'dark';
+
+    return (
+      <div className="min-h-screen flex items-center justify-center relative fiq-bg fiq-font-inter">
+        {/* Theme toggle */}
+        <div className="absolute top-6 right-6">
           <button
-            onClick={() => {setUserRole('rep'); setCurrentUser('Alex Johnson'); setCurrentView('rep-dashboard');}}
-            className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-4 px-6 rounded-xl font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
+            onClick={toggleTheme}
+            style={{
+              background: isDark ? '#1a1a1a' : '#f5f3ef',
+              border: 'none',
+              borderRadius: '9999px',
+              width: 72,
+              height: 32,
+              display: 'flex',
+              alignItems: 'center',
+              padding: 4,
+              cursor: 'pointer',
+            }}
           >
-            <User className="w-5 h-5" />
-            <span>Login as Sales Rep</span>
-          </button>
-          <button
-            onClick={() => {setUserRole('manager'); setCurrentUser('Manager'); setCurrentView('manager-dashboard');}}
-            className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-4 px-6 rounded-xl font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
-          >
-            <Award className="w-5 h-5" />
-            <span>Login as Manager</span>
+            {isDark ? (
+              <>
+                <span style={{ flex: 1 }} />
+                <Moon size={14} color="#c4a574" />
+              </>
+            ) : (
+              <>
+                <span style={{
+                  width: 24, height: 24, borderRadius: '50%',
+                  background: '#0f0f0f', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  <Sun size={14} color="#fafaf9" />
+                </span>
+                <span style={{ flex: 1 }} />
+                <Moon size={14} color="#c4a574" />
+              </>
+            )}
           </button>
         </div>
 
-        <div className="mt-8 text-center">
-          <p className="text-xs text-gray-500">Demo credentials - Click any button to explore</p>
+        {/* Login card */}
+        <div style={{
+          width: 400,
+          background: isDark ? '#171717' : '#ffffff',
+          borderRadius: 8,
+          padding: 40,
+          borderTop: '2px solid #c4a574',
+          borderLeft: `1px solid ${isDark ? '#333333' : '#c4a574'}`,
+          borderRight: `1px solid ${isDark ? '#333333' : 'rgba(196,165,116,0.3)'}`,
+          borderBottom: `1px solid ${isDark ? '#333333' : 'rgba(196,165,116,0.2)'}`,
+          boxShadow: isDark ? 'none' : '0 4px 24px rgba(0,0,0,0.08)',
+        }}>
+          {/* Logo + tagline */}
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ marginBottom: 6 }}>
+              <span style={{ fontSize: 22, fontWeight: 600, color: isDark ? '#ffffff' : '#000000' }}>FieldIQ</span>
+            </div>
+            <div style={{ fontSize: 13, color: isDark ? '#a1a1aa' : '#71717a' }}>
+              Field Sales Intelligence for Title Professionals
+            </div>
+          </div>
+
+          {/* Heading */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 20, fontWeight: 600, color: isDark ? '#ffffff' : '#000000', marginBottom: 4 }}>
+              Welcome back
+            </div>
+            <div style={{ fontSize: 14, color: isDark ? '#a1a1aa' : '#71717a' }}>
+              Sign in to your account
+            </div>
+          </div>
+
+          {/* Email */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: isDark ? '#d4d4d8' : '#3f3f46', marginBottom: 6 }}>
+              Email address
+            </label>
+            <div style={{
+              display: 'flex', alignItems: 'center',
+              background: isDark ? '#1a1a1a' : '#ffffff',
+              border: `1px solid ${isDark ? '#333333' : '#e4e4e7'}`,
+              borderRadius: 8, padding: '0 12px', height: 40,
+            }}>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 13, color: isDark ? '#d4d4d8' : '#000' }}
+              />
+            </div>
+          </div>
+
+          {/* Password */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <label style={{ fontSize: 12, fontWeight: 500, color: isDark ? '#d4d4d8' : '#3f3f46' }}>Password</label>
+              <button style={{ fontSize: 12, color: '#c4a574', background: 'none', border: 'none', cursor: 'pointer' }}>
+                Forgot password?
+              </button>
+            </div>
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              background: isDark ? '#1a1a1a' : '#ffffff',
+              border: `1px solid ${isDark ? '#333333' : '#e4e4e7'}`,
+              borderRadius: 8, padding: '0 12px', height: 40,
+            }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 13, color: isDark ? '#d4d4d8' : '#000' }}
+              />
+              <Eye size={14} color={isDark ? '#a1a1aa' : '#71717a'} style={{ cursor: 'pointer' }} onClick={() => setShowPassword(s => !s)} />
+            </div>
+          </div>
+
+          {/* Sign In as Rep */}
+          <button
+            onClick={() => { setUserRole('rep'); setCurrentUser('Jane Doe'); setCurrentView('rep-dashboard'); }}
+            style={{
+              width: '100%', height: 42, borderRadius: 8,
+              background: isDark ? '#c4a574' : '#000000',
+              color: isDark ? '#000000' : '#fafaf9',
+              fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer',
+              marginBottom: 8,
+            }}
+          >
+            Sign in as Rep
+          </button>
+
+          {/* Sign In as Manager */}
+          <button
+            onClick={() => { setUserRole('manager'); setCurrentUser('Manager'); setCurrentView('manager-dashboard'); }}
+            style={{
+              width: '100%', height: 42, borderRadius: 8,
+              background: 'transparent',
+              color: isDark ? '#a1a1aa' : '#71717a',
+              fontSize: 14, fontWeight: 500, border: `1px solid ${isDark ? '#3f3f46' : '#e4e4e7'}`,
+              cursor: 'pointer', marginBottom: 20,
+            }}
+          >
+            Sign in as Manager
+          </button>
+
+          {/* Divider */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+            <div style={{ flex: 1, height: 1, background: isDark ? '#27272a' : '#e4e4e7' }} />
+            <span style={{ fontSize: 12, color: isDark ? '#a1a1aa' : '#71717a' }}>or</span>
+            <div style={{ flex: 1, height: 1, background: isDark ? '#27272a' : '#e4e4e7' }} />
+          </div>
+
+          {/* SSO */}
+          <button style={{
+            width: '100%', height: 42, borderRadius: 8,
+            background: 'transparent',
+            border: `1px solid ${isDark ? '#3f3f46' : '#e4e4e7'}`,
+            color: isDark ? '#d4d4d8' : '#3f3f46',
+            fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            marginBottom: 24,
+          }}>
+            <Building size={16} />
+            Continue with SSO
+          </button>
+
+          {/* Footer */}
+          <div style={{ textAlign: 'center', fontSize: 12, color: isDark ? '#a1a1aa' : '#71717a' }}>
+            Don't have an account? Contact your agency admin.
+          </div>
+        </div>
+
+        {/* Page footer */}
+        <div style={{ position: 'absolute', bottom: 24, left: 0, right: 0, textAlign: 'center', fontSize: 11, color: isDark ? '#a1a1aa' : '#71717a' }}>
+          © 2025 FieldIQ · Privacy · Terms
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
-  // Navbar Component
+  // FieldIQ Top Nav
+  const FieldIQNav = ({ showBack = false, onBack = null }) => {
+    const isDark = theme === 'dark';
+    const initials = currentUser.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    return (
+      <div style={{
+        height: 56, background: '#000000',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 24px', flexShrink: 0,
+      }}>
+        {/* Left */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {showBack && (
+            <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a1a1aa', display: 'flex' }}>
+              <ChevronLeft size={18} />
+            </button>
+          )}
+          <span style={{ fontSize: 16, fontWeight: 600, color: '#ffffff', fontFamily: 'Inter, sans-serif' }}>FieldIQ</span>
+          <div style={{ width: 1, height: 20, background: '#333333' }} />
+          <div style={{
+            border: '1px solid #c4a574', borderRadius: 9999,
+            padding: '3px 10px', display: 'flex', alignItems: 'center',
+          }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#c4a574', letterSpacing: '0.1em' }}>AGENT</span>
+          </div>
+        </div>
+
+        {/* Right */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          {/* Theme toggle */}
+          <button
+            onClick={toggleTheme}
+            style={{
+              background: '#1a1a1a', border: 'none', borderRadius: 9999,
+              width: 72, height: 28, display: 'flex', alignItems: 'center',
+              padding: 4, cursor: 'pointer', gap: 4,
+            }}
+          >
+            {isDark ? (
+              <>
+                <Moon size={14} color="#c4a574" />
+                <span style={{ flex: 1 }} />
+                <Sun size={14} color="#52525b" />
+              </>
+            ) : (
+              <>
+                <Sun size={14} color="#c4a574" />
+                <span style={{ flex: 1 }} />
+                <Moon size={14} color="#52525b" />
+              </>
+            )}
+          </button>
+
+          {/* Bell */}
+          <div style={{ position: 'relative' }}>
+            <Bell size={18} color="#e5e5e5" />
+            {notifications.length > 0 && (
+              <span style={{
+                position: 'absolute', top: -4, right: -4,
+                background: '#ef4444', color: '#fff', fontSize: 9,
+                borderRadius: '50%', width: 14, height: 14,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>{notifications.length}</span>
+            )}
+          </div>
+
+          {/* Avatar */}
+          <div style={{
+            width: 32, height: 32, borderRadius: '50%', background: '#c4a574',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 12, fontWeight: 600, color: '#000',
+          }}>{initials}</div>
+
+          <span style={{ fontSize: 13, color: '#e5e5e5' }}>{currentUser}</span>
+          <ChevronDown size={14} color="#a1a1aa" />
+        </div>
+      </div>
+    );
+  };
+
+  // Legacy Navbar kept for other screens
   const Navbar = ({ title, subtitle, showBack = false, onBack = null }) => {
     return (
       <div className="bg-white shadow-sm border-b">
@@ -671,30 +907,31 @@ const SalesTrackerApp = () => {
                 </button>
               )}
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: '#c4a574' }}>
                   <BarChart3 className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-lg font-bold text-gray-800">TIMEBOX</h1>
-                  {title && <p className="text-sm text-gray-600">{title}</p>}
+                  <h1 className="text-lg font-bold" style={{ color: 'var(--fiq-text-heading)' }}>FieldIQ</h1>
+                  {title && <p className="text-sm" style={{ color: 'var(--fiq-text-muted)' }}>{title}</p>}
                 </div>
               </div>
             </div>
             <div className="flex items-center space-x-3">
               <div className="relative">
-                <Bell className="w-5 h-5 text-gray-600" />
+                <Bell className="w-5 h-5" style={{ color: 'var(--fiq-text-muted)' }} />
                 {notifications.length > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
                     {notifications.length}
                   </span>
                 )}
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm" style={{ color: 'var(--fiq-text-body)' }}>
                 {currentUser}
               </div>
               <button
                 onClick={() => setCurrentView('login')}
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium px-3 py-1 rounded-lg hover:bg-blue-50 transition-colors"
+                className="text-sm font-medium px-3 py-1 rounded-lg transition-colors"
+                style={{ color: '#c4a574' }}
               >
                 Logout
               </button>
@@ -705,157 +942,342 @@ const SalesTrackerApp = () => {
     );
   };
 
-  // Enhanced Sales Rep Dashboard
+  // FieldIQ Agent Dashboard
   const RepDashboard = () => {
+    const isDark = theme === 'dark';
     const userMeetings = meetings.filter(m => m.repName === currentUser);
-    const thisMonthMeetings = userMeetings.filter(m => new Date(m.date).getMonth() === new Date().getMonth());
-    const avgDuration = thisMonthMeetings.length > 0 ? Math.round(thisMonthMeetings.reduce((sum, m) => sum + m.duration, 0) / thisMonthMeetings.length) : 0;
-    const inPersonMeetings = thisMonthMeetings.filter(m => m.type === 'In-Person').length;
-    const virtualMeetings = thisMonthMeetings.filter(m => m.type === 'Virtual').length;
+    const thisWeekMeetings = userMeetings.filter(m => {
+      const d = new Date(m.date);
+      const now = new Date();
+      const weekAgo = new Date(now); weekAgo.setDate(now.getDate() - 7);
+      return d >= weekAgo;
+    });
+    const totalSpendMTD = thisWeekMeetings.reduce((sum, m) => sum + (m.duration || 0) * 2, 0); // simulated cost
+    const contactsEngaged = agents.filter(a => a.addedBy === currentUser).length;
+    const followUpsPending = userMeetings.filter(m => m.followUpDate && new Date(m.followUpDate) > new Date()).length;
+    const followUpsOverdue = userMeetings.filter(m => m.followUpDate && new Date(m.followUpDate) < new Date()).length;
+
+    // Colors
+    const bg = isDark ? '#0f0f0f' : '#fafaf9';
+    const cardBg = isDark ? '#171717' : '#ffffff';
+    const sidebarBg = isDark ? '#0f0f0f' : '#fafafa';
+    const border = isDark ? '#27272a' : '#e4e4e7';
+    const textHead = isDark ? '#ffffff' : '#000000';
+    const textMuted = isDark ? '#a1a1aa' : '#71717a';
+    const textBody = isDark ? '#d4d4d8' : '#3f3f46';
+    const agentCardBg = isDark ? '#1a1a1a' : '#f5f3ef';
+    const tableHead = isDark ? '#0f0f0f' : '#fafaf9';
+    const rowBorder = isDark ? '#27272a' : '#e4e4e7';
+
+    // Nav items
+    const navItems = [
+      { icon: LayoutDashboard, label: 'Dashboard', active: true, view: 'rep-dashboard' },
+      { icon: Activity, label: 'Activities', active: false, view: 'all-meetings' },
+      { icon: Users, label: 'Contacts', active: false, view: 'add-agent' },
+      { icon: Calendar, label: 'Follow-ups', active: false, view: 'all-meetings' },
+    ];
+
+    const insightItems = [
+      { icon: TrendingUp, label: 'My Performance', view: 'manager-dashboard' },
+      { icon: Heart, label: 'Relationship Scores', view: null },
+    ];
+
+    const bottomItems = [
+      { icon: Settings, label: 'Settings', view: null },
+      { icon: HelpCircle, label: 'Help & Support', view: null },
+    ];
+
+    const initials = currentUser.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+
+    // Week streak: last 7 days labels
+    const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    const today = new Date().getDay(); // 0=Sun
+    const activeDay = today === 0 ? 6 : today - 1;
 
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar title={`Welcome back, ${currentUser}`} />
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: bg, fontFamily: 'Inter, sans-serif' }}>
+        {/* Top Nav */}
+        <FieldIQNav />
 
-        {/* Notifications */}
-        {notifications.length > 0 && (
-          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mx-4 mt-4 rounded">
-            <div className="flex">
-              <Bell className="w-5 h-5 text-blue-400 mt-0.5" />
-              <div className="ml-3">
-                <p className="text-sm text-blue-700 font-medium">You have {notifications.length} notification(s)</p>
-                <div className="mt-2 space-y-1">
-                  {notifications.map(notif => (
-                    <p key={notif.id} className="text-xs text-blue-600">{notif.message}</p>
-                  ))}
+        {/* Body: sidebar + main */}
+        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+          {/* Left Sidebar */}
+          <div style={{
+            width: 220, background: sidebarBg, flexShrink: 0,
+            borderRight: `1px solid ${border}`,
+            display: 'flex', flexDirection: 'column',
+            padding: '24px 0 16px 0',
+            overflowY: 'auto',
+          }}>
+            {/* Main nav */}
+            {navItems.map(item => (
+              <button
+                key={item.label}
+                onClick={() => item.view && setCurrentView(item.view)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  height: 36, padding: '0 20px', width: '100%',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  borderLeft: item.active ? '2px solid #c4a574' : '2px solid transparent',
+                }}
+              >
+                <item.icon size={16} color={item.active ? textHead : textMuted} />
+                <span style={{ fontSize: 13, fontWeight: item.active ? 500 : 400, color: item.active ? textHead : textMuted }}>
+                  {item.label}
+                </span>
+              </button>
+            ))}
+
+            {/* Insights section */}
+            <div style={{ padding: '24px 20px 0 20px' }}>
+              <span style={{ fontSize: 10, fontWeight: 600, color: textMuted, letterSpacing: '0.1em' }}>INSIGHTS</span>
+            </div>
+            {insightItems.map(item => (
+              <button
+                key={item.label}
+                onClick={() => item.view && setCurrentView(item.view)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  height: 36, padding: '0 20px', width: '100%',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  borderLeft: '2px solid transparent',
+                }}
+              >
+                <item.icon size={16} color={textMuted} />
+                <span style={{ fontSize: 13, color: textMuted }}>{item.label}</span>
+              </button>
+            ))}
+
+            {/* Divider */}
+            <div style={{ height: 1, background: border, margin: '8px 0' }} />
+
+            {/* Bottom nav */}
+            {bottomItems.map(item => (
+              <button
+                key={item.label}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  height: 36, padding: '0 20px', width: '100%',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  borderLeft: '2px solid transparent',
+                }}
+              >
+                <item.icon size={16} color={textMuted} />
+                <span style={{ fontSize: 13, color: textMuted }}>{item.label}</span>
+              </button>
+            ))}
+
+            {/* Spacer */}
+            <div style={{ flex: 1 }} />
+
+            {/* Agent card */}
+            <div style={{ padding: '0 8px' }}>
+              <div style={{
+                background: agentCardBg, borderRadius: 8, padding: 12,
+                border: `1px solid ${border}`,
+                display: 'flex', alignItems: 'center', gap: 8,
+              }}>
+                <div style={{
+                  width: 28, height: 28, borderRadius: '50%', background: '#c4a574',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 11, fontWeight: 600, color: '#000', flexShrink: 0,
+                }}>{initials}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: textHead, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {currentUser}
+                  </div>
+                  <div style={{ fontSize: 11, color: textMuted }}>Premier Title Agency</div>
                 </div>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#c4a574', flexShrink: 0 }} />
               </div>
             </div>
           </div>
-        )}
 
-        {/* Enhanced Quick Stats */}
-        <div className="p-4">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200 p-5 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-2xl font-bold text-slate-800">{thisMonthMeetings.length}</div>
-                  <div className="text-sm font-medium text-blue-700">This Month</div>
-                </div>
-                <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center shadow-md">
-                  <Calendar className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </div>
-            <div className="bg-gradient-to-br from-emerald-50 to-teal-100 border border-emerald-200 p-5 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-2xl font-bold text-slate-800">{agents.filter(a => a.addedBy === currentUser).length}</div>
-                  <div className="text-sm font-medium text-emerald-700">My Agents</div>
-                </div>
-                <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center shadow-md">
-                  <Users className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </div>
-            <div className="bg-gradient-to-br from-amber-50 to-orange-100 border border-amber-200 p-5 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-2xl font-bold text-slate-800">{avgDuration}m</div>
-                  <div className="text-sm font-medium text-amber-700">Avg Duration</div>
-                </div>
-                <div className="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center shadow-md">
-                  <Clock className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </div>
-            <div className="bg-gradient-to-br from-purple-50 to-pink-100 border border-purple-200 p-5 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-2xl font-bold text-slate-800">{Math.round((inPersonMeetings / (inPersonMeetings + virtualMeetings)) * 100) || 0}%</div>
-                  <div className="text-sm font-medium text-purple-700">In-Person</div>
-                </div>
-                <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center shadow-md">
-                  <MapPin className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Main Content */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: 32, display: 'flex', flexDirection: 'column', gap: 0 }}>
 
-          {/* Quick Actions */}
-          <div className="flex gap-3 mb-6">
-            <button
-              onClick={() => setCurrentView('add-agent')}
-              className="flex-1 bg-gradient-to-r from-rose-500 to-pink-600 text-white p-4 rounded-lg flex items-center justify-center space-x-3 hover:from-rose-600 hover:to-pink-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105"
-            >
-              <Users className="w-5 h-5" />
-              <span className="font-semibold">Add Agent</span>
-            </button>
-            <button
-              onClick={() => setCurrentView('add-meeting')}
-              className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 rounded-lg flex items-center justify-center space-x-3 hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105"
-            >
-              <Calendar className="w-5 h-5" />
-              <span className="font-semibold">Log Meeting</span>
-            </button>
-            <button
-              onClick={() => setCurrentView('pipeline')}
-              className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-4 rounded-lg flex items-center justify-center space-x-3 hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105"
-            >
-              <Target className="w-5 h-5" />
-              <span className="font-semibold">Manage Pipeline</span>
-            </button>
-          </div>
-
-          {/* Recent Meetings with Enhanced UI */}
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div className="p-4 border-b bg-gray-50">
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-gray-800">Recent Meetings</h2>
-                <button 
-                  onClick={() => setCurrentView('all-meetings')}
-                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  View All
-                </button>
+            {/* Page header */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
+              <div>
+                <div style={{ fontSize: 22, fontWeight: 600, color: textHead }}>Dashboard</div>
+                <div style={{ fontSize: 14, color: textMuted, marginTop: 4 }}>
+                  Good morning, {currentUser.split(' ')[0]}. Here's your activity summary.
+                </div>
               </div>
+              <button
+                onClick={() => setCurrentView('add-meeting')}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  height: 44, padding: '0 20px', borderRadius: 8,
+                  background: isDark ? '#c4a574' : '#000000',
+                  color: isDark ? '#000000' : '#ffffff',
+                  border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 600,
+                }}
+              >
+                <Plus size={14} />
+                Log Activity
+              </button>
             </div>
-            <div className="divide-y">
-              {userMeetings.slice(0, 5).map((meeting) => (
-                <div key={meeting.id} className="p-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <div className="font-medium text-gray-800">{meeting.agentName}</div>
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          meeting.type === 'In-Person' 
-                            ? 'bg-blue-100 text-blue-700' 
-                            : 'bg-green-100 text-green-700'
-                        }`}>
-                          {meeting.type}
-                        </span>
-                      </div>
-                      <div className="text-sm text-gray-600">{meeting.organization}</div>
-                      <div className="text-sm text-gray-500 mt-1 flex items-center space-x-4">
-                        <span>{meeting.date}</span>
-                        <span>{meeting.duration} min</span>
-                        <span className="flex items-center space-x-1">
-                          <MapPin className="w-3 h-3" />
-                          <span>{meeting.location}</span>
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-600 mt-1">
-                        Next: {meeting.nextSteps}
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className={`w-3 h-3 rounded-full ${meeting.proofUploaded ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                      <Eye className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-pointer" />
-                    </div>
+
+            {/* KPI Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+              {[
+                { label: 'ACTIVITIES THIS WEEK', value: thisWeekMeetings.length.toString(), sub: '↑ 3 from last week', subColor: '#16a34a' },
+                { label: 'TOTAL SPEND MTD', value: `$${(1240).toLocaleString()}`, sub: '$800 avg · On track', subColor: textMuted },
+                { label: 'CONTACTS ENGAGED', value: contactsEngaged.toString(), sub: 'This month', subColor: textMuted },
+                { label: 'FOLLOW-UPS PENDING', value: followUpsPending.toString(), sub: `${followUpsOverdue} overdue`, subColor: '#d97706' },
+              ].map((kpi, i) => (
+                <div key={i} style={{
+                  background: cardBg, borderRadius: 8, border: `1px solid ${border}`,
+                  overflow: 'hidden',
+                  boxShadow: isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.06)',
+                }}>
+                  <div style={{ height: 2, background: '#c4a574' }} />
+                  <div style={{ padding: '12px 20px 20px 20px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <span style={{ fontSize: 11, fontWeight: 500, color: textMuted, letterSpacing: '0.06em' }}>{kpi.label}</span>
+                    <span style={{ fontSize: 32, fontWeight: 700, color: '#c4a574', lineHeight: 1 }}>{kpi.value}</span>
+                    <span style={{ fontSize: 12, color: kpi.subColor }}>{kpi.sub}</span>
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Two column: recent activity + streak */}
+            <div style={{ display: 'flex', gap: 16 }}>
+              {/* Recent Activity Table */}
+              <div style={{
+                flex: 1, background: cardBg, borderRadius: 8, border: `1px solid ${border}`,
+                overflow: 'hidden',
+                boxShadow: isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.06)',
+              }}>
+                <div style={{ height: 2, background: '#c4a574' }} />
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px' }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: textHead }}>Recent Activity</span>
+                  <button
+                    onClick={() => setCurrentView('all-meetings')}
+                    style={{ fontSize: 12, color: '#c4a574', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}
+                  >
+                    View all →
+                  </button>
+                </div>
+                {/* Table header */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', height: 32,
+                  background: tableHead, borderBottom: `1px solid ${border}`,
+                  padding: '0 20px',
+                }}>
+                  {['TYPE', 'CONTACT', 'DATE', 'COST', 'STATUS'].map((h, i) => (
+                    <span key={h} style={{
+                      fontSize: 10, fontWeight: 600, color: textMuted, letterSpacing: '0.06em',
+                      flex: i === 1 ? 2 : 1,
+                    }}>{h}</span>
+                  ))}
+                </div>
+                {/* Rows */}
+                {userMeetings.slice(0, 5).map((meeting, idx) => {
+                  const daysAgo = Math.floor((new Date() - new Date(meeting.date)) / 86400000);
+                  const dateLabel = daysAgo === 0 ? 'Today' : daysAgo === 1 ? '1 day ago' : `${daysAgo} days ago`;
+                  const hasFollowUp = meeting.followUpDate && new Date(meeting.followUpDate) > new Date();
+                  const isLapsed = meeting.followUpDate && new Date(meeting.followUpDate) < new Date() && !meeting.proofUploaded;
+                  const statusBadge = hasFollowUp
+                    ? <span className="fiq-badge-follow-up">Follow-up</span>
+                    : isLapsed
+                      ? <span className="fiq-badge-lapsed">Lapsed</span>
+                      : meeting.proofUploaded
+                        ? <span className="fiq-badge-complete">Complete</span>
+                        : <span className="fiq-badge-lapsed">Pending</span>;
+
+                  const agendaIcon = meeting.agenda === 'Lunch / Networking' ? '🍽' :
+                    meeting.agenda === 'Contract Signing' ? '📝' :
+                    meeting.agenda === 'Training / Onboarding' ? '🎓' :
+                    meeting.agenda === 'Follow-up Meeting' ? '🔄' : '☕';
+
+                  return (
+                    <div key={meeting.id} style={{
+                      display: 'flex', alignItems: 'center', height: 52,
+                      borderBottom: idx < 4 ? `1px solid ${border}` : 'none',
+                      padding: '0 20px',
+                    }}>
+                      <span style={{ flex: 1, fontSize: 13, color: textMuted }}>{agendaIcon} {meeting.agenda?.split(' ')[0]}</span>
+                      <span style={{ flex: 2 }}>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: textHead }}>{meeting.agentName}</div>
+                        <div style={{ fontSize: 11, color: textMuted }}>{meeting.organization?.split(' ').slice(0, 2).join(' ')}</div>
+                      </span>
+                      <span style={{ flex: 1, fontSize: 12, color: textMuted }}>{dateLabel}</span>
+                      <span style={{ flex: 1, fontSize: 13, color: textHead }}>${meeting.duration * 2}</span>
+                      <span style={{ flex: 1 }}>{statusBadge}</span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Activity Streak Card */}
+              <div style={{
+                width: 280, background: cardBg, borderRadius: 8, border: `1px solid ${border}`,
+                overflow: 'hidden', flexShrink: 0,
+                boxShadow: isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.06)',
+              }}>
+                <div style={{ height: 2, background: '#c4a574' }} />
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px' }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: textHead }}>This Week</span>
+                  <span style={{ fontSize: 12, color: textMuted }}>{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                </div>
+                <div style={{ height: 1, background: border }} />
+
+                {/* Day pills */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px 20px' }}>
+                  {days.map((d, i) => (
+                    <div key={i} style={{
+                      width: 28, height: 28, borderRadius: '50%',
+                      background: i <= activeDay ? '#c4a574' : agentCardBg,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '0.7rem', fontWeight: i <= activeDay ? 600 : 400,
+                      color: i <= activeDay ? '#000' : textMuted,
+                    }}>{d}</div>
+                  ))}
+                </div>
+
+                <div style={{ height: 1, background: border }} />
+
+                {/* Stats */}
+                <div style={{ padding: '12px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {[
+                    { label: 'Avg cost per activity', value: '$103' },
+                    { label: 'Most active type', value: 'Lunch' },
+                    { label: 'Longest streak', value: '12 days' },
+                  ].map(stat => (
+                    <div key={stat.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 12, color: textMuted }}>{stat.label}</span>
+                      <span style={{ fontSize: 12, fontWeight: 500, color: '#c4a574' }}>{stat.value}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Quick actions */}
+                <div style={{ height: 1, background: border }} />
+                <div style={{ padding: '12px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <button
+                    onClick={() => setCurrentView('add-agent')}
+                    style={{
+                      width: '100%', padding: '8px 0', borderRadius: 6,
+                      background: agentCardBg, border: `1px solid ${border}`,
+                      color: textBody, fontSize: 12, cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                    }}
+                  >
+                    + Add Contact
+                  </button>
+                  <button
+                    onClick={() => setCurrentView('pipeline')}
+                    style={{
+                      width: '100%', padding: '8px 0', borderRadius: 6,
+                      background: agentCardBg, border: `1px solid ${border}`,
+                      color: textBody, fontSize: 12, cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                    }}
+                  >
+                    View Pipeline
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

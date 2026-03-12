@@ -1,65 +1,84 @@
-# CLAUDE.md
+# CLAUDE.md — FieldIQ Prototype
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## What This Project Is
+FieldIQ is a high-fidelity interactive prototype of an AI-powered field sales
+intelligence platform for the title insurance industry. Built for investor and
+sales demos. Must feel production-ready.
 
-## Commands
+## Tech Stack
+- Next.js 14 App Router
+- TypeScript
+- Tailwind CSS v3
+- shadcn/ui
+- Framer Motion
+- Recharts
+- Lucide React
+- Inter font via next/font/google
 
-```bash
-# Start dev server (Vite)
-npm run dev
+## Design Source
+Designs live in Pencil.dev. Use the Pencil MCP tool to read each screen's
+design before building it. Always read the design first — do not guess layout.
 
-# Lint
-npm run lint
+## Design Token Rules (NEVER VIOLATE THESE)
+- Gold (#c4a574) is used ONLY for: KPI values, card top borders (top edge
+  only), active states, score rings, progress bar fills, "View all" links.
+  Never as a large background fill.
+- Card border: 2px solid #c4a574 on TOP edge only. Other 3 sides:
+  1px solid var(--border). Never gold on all 4 sides.
+- Sidebar active item: border-left 2px solid #c4a574, transparent background,
+  font-weight 600. Never a filled gold background.
+- Dark mode default. Light mode available via toggle.
+- No red anywhere in the UI. Warnings use #d97706 amber only.
+- No gradients on content cards. Subtle shadows only.
 
-# Build for production
-npm run build
+## Color Tokens
+### Light Mode
+- --background: #fafaf9
+- --card: #ffffff
+- --surface: #f5f3ef
+- --border: #e4e4e7
+- --foreground: #000000
+- --body: #3f3f46
+- --muted: #71717a
 
-# Preview production build
-npm run preview
-```
+### Dark Mode
+- --background: #0f0f0f
+- --card: #171717
+- --surface: #1a1a1a
+- --border: #27272a
+- --foreground: #ffffff
+- --body: #d4d4d8
+- --muted: #a1a1aa
 
-> Note: `package.json` also contains `react-scripts` commands (`start`, `build`, `test`, `eject`) but the project uses Vite — use the Vite-based commands above.
+### Brand
+- --gold: #c4a574
+- --gold-hover: #a68751
+- --gold-light: #d4b584
+- --success: #16a34a
+- --warning: #d97706
 
-## Architecture
+## Typography
+- Font: Inter throughout. No decorative fonts.
+- Base unit: 8px spacing system
+- Border radius: 8px throughout
+- Shadows: 0 1px 3px rgba(0,0,0,0.06) only
 
-This is a single-page React app with **no routing library and no backend**. All state is held in memory (no persistence between page refreshes).
+## Project Structure
+See PRD for full structure. Key paths:
+- /app — Next.js App Router pages
+- /components/fieldiq — custom FieldIQ components
+- /components/ui — shadcn primitives
+- /lib/mock-data — JSON mock data files
+- /lib/context — React Context providers
 
-### Single-component design
+## Demo Mode Rules
+- No real auth. Auto-login as demo user.
+- Theme persists in React Context (not localStorage).
+- Role switcher always visible and functional.
+- All form submissions succeed and show a toast.
+- Out-of-scope screens show a Coming Soon page.
 
-The entire application lives in `src/App.jsx` as one large component (`SalesTrackerApp`). All "screens" are inner function components defined inside `SalesTrackerApp`, giving them closure access to shared state and setters. Navigation is handled by a `currentView` string and a `renderCurrentView()` switch statement at the bottom of the file.
-
-### Views (screens)
-
-| `currentView` value | Component | Description |
-|---|---|---|
-| `login` | `LoginScreen` | Role selection (Rep or Manager) |
-| `rep-dashboard` | `RepDashboard` | Rep's home with stats and recent activity |
-| `add-agent` | `AddAgentScreen` | Form to add a new agent/prospect |
-| `add-meeting` | `AddMeetingScreen` | Form to log a meeting with speech-to-text for notes |
-| `all-meetings` | `AllMeetingsScreen` | Filterable list of all meetings |
-| `all-reps` | `AllRepsScreen` | Manager view of all sales reps |
-| `pipeline` | `PipelineBoard` | Kanban-style pipeline board |
-| `manager-dashboard` | `ManagerDashboard` | Manager home with team analytics |
-
-### Shared state (in `SalesTrackerApp`)
-
-- `currentView` / `userRole` / `currentUser` — navigation and auth context
-- `agents` — array of agent/prospect records with pipeline stage and deal value
-- `meetings` — array of logged meetings linked to agents by `agentId`
-- `notifications`, `searchTerm`, `filterType` — UI state
-
-### Pipeline stages
-
-Defined in `pipelineStages` array: `prospect` → `contact-made` → `meeting-held` → `proposal-sent` → `negotiation` → `closed-won` / `closed-lost`.
-
-### Styling
-
-`src/index.css` is a hand-rolled Tailwind-compatible utility class library (not actual Tailwind). All utility classes (spacing, colors, flex, grid, responsive breakpoints) are manually defined there. Tailwind is listed as a dev dependency but the CSS file is self-contained — do not rely on Tailwind's JIT compiler generating classes at runtime.
-
-### Speech-to-text
-
-`useSpeechToText` is a custom hook defined inside `SalesTrackerApp` (not a separate file). It wraps the browser's `webkitSpeechRecognition` / `SpeechRecognition` API. It is used in `AddMeetingScreen` for voice-input of meeting notes.
-
-### Icons
-
-All icons come from `lucide-react`, imported at the top of `App.jsx`.
+## Role Personas
+- Agent: Sarah Chen, Senior Title Agent, Buckhead Territory
+- Manager: Jane Doe, Regional Sales Manager, Premier Title Agency
+- Executive: stub only

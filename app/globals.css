@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light mode tokens */
+    --background: #fafaf9;
+    --card: #ffffff;
+    --surface: #f5f3ef;
+    --border: #e4e4e7;
+    --foreground: #000000;
+    --body: #3f3f46;
+    --muted: #71717a;
+
+    /* Brand tokens (same in both modes) */
+    --gold: #c4a574;
+    --gold-hover: #a68751;
+    --gold-light: #d4b584;
+    --success: #16a34a;
+    --warning: #d97706;
+
+    --radius: 8px;
+
+    /* shadcn/ui HSL tokens — light */
+    --background-hsl: 60 9% 98%;
+    --foreground-hsl: 240 10% 4%;
+    --card-hsl: 0 0% 100%;
+    --card-foreground-hsl: 240 10% 4%;
+    --popover-hsl: 0 0% 100%;
+    --popover-foreground-hsl: 240 10% 4%;
+    --primary-hsl: 38 52% 62%;
+    --primary-foreground-hsl: 0 0% 100%;
+    --secondary-hsl: 240 5% 96%;
+    --secondary-foreground-hsl: 240 6% 10%;
+    --muted-hsl: 240 5% 96%;
+    --muted-foreground-hsl: 240 4% 46%;
+    --accent-hsl: 240 5% 96%;
+    --accent-foreground-hsl: 240 6% 10%;
+    --destructive-hsl: 0 84% 60%;
+    --destructive-foreground-hsl: 0 0% 98%;
+    --border-hsl: 240 6% 90%;
+    --input-hsl: 240 6% 90%;
+    --ring-hsl: 38 52% 62%;
+  }
+
+  .dark {
+    /* Dark mode tokens */
+    --background: #0f0f0f;
+    --card: #171717;
+    --surface: #1a1a1a;
+    --border: #27272a;
+    --foreground: #ffffff;
+    --body: #d4d4d8;
+    --muted: #a1a1aa;
+
+    /* Brand tokens */
+    --gold: #c4a574;
+    --gold-hover: #a68751;
+    --gold-light: #d4b584;
+    --success: #16a34a;
+    --warning: #d97706;
+
+    /* shadcn/ui HSL tokens — dark */
+    --background-hsl: 0 0% 6%;
+    --foreground-hsl: 0 0% 98%;
+    --card-hsl: 0 0% 9%;
+    --card-foreground-hsl: 0 0% 98%;
+    --popover-hsl: 0 0% 9%;
+    --popover-foreground-hsl: 0 0% 98%;
+    --primary-hsl: 38 52% 62%;
+    --primary-foreground-hsl: 0 0% 9%;
+    --secondary-hsl: 240 4% 16%;
+    --secondary-foreground-hsl: 0 0% 98%;
+    --muted-hsl: 240 4% 16%;
+    --muted-foreground-hsl: 240 5% 65%;
+    --accent-hsl: 240 4% 16%;
+    --accent-foreground-hsl: 0 0% 98%;
+    --destructive-hsl: 0 63% 31%;
+    --destructive-foreground-hsl: 0 0% 98%;
+    --border-hsl: 240 4% 16%;
+    --input-hsl: 240 4% 16%;
+    --ring-hsl: 38 52% 62%;
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--body);
+  }
+}
+
+@layer components {
+  .fieldiq-card {
+    border-top: 2px solid #c4a574;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    border-left: 1px solid var(--border);
+    border-radius: 8px;
+    background-color: var(--card);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  }
+
+  .sidebar-item-active {
+    border-left: 2px solid #c4a574;
+    background: transparent;
+    font-weight: 600;
+  }
+}
