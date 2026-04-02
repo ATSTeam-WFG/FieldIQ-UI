@@ -2,24 +2,53 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import type { LucideIcon } from 'lucide-react'
 import {
-  BarChart2,
-  BookUser,
-  ClipboardList,
   LayoutDashboard,
-  Settings,
+  Activity,
+  FileText,
   Users,
+  CalendarCheck,
+  TrendingUp,
+  Settings,
+  Info,
+  BarChart2,
 } from 'lucide-react'
 import { useRole } from '@/lib/context/RoleContext'
-import { cn } from '@/lib/utils'
 
-const navItems = [
-  { label: 'Dashboard',    icon: LayoutDashboard, href: '/dashboard' },
-  { label: 'My Team',      icon: Users,           href: '/manager'   },
-  { label: 'Activity Log', icon: ClipboardList,   href: '/coming-soon' },
-  { label: 'Contacts',     icon: BookUser,        href: '/coming-soon' },
-  { label: 'Reports',      icon: BarChart2,       href: '/coming-soon' },
-  { label: 'Settings',     icon: Settings,        href: '/coming-soon' },
+interface NavItemDef {
+  label: string
+  icon: LucideIcon
+  href: string
+}
+
+const agentMainNav: NavItemDef[] = [
+  { label: 'Dashboard',  icon: LayoutDashboard, href: '/dashboard'  },
+  { label: 'Activities', icon: Activity,        href: '/activities' },
+  { label: 'Contracts',  icon: FileText,        href: '/contracts'  },
+  { label: 'Contacts',   icon: Users,           href: '/contacts'   },
+  { label: 'Follow-ups', icon: CalendarCheck,   href: '/follow-ups' },
+]
+
+const agentInsightNav: NavItemDef[] = [
+  { label: 'My Performance', icon: TrendingUp, href: '/performance' },
+]
+
+const managerMainNav: NavItemDef[] = [
+  { label: 'Dashboard',  icon: LayoutDashboard, href: '/manager'      },
+  { label: 'Team',       icon: Users,           href: '/team'         },
+  { label: 'Contracts',  icon: FileText,        href: '/contracts'    },
+  { label: 'Activities', icon: Activity,        href: '/activities'   },
+]
+
+const managerInsightNav: NavItemDef[] = [
+  { label: 'Performance', icon: TrendingUp, href: '/performance'  },
+  { label: 'Reports',     icon: BarChart2,  href: '/coming-soon'  },
+]
+
+const settingsNavItems: NavItemDef[] = [
+  { label: 'Settings',     icon: Settings, href: '/settings'    },
+  { label: 'Help & Support', icon: Info,   href: '/coming-soon' },
 ]
 
 interface SidebarProps {
@@ -28,77 +57,119 @@ interface SidebarProps {
 
 export function Sidebar({ activeItem }: SidebarProps) {
   const pathname = usePathname()
-  const { persona } = useRole()
+  const { persona, role } = useRole()
+
+  const isManager = role === 'manager'
+  const mainNav = isManager ? managerMainNav : agentMainNav
+  const insightNav = isManager ? managerInsightNav : agentInsightNav
+
+  function isActive(href: string, label: string): boolean {
+    if (activeItem) return activeItem === label
+    return pathname === href
+  }
+
+  function NavItem({ label, icon: Icon, href }: NavItemDef) {
+    const active = isActive(href, label)
+    return (
+      <Link
+        href={href}
+        className="flex items-center gap-2 transition-colors"
+        style={{
+          height: 36,
+          paddingLeft: 20,
+          paddingRight: 20,
+          fontSize: 13,
+          borderLeft: active ? '2px solid #c4a574' : '2px solid transparent',
+          color: active ? 'var(--foreground)' : 'var(--muted)',
+          fontWeight: active ? 600 : 400,
+        }}
+      >
+        <Icon size={16} />
+        {label}
+      </Link>
+    )
+  }
 
   return (
     <aside
-      className="flex h-full w-[220px] shrink-0 flex-col border-r"
+      className="flex h-full w-[220px] shrink-0 flex-col"
       style={{
-        backgroundColor: 'var(--card)',
-        borderColor: 'var(--border)',
+        backgroundColor: 'var(--background)',
+        borderRight: '1px solid var(--border)',
       }}
     >
-      {/* Nav items */}
-      <nav className="flex flex-col gap-0.5 p-3 flex-1">
-        {navItems.map(item => {
-          const isActive = activeItem
-            ? activeItem === item.label
-            : pathname === item.href
+      {/* Main nav */}
+      <div className="flex flex-col pt-6">
+        {mainNav.map(item => (
+          <NavItem key={item.label} {...item} />
+        ))}
+      </div>
 
-          return (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={cn(
-                'flex items-center gap-3 rounded-r-[8px] px-3 py-2.5 text-sm transition-colors',
-                isActive
-                  ? 'sidebar-item-active'
-                  : 'hover:bg-[var(--surface)]'
-              )}
-              style={{
-                color: isActive ? 'var(--foreground)' : 'var(--muted)',
-              }}
-            >
-              <item.icon className="h-4 w-4 shrink-0" />
-              {item.label}
-            </Link>
-          )
-        })}
-      </nav>
+      {/* Insights section */}
+      <div className="flex flex-col pt-6">
+        <span
+          className="px-5 pb-1 uppercase"
+          style={{ fontSize: 10, letterSpacing: '0.06em', color: 'var(--muted)' }}
+        >
+          INSIGHTS
+        </span>
+        {insightNav.map(item => (
+          <NavItem key={item.label} {...item} />
+        ))}
+      </div>
 
-      {/* Agent card at bottom */}
-      <div
-        className="border-t p-3"
-        style={{ borderColor: 'var(--border)' }}
-      >
-        <div className="flex items-center gap-3 rounded-[8px] px-3 py-2.5">
+      {/* Divider */}
+      <div className="mt-3 mx-0" style={{ height: 1, backgroundColor: 'var(--border)' }} />
+
+      {/* Settings / Help */}
+      <div className="flex flex-col">
+        {settingsNavItems.map(item => (
+          <NavItem key={item.label} {...item} />
+        ))}
+      </div>
+
+      {/* Spacer */}
+      <div className="flex-1" />
+
+      {/* User summary card */}
+      <div className="p-4">
+        <div
+          className="flex items-center gap-2 rounded-[8px] p-3"
+          style={{
+            backgroundColor: 'var(--surface)',
+            borderTop: '2px solid #c4a574',
+            borderRight: '1px solid var(--border)',
+            borderBottom: '1px solid var(--border)',
+            borderLeft: '1px solid var(--border)',
+          }}
+        >
           {/* Avatar */}
           <div
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold"
-            style={{ backgroundColor: '#c4a574', color: '#ffffff' }}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+            style={{ backgroundColor: '#c4a574', fontSize: 11, fontWeight: 600, color: '#ffffff' }}
           >
             {persona.initials}
           </div>
 
-          {/* Name + role */}
-          <div className="flex min-w-0 flex-col">
+          {/* Name + company */}
+          <div className="flex min-w-0 flex-1 flex-col" style={{ gap: 2 }}>
             <span
-              className="truncate text-sm font-semibold"
-              style={{ color: 'var(--foreground)' }}
+              className="truncate"
+              style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)' }}
             >
               {persona.name}
             </span>
             <span
-              className="truncate text-xs"
-              style={{ color: 'var(--muted)' }}
+              className="truncate"
+              style={{ fontSize: 11, color: 'var(--muted)' }}
             >
-              {persona.title}
+              Premier Title Agency
             </span>
           </div>
 
           {/* Active dot */}
           <div
-            className="ml-auto h-2 w-2 shrink-0 rounded-full"
+            className="h-1.5 w-1.5 shrink-0 rounded-full"
             style={{ backgroundColor: '#c4a574' }}
           />
         </div>

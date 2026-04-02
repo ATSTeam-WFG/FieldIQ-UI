@@ -20,10 +20,10 @@ export function KPICard({
   className,
 }: KPICardProps) {
   return (
-    <div className={cn('fieldiq-card p-5', className)}>
+    <div className={cn('fieldiq-card p-3 md:p-5', className)}>
       {/* Label */}
       <p
-        className="mb-2 text-xs font-semibold uppercase tracking-[0.06em]"
+        className="mb-1 md:mb-2 text-[10px] md:text-xs font-semibold uppercase leading-tight tracking-[0.05em]"
         style={{ color: 'var(--muted)' }}
       >
         {label}
@@ -31,7 +31,7 @@ export function KPICard({
 
       {/* Value */}
       <p
-        className="text-3xl font-bold leading-none"
+        className="text-2xl md:text-3xl font-bold leading-none"
         style={{ color: '#c4a574' }}
       >
         {value}
@@ -40,7 +40,7 @@ export function KPICard({
       {/* SubLabel */}
       {subLabel && (
         <p
-          className="mt-1.5 text-xs"
+          className="mt-1 md:mt-1.5 text-[10px] md:text-xs"
           style={{ color: subLabelColor ?? 'var(--muted)' }}
         >
           {subLabel}

@@ -1,45 +1,42 @@
 import { cn } from '@/lib/utils'
 
-type Status = 'on-track' | 'watch' | 'below-target' | 'complete' | 'follow-up'
+export type ActivityStatus = 'complete' | 'follow-up' | 'logged' | 'on-track' | 'watch' | 'below-target'
 
 interface StatusBadgeProps {
-  status: Status
+  status: ActivityStatus
   className?: string
 }
 
-const statusConfig: Record<
-  Status,
-  { label: string; color: string; bg: string; border: string }
-> = {
-  'on-track': {
-    label: 'On Track',
-    color: '#16a34a',
-    bg: 'rgba(22, 163, 74, 0.08)',
-    border: 'rgba(22, 163, 74, 0.3)',
+const statusConfig: Record<ActivityStatus, { label: string; color: string; border: string }> = {
+  'follow-up': {
+    label: 'Follow-up',
+    color: '#c4a574',
+    border: '#c4a574',
   },
   complete: {
     label: 'Complete',
     color: '#16a34a',
-    bg: 'rgba(22, 163, 74, 0.08)',
-    border: 'rgba(22, 163, 74, 0.3)',
+    border: '#16a34a',
+  },
+  logged: {
+    label: 'Logged',
+    color: 'var(--muted)',
+    border: 'var(--border)',
+  },
+  'on-track': {
+    label: 'On Track',
+    color: '#16a34a',
+    border: '#16a34a',
   },
   watch: {
     label: 'Watch',
     color: '#d97706',
-    bg: 'rgba(217, 119, 6, 0.08)',
-    border: 'rgba(217, 119, 6, 0.3)',
+    border: '#d97706',
   },
   'below-target': {
     label: 'Below Target',
     color: '#d97706',
-    bg: 'rgba(217, 119, 6, 0.14)',
-    border: 'rgba(217, 119, 6, 0.4)',
-  },
-  'follow-up': {
-    label: 'Follow Up',
-    color: '#d97706',
-    bg: 'rgba(217, 119, 6, 0.08)',
-    border: 'rgba(217, 119, 6, 0.3)',
+    border: '#d97706',
   },
 }
 
@@ -48,13 +45,12 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
 
   return (
     <span
-      className={cn(
-        'inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold',
-        className
-      )}
+      className={cn('inline-flex items-center justify-center rounded-[4px] border px-2', className)}
       style={{
+        height: 22,
+        fontSize: 11,
         color: config.color,
-        backgroundColor: config.bg,
+        backgroundColor: 'transparent',
         borderColor: config.border,
       }}
     >

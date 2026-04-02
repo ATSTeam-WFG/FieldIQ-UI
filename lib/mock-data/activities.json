@@ -1,6 +1,8 @@
 [
   {
     "id": "act-001",
+    "agentName": "Sarah Chen",
+    "agentInitials": "SC",
     "type": "Lunch",
     "contactName": "Marcus Webb",
     "contactCompany": "Peachtree Realty Group",
@@ -8,10 +10,15 @@
     "time": "12:30 PM",
     "notes": "Discussed Q2 pipeline and upcoming Buckhead commercial listings. Marcus expects 4–6 closings this quarter, all title-eligible.",
     "spend": 142,
-    "followUp": "Send CE class invite by Friday"
+    "followUp": "Send CE class invite by Friday",
+    "status": "follow-up",
+    "label": "Q2 Pipeline Lunch",
+    "sponsored": false
   },
   {
     "id": "act-002",
+    "agentName": "Michael Torres",
+    "agentInitials": "MT",
     "type": "Pop-by",
     "contactName": "Lisa Thornton",
     "contactCompany": "Thornton & Associates Realty",
@@ -19,10 +26,15 @@
     "time": "10:00 AM",
     "notes": "Dropped off closing gift basket for recent referral. Lisa was in a meeting but her assistant confirmed receipt.",
     "spend": 85,
-    "followUp": "Follow up call Monday"
+    "followUp": "Follow up call Monday",
+    "status": "logged",
+    "label": "",
+    "sponsored": false
   },
   {
     "id": "act-003",
+    "agentName": "Emily Rodriguez",
+    "agentInitials": "ER",
     "type": "CE Class",
     "contactName": "Group Session",
     "contactCompany": "Atlanta Association of Realtors",
@@ -30,10 +42,15 @@
     "time": "9:00 AM",
     "notes": "Hosted 2-hour CE class on title insurance fundamentals. 14 agents attended, 3 new contacts captured.",
     "spend": 320,
-    "followUp": "Send materials to all attendees"
+    "followUp": "Send materials to all attendees",
+    "status": "complete",
+    "label": "Title Insurance 101",
+    "sponsored": true
   },
   {
     "id": "act-004",
+    "agentName": "Sarah Chen",
+    "agentInitials": "SC",
     "type": "Coffee",
     "contactName": "Derek Okafor",
     "contactCompany": "Okafor Properties LLC",
@@ -41,10 +58,15 @@
     "time": "8:00 AM",
     "notes": "Derek moving into luxury market segment. Discussed endorsement options for high-value policies. Strong interest.",
     "spend": 18,
-    "followUp": "Send luxury endorsement overview packet"
+    "followUp": "Send luxury endorsement overview packet",
+    "status": "logged",
+    "label": "Luxury Market Intro",
+    "sponsored": false
   },
   {
     "id": "act-005",
+    "agentName": "Rachel Green",
+    "agentInitials": "RG",
     "type": "Closing Gift",
     "contactName": "Jennifer Hartley",
     "contactCompany": "Hartley Homes",
@@ -52,10 +74,15 @@
     "time": "2:00 PM",
     "notes": "Delivered custom cutting board for the Morningside closing. Jennifer was thrilled — posted on Instagram.",
     "spend": 95,
-    "followUp": null
+    "followUp": "Send thank-you card",
+    "status": "follow-up",
+    "label": "Morningside Closing Gift",
+    "sponsored": false
   },
   {
     "id": "act-006",
+    "agentName": "Sarah Chen",
+    "agentInitials": "SC",
     "type": "Lunch",
     "contactName": "Brendan Mills",
     "contactCompany": "Compass Real Estate – Atlanta",
@@ -63,10 +90,15 @@
     "time": "12:00 PM",
     "notes": "Quarterly check-in. Brendan's team has 18 active listings in our territory. Agreed to schedule quarterly breakfast series.",
     "spend": 178,
-    "followUp": "Confirm Q2 breakfast dates"
+    "followUp": "Confirm Q2 breakfast dates",
+    "status": "follow-up",
+    "label": "Q1 Check-in Lunch",
+    "sponsored": true
   },
   {
     "id": "act-007",
+    "agentName": "Marcus Johnson",
+    "agentInitials": "MJ",
     "type": "Call",
     "contactName": "Priya Nair",
     "contactCompany": "Nair & Associates",
@@ -74,10 +106,15 @@
     "time": "3:30 PM",
     "notes": "Priya had questions about split-closing procedure for an out-of-state buyer. Resolved on call, sent written follow-up.",
     "spend": 0,
-    "followUp": "Check if deal closed successfully"
+    "followUp": "Check if deal closed successfully",
+    "status": "logged",
+    "label": "",
+    "sponsored": false
   },
   {
     "id": "act-008",
+    "agentName": "Lisa Park",
+    "agentInitials": "LP",
     "type": "Sponsorship",
     "contactName": "Event Sponsor",
     "contactCompany": "Buckhead Business Association",
@@ -85,10 +122,15 @@
     "time": "6:00 PM",
     "notes": "Sponsored networking mixer — FieldIQ banner placement, 45 min open networking. Collected 7 business cards.",
     "spend": 250,
-    "followUp": "Connect with all 7 contacts on LinkedIn"
+    "followUp": "Connect with all 7 contacts on LinkedIn",
+    "status": "follow-up",
+    "label": "Buckhead Mixer Sponsorship",
+    "sponsored": true
   },
   {
     "id": "act-009",
+    "agentName": "James Wilson",
+    "agentInitials": "JW",
     "type": "Pop-by",
     "contactName": "Tony Vasquez",
     "contactCompany": "Vasquez Luxury Homes",
@@ -96,10 +138,15 @@
     "time": "11:00 AM",
     "notes": "Stopped by office with monthly market update flyer. Tony asked about 1031 exchange title coordination.",
     "spend": 0,
-    "followUp": "Email 1031 exchange one-pager"
+    "followUp": "Email 1031 exchange one-pager",
+    "status": "logged",
+    "label": "",
+    "sponsored": false
   },
   {
     "id": "act-010",
+    "agentName": "Rachel Green",
+    "agentInitials": "RG",
     "type": "Other",
     "contactName": "Ryan Park",
     "contactCompany": "Park Realty Co.",
@@ -107,6 +154,9 @@
     "time": "4:00 PM",
     "notes": "Attended Ryan's office grand opening. Met 3 new agents on his team. Strong presence in the Sandy Springs sub-market.",
     "spend": 75,
-    "followUp": "Schedule intro coffees with new agents"
+    "followUp": "Schedule intro coffees with new agents",
+    "status": "complete",
+    "label": "Grand Opening Visit",
+    "sponsored": false
   }
 ]

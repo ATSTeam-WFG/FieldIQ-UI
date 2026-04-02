@@ -1,24 +1,24 @@
 'use client'
 
-import { Check, ChevronDown } from 'lucide-react'
+import { ChevronDown, LogOut } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useRole, type Role } from '@/lib/context/RoleContext'
-
-const roleOptions: { role: Role; name: string; label: string }[] = [
-  { role: 'agent',     name: 'Sarah Chen',   label: 'Senior Title Agent' },
-  { role: 'manager',   name: 'Jane Doe',     label: 'Regional Sales Manager' },
-  { role: 'executive', name: 'Robert Mills', label: 'VP of Operations' },
-]
+import { useRole } from '@/lib/context/RoleContext'
 
 export function RoleSwitcher() {
   const { role, persona, setRole } = useRole()
+  const router = useRouter()
+
+  const switchTarget =
+    role === 'agent'
+      ? { role: 'manager' as const, name: 'Jane Doe', label: 'Regional Sales Manager', action: 'Switch to Manager' }
+      : { role: 'agent' as const, name: 'Sarah Chen', label: 'Senior Title Agent', action: 'Switch to Agent' }
 
   return (
     <DropdownMenu>
@@ -46,29 +46,30 @@ export function RoleSwitcher() {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>Switch Persona</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {roleOptions.map(option => (
-          <DropdownMenuItem
-            key={option.role}
-            onClick={() => setRole(option.role)}
-            className="flex items-center gap-2 cursor-pointer"
-          >
-            <span className="flex h-4 w-4 items-center justify-center">
-              {role === option.role && (
-                <Check className="h-4 w-4" style={{ color: '#c4a574' }} />
-              )}
+        <DropdownMenuItem
+          onClick={() => {
+            setRole(switchTarget.role)
+            router.push(switchTarget.role === 'manager' ? '/manager' : '/dashboard')
+          }}
+          className="flex items-center gap-2 cursor-pointer"
+        >
+          <div className="flex flex-col">
+            <span className="font-medium" style={{ color: 'var(--foreground)' }}>
+              {switchTarget.action}
             </span>
-            <div className="flex flex-col">
-              <span className="font-medium" style={{ color: 'var(--foreground)' }}>
-                {option.name}
-              </span>
-              <span className="text-xs" style={{ color: 'var(--muted)' }}>
-                {option.label}
-              </span>
-            </div>
-          </DropdownMenuItem>
-        ))}
+            <span className="text-xs" style={{ color: 'var(--muted)' }}>
+              {switchTarget.name} · {switchTarget.label}
+            </span>
+          </div>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => router.push('/login')}
+          className="flex items-center gap-2 cursor-pointer"
+        >
+          <LogOut className="h-4 w-4" style={{ color: 'var(--muted)' }} />
+          <span style={{ color: 'var(--foreground)' }}>Log Out</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )

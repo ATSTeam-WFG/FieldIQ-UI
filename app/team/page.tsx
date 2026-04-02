@@ -1,0 +1,380 @@
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import { Download, UserPlus, ChevronRight, Radio, FileBarChart2, Search, SlidersHorizontal } from 'lucide-react'
+import { AppShell } from '@/components/fieldiq/AppShell'
+import { useInviteAgent } from '@/lib/context/InviteAgentContext'
+import { useTeamBroadcast } from '@/lib/context/TeamBroadcastContext'
+import teamData from '@/lib/mock-data/team.json'
+
+const { roster } = teamData as any
+
+type EmploymentStatus = 'active' | 'on-leave' | 'inactive'
+
+const statusConfig: Record<EmploymentStatus, { dot: string; label: string; textColor: string; borderColor: string }> = {
+  active:     { dot: '#4ade80', label: 'Active',   textColor: '#4ade80', borderColor: '#4ade80' },
+  'on-leave': { dot: '#d97706', label: 'On Leave', textColor: '#d97706', borderColor: '#d97706' },
+  inactive:   { dot: '#71717a', label: 'Inactive', textColor: '#71717a', borderColor: '#71717a' },
+}
+
+const cardStyle = {
+  backgroundColor: 'var(--card)',
+  borderTop: '2px solid #c4a574',
+  borderRight: '1px solid var(--border)',
+  borderBottom: '1px solid var(--border)',
+  borderLeft: '1px solid var(--border)',
+  borderRadius: 8,
+} as const
+
+export default function TeamRosterPage() {
+  const { kpi, agents } = roster
+  const { openInviteAgent } = useInviteAgent()
+  const { openBroadcast } = useTeamBroadcast()
+  const [showAll, setShowAll] = useState(false)
+  const [search, setSearch] = useState('')
+
+  const activeCount = (agents as any[]).filter((a: any) => a.employmentStatus === 'active').length
+  const filteredAgents = search
+    ? (agents as any[]).filter((a: any) => a.name.toLowerCase().includes(search.toLowerCase()))
+    : agents
+
+  const MOBILE_PREVIEW = 4
+  const mobileAgents = showAll ? filteredAgents : (filteredAgents as any[]).slice(0, MOBILE_PREVIEW)
+
+  return (
+    <AppShell activeItem="Team">
+      <div className="mx-auto max-w-6xl" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+        {/* ── Page header ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* Title row */}
+          <div className="flex items-start justify-between gap-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--foreground)', margin: 0 }}>
+                Team
+              </h1>
+              <p style={{ fontSize: 13, color: 'var(--muted)', margin: 0 }}>
+                {agents.length} agents in your team
+              </p>
+            </div>
+
+            {/* Desktop buttons */}
+            <div className="hidden md:flex items-center shrink-0" style={{ gap: 8 }}>
+              <button
+                className="flex items-center"
+                style={{
+                  height: 34, paddingLeft: 12, paddingRight: 12, gap: 6,
+                  fontSize: 13, fontWeight: 500, color: 'var(--foreground)',
+                  backgroundColor: 'transparent', border: '1px solid var(--border)',
+                  borderRadius: 8, cursor: 'pointer',
+                }}
+              >
+                <Download size={14} />
+                Export
+              </button>
+              <button
+                onClick={openInviteAgent}
+                className="flex items-center"
+                style={{
+                  height: 34, paddingLeft: 12, paddingRight: 12, gap: 6,
+                  fontSize: 13, fontWeight: 500, color: '#000000',
+                  backgroundColor: '#c4a574', border: 'none',
+                  borderRadius: 8, cursor: 'pointer',
+                }}
+              >
+                <UserPlus size={14} />
+                Invite Agent
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile: full-width Invite Agent button */}
+          <button
+            onClick={openInviteAgent}
+            className="flex md:hidden w-full items-center justify-center"
+            style={{
+              height: 40, gap: 6, fontSize: 14, fontWeight: 600,
+              color: '#000000', backgroundColor: '#c4a574',
+              border: 'none', borderRadius: 8, cursor: 'pointer',
+            }}
+          >
+            <UserPlus size={15} />
+            Invite Agent
+          </button>
+        </div>
+
+        {/* ── Mobile search bar ── */}
+        <div
+          className="flex md:hidden items-center rounded-[8px] px-3"
+          style={{
+            height: 40, gap: 8,
+            backgroundColor: 'var(--surface)',
+            border: '1px solid var(--border)',
+          }}
+        >
+          <Search size={15} style={{ color: 'var(--muted)', flexShrink: 0 }} />
+          <input
+            type="text"
+            placeholder="Search agents..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="flex-1 bg-transparent outline-none"
+            style={{ fontSize: 13, color: 'var(--foreground)' }}
+          />
+          <SlidersHorizontal size={15} style={{ color: 'var(--muted)', flexShrink: 0 }} />
+        </div>
+
+        {/* ── KPI cards ── */}
+        {/* Desktop: 4 columns */}
+        <div className="hidden md:grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+          <div style={{ ...cardStyle, padding: 20, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={{ fontSize: 10, letterSpacing: '0.06em', color: 'var(--muted)', textTransform: 'uppercase' }}>Total Agents</span>
+            <span style={{ fontSize: 28, fontWeight: 600, color: '#c4a574', lineHeight: 1 }}>{kpi.totalAgents}</span>
+            <span style={{ fontSize: 12, color: 'var(--muted)' }}>{kpi.onLeave} on leave</span>
+          </div>
+          <div style={{ ...cardStyle, padding: 20, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={{ fontSize: 10, letterSpacing: '0.06em', color: 'var(--muted)', textTransform: 'uppercase' }}>Avg Relationship Score</span>
+            <span style={{ fontSize: 28, fontWeight: 600, color: '#c4a574', lineHeight: 1 }}>{kpi.avgScore}</span>
+            <span style={{ fontSize: 12, color: 'var(--muted)' }}>↑{kpi.scoreDelta}pts from last month</span>
+          </div>
+          <div style={{ ...cardStyle, padding: 20, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={{ fontSize: 10, letterSpacing: '0.06em', color: 'var(--muted)', textTransform: 'uppercase' }}>Team Activities (MTD)</span>
+            <span style={{ fontSize: 28, fontWeight: 600, color: '#c4a574', lineHeight: 1 }}>{kpi.teamActivitiesMTD}</span>
+            <span style={{ fontSize: 12, color: 'var(--muted)' }}>↑{kpi.activitiesDeltaPct}% from last month</span>
+          </div>
+          <div style={{ ...cardStyle, padding: 20, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={{ fontSize: 10, letterSpacing: '0.06em', color: 'var(--muted)', textTransform: 'uppercase' }}>Top Performer</span>
+            <span style={{ fontSize: 20, fontWeight: 600, color: '#c4a574', lineHeight: 1.2 }}>{kpi.topPerformer.name}</span>
+            <span style={{ fontSize: 12, color: 'var(--muted)' }}>Score: {kpi.topPerformer.score} · {kpi.topPerformer.activities} activities</span>
+          </div>
+        </div>
+
+        {/* Mobile: 2×2 grid */}
+        <div className="grid md:hidden" style={{ gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          {[
+            { label: 'Total Agents',   value: kpi.totalAgents,   isName: false },
+            { label: 'Active Now',     value: activeCount,        isName: false },
+            { label: 'Avg Score',      value: kpi.avgScore,       isName: false },
+            { label: 'Top Performer',  value: kpi.topPerformer.name.split(' ').map((w: string, i: number) => i === 0 ? w[0] + '.' : w).join(' '), isName: true },
+          ].map(({ label, value, isName }) => (
+            <div
+              key={label}
+              className="rounded-[8px] p-4"
+              style={{
+                backgroundColor: 'var(--card)',
+                border: '1px solid var(--border)',
+                display: 'flex', flexDirection: 'column', gap: 4,
+              }}
+            >
+              <span style={{ fontSize: 11, color: 'var(--muted)' }}>{label}</span>
+              <span style={{ fontSize: isName ? 17 : 24, fontWeight: 600, color: isName ? '#c4a574' : 'var(--foreground)', lineHeight: 1.1 }}>
+                {value}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Agent table — desktop ── */}
+        <div
+          className="hidden md:block rounded-[8px] overflow-hidden"
+          style={{
+            backgroundColor: 'var(--card)',
+            borderTop: '2px solid #c4a574',
+            borderRight: '1px solid var(--border)',
+            borderBottom: '1px solid var(--border)',
+            borderLeft: '1px solid var(--border)',
+          }}
+        >
+          <table className="w-full" style={{ borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                {['Agent', 'Territory', 'Activities', 'Score', 'Status', 'Last Active', 'Actions'].map(col => (
+                  <th
+                    key={col}
+                    className="text-left"
+                    style={{
+                      padding: '10px 16px', fontSize: 10, letterSpacing: '0.06em',
+                      fontWeight: 500, color: 'var(--muted)', textTransform: 'uppercase',
+                    }}
+                  >
+                    {col}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {(agents as any[]).map((agent: any, i: number) => {
+                const status = statusConfig[agent.employmentStatus as EmploymentStatus]
+                const isLast = i === agents.length - 1
+                return (
+                  <tr
+                    key={agent.id}
+                    style={{ height: 44, borderBottom: isLast ? 'none' : '1px solid var(--border)' }}
+                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--surface)')}
+                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <td style={{ padding: '0 16px' }}>
+                      <div className="flex items-center" style={{ gap: 10 }}>
+                        <div
+                          className="flex items-center justify-center rounded-full shrink-0"
+                          style={{ width: 28, height: 28, backgroundColor: '#c4a574', fontSize: 10, fontWeight: 600, color: '#000000' }}
+                        >
+                          {agent.initials}
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--foreground)' }}>{agent.name}</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: '0 16px', fontSize: 13, color: 'var(--body)' }}>{agent.territory}</td>
+                    <td style={{ padding: '0 16px', fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>{agent.activities}</td>
+                    <td style={{ padding: '0 16px', fontSize: 13, color: '#c4a574', fontWeight: 600 }}>{agent.score}</td>
+                    <td style={{ padding: '0 16px' }}>
+                      <span className="flex items-center" style={{ gap: 6 }}>
+                        <span className="rounded-full shrink-0" style={{ width: 6, height: 6, backgroundColor: status.dot, display: 'inline-block' }} />
+                        <span style={{ fontSize: 13, color: status.textColor }}>{status.label}</span>
+                      </span>
+                    </td>
+                    <td style={{ padding: '0 16px', fontSize: 13, color: 'var(--muted)' }}>{agent.lastActive}</td>
+                    <td style={{ padding: '0 16px' }}>
+                      <Link href={`/agent/${agent.id}`} style={{ fontSize: 13, fontWeight: 500, color: '#c4a574', textDecoration: 'none' }}>
+                        View
+                      </Link>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* ── Agent list — mobile (3 cols: Agent, Last Active, Status) ── */}
+        <div
+          className="md:hidden rounded-[8px] overflow-hidden"
+          style={{
+            backgroundColor: 'var(--card)',
+            border: '1px solid var(--border)',
+          }}
+        >
+          {/* Table header */}
+          <div
+            className="grid"
+            style={{
+              gridTemplateColumns: '1fr auto auto',
+              padding: '10px 16px',
+              borderBottom: '1px solid var(--border)',
+            }}
+          >
+            {['Agent', 'Last Active', 'Status'].map(col => (
+              <span
+                key={col}
+                style={{ fontSize: 10, letterSpacing: '0.06em', fontWeight: 500, color: 'var(--muted)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}
+              >
+                {col}
+              </span>
+            ))}
+          </div>
+
+          {/* Rows */}
+          {(mobileAgents as any[]).map((agent: any, i: number) => {
+            const status = statusConfig[agent.employmentStatus as EmploymentStatus]
+            const isLast = i === mobileAgents.length - 1
+            return (
+              <Link
+                key={agent.id}
+                href={`/agent/${agent.id}`}
+                className="grid items-center"
+                style={{
+                  gridTemplateColumns: '1fr auto auto',
+                  height: 52, padding: '0 16px', gap: 12,
+                  borderBottom: isLast ? 'none' : '1px solid var(--border)',
+                  textDecoration: 'none',
+                }}
+              >
+                {/* Agent */}
+                <div className="flex items-center" style={{ gap: 10, minWidth: 0 }}>
+                  <div
+                    className="flex items-center justify-center rounded-full shrink-0"
+                    style={{ width: 28, height: 28, backgroundColor: '#c4a574', fontSize: 10, fontWeight: 600, color: '#000000' }}
+                  >
+                    {agent.initials}
+                  </div>
+                  <span className="truncate" style={{ fontSize: 13, fontWeight: 500, color: 'var(--foreground)' }}>
+                    {agent.name}
+                  </span>
+                </div>
+
+                {/* Last Active */}
+                <span style={{ fontSize: 12, color: 'var(--muted)', whiteSpace: 'nowrap', paddingRight: 16 }}>
+                  {agent.lastActive}
+                </span>
+
+                {/* Status badge */}
+                <span
+                  className="inline-flex items-center justify-center"
+                  style={{
+                    height: 22, paddingLeft: 8, paddingRight: 8,
+                    fontSize: 11, fontWeight: 500, whiteSpace: 'nowrap',
+                    color: status.textColor,
+                    border: `1px solid ${status.borderColor}`,
+                    borderRadius: 4,
+                  }}
+                >
+                  {status.label}
+                </span>
+              </Link>
+            )
+          })}
+
+          {/* View all / collapse */}
+          {(filteredAgents as any[]).length > MOBILE_PREVIEW && (
+            <button
+              onClick={() => setShowAll(v => !v)}
+              className="w-full flex items-center justify-center"
+              style={{
+                height: 40,
+                fontSize: 13, fontWeight: 500, color: '#c4a574',
+                backgroundColor: 'transparent', border: 'none',
+                borderTop: '1px solid var(--border)', cursor: 'pointer',
+              }}
+            >
+              {showAll
+                ? 'Show less'
+                : `View all ${(filteredAgents as any[]).length} agents`}
+            </button>
+          )}
+        </div>
+
+        {/* ── Quick Actions ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>Quick Actions</span>
+          <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 12 }}>
+            {[
+              { icon: Radio,        title: 'Send Team Broadcast',  sub: 'Message all agents at once', onClick: openBroadcast },
+              { icon: FileBarChart2, title: 'View Performance Report', sub: 'Weekly team analytics summary', onClick: undefined },
+            ].map(({ icon: Icon, title, sub, onClick }) => (
+              <button
+                key={title}
+                onClick={onClick}
+                className="flex items-center rounded-[8px] p-4 text-left w-full"
+                style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)', gap: 12, cursor: 'pointer' }}
+              >
+                <div
+                  className="flex items-center justify-center rounded-[6px] shrink-0"
+                  style={{ width: 36, height: 36, backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
+                >
+                  <Icon size={16} style={{ color: 'var(--muted)' }} />
+                </div>
+                <div className="flex-1" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--foreground)' }}>{title}</span>
+                  <span style={{ fontSize: 12, color: 'var(--muted)' }}>{sub}</span>
+                </div>
+                <ChevronRight size={16} style={{ color: 'var(--muted)', flexShrink: 0 }} />
+              </button>
+            ))}
+          </div>
+        </div>
+
+      </div>
+    </AppShell>
+  )
+}

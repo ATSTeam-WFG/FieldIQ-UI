@@ -163,7 +163,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 className="flex-1 bg-transparent outline-none"
-                style={{ fontSize: 14, color: 'var(--muted)' }}
+                style={{ fontSize: 14, color: 'var(--foreground)' }}
               />
               <button
                 type="button"
@@ -235,7 +235,7 @@ export default function LoginPage() {
       {/* Page footer */}
       <div className="absolute bottom-6 left-0 right-0 flex justify-center">
         <span style={{ fontSize: 11, color: 'var(--muted)' }}>
-          © 2025 FieldIQ · Privacy · Terms
+          © 2026 FieldIQ · Privacy · Terms
         </span>
       </div>
     </div>

@@ -1,14 +1,69 @@
 'use client'
 
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useState } from 'react'
+import { House, Activity, Users, CalendarCheck, Ellipsis, LayoutDashboard, FileText } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import { AnimatePresence } from 'framer-motion'
 import { TopNav } from './TopNav'
 import { Sidebar } from './Sidebar'
+import { LogActivityPanel } from './LogActivityPanel'
+import { LogContractPanel } from './LogContractPanel'
+import { AddContactPanel } from './AddContactPanel'
+import { NotificationPanel } from './NotificationPanel'
+import { CommandPalette } from './CommandPalette'
+import { MobileMoreSheet } from './MobileMoreSheet'
+import { useActivityLog } from '@/lib/context/ActivityLogContext'
+import { useAddContact } from '@/lib/context/AddContactContext'
+import { useNotifications } from '@/lib/context/NotificationContext'
+import { useSearch } from '@/lib/context/SearchContext'
+import { useContract } from '@/lib/context/ContractContext'
+import { InviteAgentPanel } from './InviteAgentPanel'
+import { TeamBroadcastPanel } from './TeamBroadcastPanel'
+import { useInviteAgent } from '@/lib/context/InviteAgentContext'
+import { useTeamBroadcast } from '@/lib/context/TeamBroadcastContext'
+import { useRole } from '@/lib/context/RoleContext'
 
 interface AppShellProps {
   activeItem?: string
   children: React.ReactNode
 }
 
+interface TabItem {
+  label: string
+  icon: LucideIcon
+  href: string
+}
+
+const agentMobileTabItems: TabItem[] = [
+  { label: 'Home',       icon: House,         href: '/dashboard'  },
+  { label: 'Activities', icon: Activity,       href: '/activities' },
+  { label: 'Contacts',   icon: Users,          href: '/contacts'   },
+  { label: 'Follow-ups', icon: CalendarCheck,  href: '/follow-ups' },
+  { label: 'More',       icon: Ellipsis,       href: '/coming-soon' },
+]
+
+const managerMobileTabItems: TabItem[] = [
+  { label: 'Dashboard',  icon: LayoutDashboard, href: '/manager'    },
+  { label: 'My Team',    icon: Users,           href: '/team'       },
+  { label: 'Activities', icon: Activity,        href: '/activities' },
+  { label: 'Contracts',  icon: FileText,        href: '/contracts'  },
+  { label: 'More',       icon: Ellipsis,        href: '/coming-soon' },
+]
+
 export function AppShell({ activeItem, children }: AppShellProps) {
+  const pathname = usePathname()
+  const { role } = useRole()
+  const { isOpen: logOpen } = useActivityLog()
+  const { isOpen: addOpen } = useAddContact()
+  const { isOpen: contractOpen } = useContract()
+  const { isOpen: notifOpen } = useNotifications()
+  const { isOpen: inviteOpen } = useInviteAgent()
+  const { isOpen: broadcastOpen } = useTeamBroadcast()
+  const { isOpen: searchOpen } = useSearch()
+  const [moreOpen, setMoreOpen] = useState(false)
+
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       {/* Top navigation bar */}
@@ -16,7 +71,7 @@ export function AppShell({ activeItem, children }: AppShellProps) {
 
       {/* Body: sidebar + content */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Desktop sidebar */}
+        {/* Desktop sidebar — hidden on mobile */}
         <div className="hidden md:flex h-full">
           <Sidebar activeItem={activeItem} />
         </div>
@@ -32,27 +87,79 @@ export function AppShell({ activeItem, children }: AppShellProps) {
         </main>
       </div>
 
-      {/* Mobile: bottom tab bar */}
+      {/* Slide-over panels with AnimatePresence */}
+      <AnimatePresence>{logOpen && <LogActivityPanel />}</AnimatePresence>
+      <AnimatePresence>{contractOpen && <LogContractPanel />}</AnimatePresence>
+      <AnimatePresence>{addOpen && <AddContactPanel />}</AnimatePresence>
+      <AnimatePresence>{notifOpen && <NotificationPanel />}</AnimatePresence>
+      <AnimatePresence>{inviteOpen && <InviteAgentPanel />}</AnimatePresence>
+      <AnimatePresence>{broadcastOpen && <TeamBroadcastPanel />}</AnimatePresence>
+
+      {/* Command palette (fixed, full-screen overlay) */}
+      <AnimatePresence>{searchOpen && <CommandPalette />}</AnimatePresence>
+
+      {/* Mobile More sheet */}
+      <AnimatePresence>
+        {moreOpen && (
+          <MobileMoreSheet
+            isOpen={moreOpen}
+            onClose={() => setMoreOpen(false)}
+            role={role as 'agent' | 'manager'}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Mobile bottom tab bar */}
       <div
-        className="flex md:hidden border-t"
-        style={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)' }}
+        className="flex md:hidden"
+        style={{
+          height: 56,
+          backgroundColor: 'var(--card)',
+          borderTop: '1px solid var(--border)',
+        }}
       >
-        {[
-          { label: 'Home',     href: '/dashboard' },
-          { label: 'Team',     href: '/manager'   },
-          { label: 'Activity', href: '/coming-soon' },
-          { label: 'Contacts', href: '/coming-soon' },
-          { label: 'Reports',  href: '/coming-soon' },
-        ].map(item => (
-          <a
-            key={item.label}
-            href={item.href}
-            className="flex flex-1 flex-col items-center justify-center gap-1 py-3 text-xs"
-            style={{ color: 'var(--muted)' }}
-          >
-            <span>{item.label}</span>
-          </a>
-        ))}
+        {(role === 'manager' ? managerMobileTabItems : agentMobileTabItems).map(item => {
+          if (item.label === 'More') {
+            return (
+              <button
+                key="More"
+                onClick={() => setMoreOpen(true)}
+                className="flex flex-1 flex-col items-center justify-center"
+                style={{ gap: 3, border: 'none', backgroundColor: 'transparent', cursor: 'pointer' }}
+              >
+                <item.icon
+                  size={20}
+                  style={{ color: moreOpen ? '#c4a574' : 'var(--muted)' }}
+                />
+                <span style={{ fontSize: 10, color: moreOpen ? '#c4a574' : 'var(--muted)' }}>
+                  More
+                </span>
+              </button>
+            )
+          }
+          const isActive = pathname === item.href
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              className="flex flex-1 flex-col items-center justify-center"
+              style={{ gap: 3 }}
+            >
+              <item.icon
+                size={20}
+                style={{ color: isActive ? '#c4a574' : 'var(--muted)' }}
+              />
+              <span
+                style={{
+                  fontSize: 10,
+                  color: isActive ? '#c4a574' : 'var(--muted)',
+                }}
+              >
+                {item.label}
+              </span>
+            </Link>
+          )
+        })}
       </div>
     </div>
   )

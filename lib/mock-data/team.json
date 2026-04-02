@@ -68,6 +68,28 @@
       { "type": "Call",          "count": 103,"spend": 0    }
     ]
   },
+  "roster": {
+    "kpi": {
+      "totalAgents": 12,
+      "onLeave": 2,
+      "avgScore": 79,
+      "scoreDelta": 4.1,
+      "teamActivitiesMTD": 209,
+      "activitiesDeltaPct": 8.5,
+      "topPerformer": { "name": "Sarah Chen", "score": 92, "activities": 24 }
+    },
+    "agents": [
+      { "id": "1",  "name": "Sarah Chen",      "initials": "SC", "territory": "Buckhead",      "activities": 24, "score": 92, "employmentStatus": "active",   "lastActive": "Today"      },
+      { "id": "2",  "name": "Michael Torres",   "initials": "MT", "territory": "Midtown",       "activities": 18, "score": 87, "employmentStatus": "active",   "lastActive": "Today"      },
+      { "id": "3",  "name": "Emily Rodriguez",  "initials": "ER", "territory": "Sandy Springs", "activities": 21, "score": 85, "employmentStatus": "active",   "lastActive": "Yesterday"  },
+      { "id": "4",  "name": "James Wilson",     "initials": "JW", "territory": "Decatur",       "activities": 15, "score": 78, "employmentStatus": "active",   "lastActive": "Yesterday"  },
+      { "id": "5",  "name": "Lisa Park",        "initials": "LP", "territory": "Dunwoody",      "activities": 19, "score": 83, "employmentStatus": "active",   "lastActive": "Yesterday"  },
+      { "id": "6",  "name": "David Kim",        "initials": "DK", "territory": "Alpharetta",    "activities": 12, "score": 71, "employmentStatus": "on-leave", "lastActive": "Mar 25"     },
+      { "id": "7",  "name": "Rachel Green",     "initials": "RG", "territory": "Roswell",       "activities": 27, "score": 89, "employmentStatus": "active",   "lastActive": "Today"      },
+      { "id": "8",  "name": "Marcus Johnson",   "initials": "MJ", "territory": "Marietta",      "activities": 16, "score": 70, "employmentStatus": "active",   "lastActive": "2 days ago" },
+      { "id": "9",  "name": "Olivia Brown",     "initials": "OB", "territory": "Kennesaw",      "activities": 14, "score": 68, "employmentStatus": "inactive", "lastActive": "Mar 20"     }
+    ]
+  },
   "alerts": [
     {
       "agentName": "Kevin Ross",
@@ -76,5 +98,15 @@
       "target": 7,
       "message": "4 activities this week — below the 7-activity weekly target"
     }
+  ],
+  "agentActivity": [
+    { "name": "Sarah Chen",    "initials": "SC", "activities": 21, "level": "high",   "status": "on-track",     "weeks": [5, 6, 5, 5] },
+    { "name": "Brendan Mills", "initials": "BM", "activities": 19, "level": "high",   "status": "on-track",     "weeks": [5, 4, 5, 5] },
+    { "name": "Priya Nair",    "initials": "PN", "activities": 17, "level": "medium", "status": "on-track",     "weeks": [4, 5, 4, 4] },
+    { "name": "Tony Vasquez",  "initials": "TV", "activities": 15, "level": "medium", "status": "on-track",     "weeks": [4, 3, 4, 4] },
+    { "name": "Aisha Johnson", "initials": "AJ", "activities": 14, "level": "medium", "status": "on-track",     "weeks": [3, 4, 4, 3] },
+    { "name": "Ryan Park",     "initials": "RP", "activities": 12, "level": "low",    "status": "on-track",     "weeks": [3, 3, 3, 3] },
+    { "name": "Derek Okafor",  "initials": "DO", "activities": 10, "level": "low",    "status": "watch",        "weeks": [2, 3, 2, 3] },
+    { "name": "Kevin Ross",    "initials": "KR", "activities": 4,  "level": "none",   "status": "below-target", "weeks": [1, 1, 1, 1] }
   ]
 }
