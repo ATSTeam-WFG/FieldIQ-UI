@@ -4,6 +4,8 @@ import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, ChevronUp, ChevronDown, UserPlus, ChevronRight } from 'lucide-react'
 import { AppShell } from '@/components/fieldiq/AppShell'
+import { FilterSearchBar, FilterPills } from '@/components/fieldiq/FilterBar'
+import type { FilterOption } from '@/components/fieldiq/FilterBar'
 import { useAddContact } from '@/lib/context/AddContactContext'
 import contactsData from '@/lib/mock-data/contacts.json'
 
@@ -13,7 +15,7 @@ interface Contact {
   initials: string
   company: string
   role: string
-  type: 'agent' | 'sponsor'
+  type: 'agent' | 'vendor'
   score: number
   lastActivityType: string | null
   lastActivityDate: string | null
@@ -43,7 +45,7 @@ function ContactAvatar({ initials, size = 32 }: { initials: string; size?: numbe
 }
 
 function ScoreBadge({ score, type }: { score: number; type: string }) {
-  if (type === 'sponsor') {
+  if (type === 'vendor') {
     return <span style={{ color: 'var(--muted)', fontWeight: 600 }}>—</span>
   }
   const color =
@@ -115,7 +117,7 @@ function TypeBadge({ type }: { type: string }) {
         padding: '2px 8px',
       }}
     >
-      {type === 'agent' ? 'Agent' : 'Sponsor'}
+      {type === 'agent' ? 'Agent' : 'Vendor'}
     </span>
   )
 }
@@ -182,7 +184,7 @@ function MobileContactRow({
   onClick,
 }: {
   contact: Contact
-  activeTab: 'all' | 'agents' | 'sponsors'
+  activeTab: 'all' | 'agents' | 'vendors'
   onClick: () => void
 }) {
   return (
@@ -266,14 +268,14 @@ function MobileContactRow({
 export default function ContactsPage() {
   const router = useRouter()
   const { openAddContact } = useAddContact()
-  const [activeTab, setActiveTab] = useState<'all' | 'agents' | 'sponsors'>('all')
+  const [activeTab, setActiveTab] = useState<'all' | 'agents' | 'vendors'>('all')
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState('score')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
   const allCount = contactsData.length
   const agentCount = contactsData.filter(c => c.type === 'agent').length
-  const sponsorCount = contactsData.filter(c => c.type === 'sponsor').length
+  const vendorCount = contactsData.filter(c => c.type === 'vendor').length
 
   function handleSort(key: string) {
     if (key === sortKey) {
@@ -287,7 +289,7 @@ export default function ContactsPage() {
   const visibleContacts = useMemo(() => {
     let list = contactsData as Contact[]
     if (activeTab === 'agents') list = list.filter(c => c.type === 'agent')
-    if (activeTab === 'sponsors') list = list.filter(c => c.type === 'sponsor')
+    if (activeTab === 'vendors') list = list.filter(c => c.type === 'vendor')
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(
@@ -313,19 +315,19 @@ export default function ContactsPage() {
   const tabs = [
     { key: 'all' as const,      label: `All ${allCount}` },
     { key: 'agents' as const,   label: `Agents ${agentCount}` },
-    { key: 'sponsors' as const, label: `Sponsors ${sponsorCount}` },
+    { key: 'vendors' as const, label: `Vendors ${vendorCount}` },
   ]
 
-  function handleTabChange(key: 'all' | 'agents' | 'sponsors') {
+  function handleTabChange(key: 'all' | 'agents' | 'vendors') {
     setActiveTab(key)
-    setSortKey(key === 'sponsors' ? 'name' : 'score')
-    setSortDir(key === 'sponsors' ? 'asc' : 'desc')
+    setSortKey(key === 'vendors' ? 'name' : 'score')
+    setSortDir(key === 'vendors' ? 'asc' : 'desc')
   }
 
   const desktopColumns = {
     all:      '1fr 200px 90px 72px 160px 180px',
     agents:   '1fr 200px 72px 160px 80px 72px 180px',
-    sponsors: '1fr 200px 1fr',
+    vendors: '1fr 200px 1fr',
   }
 
   return (
@@ -377,59 +379,12 @@ export default function ContactsPage() {
           className="flex flex-col gap-3 p-4"
           style={{ borderBottom: '1px solid var(--border)' }}
         >
-          {/* Search — full width on mobile */}
-          <div className="relative">
-            <Search
-              size={14}
-              className="absolute left-3 top-1/2 -translate-y-1/2"
-              style={{ color: 'var(--muted)' }}
-            />
-            <input
-              type="text"
-              placeholder="Search name or company..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              style={{
-                width: '100%',
-                maxWidth: 360,
-                paddingLeft: 32,
-                paddingRight: 12,
-                height: 36,
-                borderRadius: 8,
-                border: '1px solid var(--border)',
-                backgroundColor: 'var(--surface)',
-                color: 'var(--foreground)',
-                fontSize: 13,
-                outline: 'none',
-              }}
-            />
-          </div>
-
-          {/* Tabs */}
-          <div className="flex gap-1">
-            {tabs.map(tab => {
-              const active = activeTab === tab.key
-              return (
-                <button
-                  key={tab.key}
-                  onClick={() => handleTabChange(tab.key)}
-                  style={{
-                    padding: '5px 12px',
-                    borderRadius: 6,
-                    fontSize: 13,
-                    fontWeight: active ? 600 : 400,
-                    color: active ? 'var(--foreground)' : 'var(--muted)',
-                    backgroundColor: active ? 'var(--surface)' : 'transparent',
-                    border: active ? '1px solid var(--border)' : '1px solid transparent',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {tab.label}
-                </button>
-              )
-            })}
-          </div>
+          <FilterSearchBar value={search} onChange={setSearch} placeholder="Search name or company…" />
+          <FilterPills<'all' | 'agents' | 'vendors'>
+            options={tabs.map(t => ({ value: t.key, label: t.label } as FilterOption<'all' | 'agents' | 'vendors'>))}
+            value={activeTab}
+            onChange={handleTabChange}
+          />
         </div>
 
         {/* ── Mobile list (hidden on md+) ── */}
@@ -484,7 +439,7 @@ export default function ContactsPage() {
                 <span style={{ fontSize: 12, color: 'var(--muted)' }}>Tags</span>
               </>
             )}
-            {activeTab === 'sponsors' && (
+            {activeTab === 'vendors' && (
               <>
                 <SortableHeader label="Name" sortKey="name" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
                 <SortableHeader label="Company" sortKey="company" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
@@ -554,7 +509,7 @@ export default function ContactsPage() {
                   </>
                 )}
 
-                {activeTab === 'sponsors' && (
+                {activeTab === 'vendors' && (
                   <TagChips tags={contact.tags} max={99} />
                 )}
               </div>

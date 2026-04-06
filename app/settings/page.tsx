@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { AppShell } from '@/components/fieldiq/AppShell'
 import { useRole } from '@/lib/context/RoleContext'
 import { useTheme } from '@/lib/context/ThemeContext'
+import { Sparkles } from 'lucide-react'
 
 // ── Toggle Switch ─────────────────────────────────────────────────────────────
 
@@ -335,6 +336,31 @@ export default function SettingsPage() {
                       </button>
                     ))}
                   </div>
+                </div>
+                <div
+                  className="flex items-center gap-2"
+                  style={{ padding: '8px 20px 10px', borderBottom: '1px solid var(--border)', backgroundColor: 'var(--surface)' }}
+                >
+                  <Sparkles size={11} style={{ color: '#c4a574', flexShrink: 0 }} />
+                  <span style={{ fontSize: 12, color: 'var(--muted)', flex: 1 }}>
+                    AI suggests: <strong style={{ color: 'var(--body)' }}>12 / month</strong> based on team historical performance
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setActivityTarget(12)}
+                    className="transition-opacity hover:opacity-70"
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: '#c4a574',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '2px 0',
+                    }}
+                  >
+                    Apply
+                  </button>
                 </div>
                 <div className="flex items-center justify-between" style={{ padding: '14px 20px' }}>
                   <div className="flex flex-col" style={{ gap: 2 }}>

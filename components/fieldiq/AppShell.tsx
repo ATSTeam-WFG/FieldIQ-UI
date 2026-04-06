@@ -36,7 +36,7 @@ interface TabItem {
   href: string
 }
 
-const agentMobileTabItems: TabItem[] = [
+const repMobileTabItems: TabItem[] = [
   { label: 'Home',       icon: House,         href: '/dashboard'  },
   { label: 'Activities', icon: Activity,       href: '/activities' },
   { label: 'Contacts',   icon: Users,          href: '/contacts'   },
@@ -104,7 +104,7 @@ export function AppShell({ activeItem, children }: AppShellProps) {
           <MobileMoreSheet
             isOpen={moreOpen}
             onClose={() => setMoreOpen(false)}
-            role={role as 'agent' | 'manager'}
+            role={role as 'rep' | 'manager'}
           />
         )}
       </AnimatePresence>
@@ -118,7 +118,7 @@ export function AppShell({ activeItem, children }: AppShellProps) {
           borderTop: '1px solid var(--border)',
         }}
       >
-        {(role === 'manager' ? managerMobileTabItems : agentMobileTabItems).map(item => {
+        {(role === 'manager' ? managerMobileTabItems : repMobileTabItems).map(item => {
           if (item.label === 'More') {
             return (
               <button

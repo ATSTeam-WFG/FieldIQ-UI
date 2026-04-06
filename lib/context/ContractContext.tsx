@@ -8,8 +8,10 @@ export interface ContractRecord {
   contactId: string
   contactName: string
   contactCompany: string
-  title: string
-  status: 'initiated' | 'pending' | 'closed' | 'updated'
+  fileNumber: string
+  address: string
+  type: 'Regular' | 'Refinance' | 'Commercial'
+  status: 'opened' | 'closed' | 'cancelled'
   amount: number
   expectedClosingDate?: string
   actualClosingDate?: string

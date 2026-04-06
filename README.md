@@ -1,12 +1,61 @@
-# React + Vite
+# FieldIQ
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+AI-powered field sales intelligence platform for the title insurance industry. Built as a high-fidelity interactive prototype for investor and sales demos.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Framework:** Next.js 14 (App Router)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS v3
+- **UI Primitives:** shadcn/ui + Radix UI
+- **Animation:** Framer Motion
+- **Charts:** Recharts
+- **Icons:** Lucide React
+- **Font:** Inter (Google Fonts)
 
-## Expanding the ESLint configuration
+## Project Structure
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```
+app/                  # Next.js App Router pages
+├── dashboard/        # Agent dashboard
+├── manager/          # Manager dashboard
+├── contacts/         # Contacts list + detail ([id])
+├── activities/       # Activity log
+├── contracts/        # Contracts
+├── follow-ups/       # Follow-up queue
+├── performance/      # Performance analytics
+├── scores/           # Relationship scores
+├── settings/         # User settings
+├── team/             # Team roster (manager)
+├── agent/[id]/       # Agent detail (manager)
+├── login/            # Login screen
+└── coming-soon/      # Placeholder for unbuilt screens
+
+components/
+├── ui/               # shadcn/ui primitives
+└── fieldiq/          # FieldIQ-specific components
+
+lib/
+├── context/          # React Context providers
+├── hooks/            # Custom React hooks
+├── mock-data/        # JSON mock data (demo mode)
+└── utils.ts          # Shared utilities
+```
+
+## Getting Started
+
+```bash
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+**Demo credentials:** `demo@fieldiq.ai` / `demo1234`
+
+## Demo Mode
+
+- No real authentication — auto-login as demo user
+- Role switcher always visible (Agent / Manager)
+- All form submissions succeed and show a toast
+- Data is hardcoded JSON mock data (March 2026 snapshot)

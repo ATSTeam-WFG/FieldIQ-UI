@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { TriangleAlert, ChevronRight } from 'lucide-react'
+import { AICard } from '@/components/fieldiq/AICard'
 import { AppShell } from '@/components/fieldiq/AppShell'
 import { StatusBadge } from '@/components/fieldiq/StatusBadge'
 import type { ActivityStatus } from '@/components/fieldiq/StatusBadge'
@@ -33,6 +34,7 @@ function weekLevel(count: number): 'none' | 'low' | 'medium' | 'high' {
 export default function ManagerPage() {
   const [period, setPeriod] = useState<Period>('mtd')
   const [alertDismissed, setAlertDismissed] = useState(false)
+  const [narrativeDismissed, setNarrativeDismissed] = useState(false)
   const router = useRouter()
   const { theme } = useTheme()
   const isDark = theme === 'dark'
@@ -102,6 +104,29 @@ export default function ManagerPage() {
             </div>
           </div>
         </div>
+
+        {/* ── AI Team Narrative ───────────────────────────── */}
+        <AnimatePresence>
+          {!narrativeDismissed && (
+            <motion.div
+              key="narrative"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0, transition: { duration: 0.2 } }}
+              exit={{ opacity: 0, height: 0, overflow: 'hidden', transition: { duration: 0.18 } }}
+            >
+              <AICard
+                label="Team Summary"
+                sublabel="This week"
+                readAloud
+                onDismiss={() => setNarrativeDismissed(true)}
+              >
+                <p style={{ fontSize: 13, color: 'var(--body)', lineHeight: 1.6, margin: 0 }}>
+                  Your team had a strong week. Total activities are up 12% from last month. Jane Carter continues to lead with 21 activities. Your main concern is Kevin Ross — 9 days without a log and his relationship scores are dropping. Amy Torres is showing early warning signs too. I&apos;d suggest a quick check-in with both this week.
+                </p>
+              </AICard>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ── KPI cards ───────────────────────────────────── */}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -179,15 +204,15 @@ export default function ManagerPage() {
             }}
           >
             <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.66px', color: 'var(--muted)', textTransform: 'uppercase' }}>
-              Active Agents
+              Active Reps
             </span>
             <span style={{ fontSize: 32, fontWeight: 700, color: 'var(--foreground)', lineHeight: 1 }}>
               {kpis.activeAgents} / {kpis.totalAgents}
             </span>
             <span style={{ fontSize: 12, color: kpis.activeAgents < kpis.totalAgents ? '#d97706' : '#16a34a' }}>
               {kpis.activeAgents < kpis.totalAgents
-                ? `${kpis.totalAgents - kpis.activeAgents} agent below threshold`
-                : 'All agents active'}
+                ? `${kpis.totalAgents - kpis.activeAgents} rep below threshold`
+                : 'All reps active'}
             </span>
           </div>
 
@@ -209,7 +234,7 @@ export default function ManagerPage() {
             }}
           >
             <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.66px', color: 'var(--muted)', textTransform: 'uppercase' }}>
-              Avg Activities / Agent
+              Avg Activities / Rep
             </span>
             <span style={{ fontSize: 32, fontWeight: 700, color: '#c4a574', lineHeight: 1 }}>
               {kpis.avgActivitiesPerAgent.toFixed(1)}
@@ -290,7 +315,7 @@ export default function ManagerPage() {
                 Team Leaderboard
               </span>
               <span style={{ fontSize: 12, color: 'var(--muted)' }}>
-                Top {leaderboard.length} agents
+                Top {leaderboard.length} reps
               </span>
             </div>
 
@@ -301,7 +326,7 @@ export default function ManagerPage() {
             >
               {([
                 { label: 'RANK',       w: 40,         flex: undefined },
-                { label: 'AGENT',      w: undefined,  flex: 1         },
+                { label: 'REP',        w: undefined,  flex: 1         },
                 { label: 'ACTIVITIES', w: 80,         flex: undefined },
                 { label: 'SPEND',      w: 80,         flex: undefined },
                 { label: 'LAST LOG',   w: 90,         flex: undefined },
@@ -460,7 +485,7 @@ export default function ManagerPage() {
                 style={{ fontSize: 12, color: '#c4a574' }}
                 className="hover:underline"
               >
-                View all 12 agents →
+                View all 12 reps →
               </button>
             </div>
           </div>
@@ -547,7 +572,7 @@ export default function ManagerPage() {
             style={{ height: 44, paddingLeft: 16, paddingRight: 16, borderBottom: '1px solid var(--border)' }}
           >
             <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)' }}>
-              Agent Activity This Month
+              Rep Activity This Month
             </span>
             <span style={{ fontSize: 12, color: 'var(--muted)' }}>
               {PERIOD_LABELS[period]}

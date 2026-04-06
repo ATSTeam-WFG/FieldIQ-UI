@@ -1,20 +1,35 @@
 ## New Requirements
+General:
+- Landing Page / Demo / Start Using
+- Typography
 
-Report Contract:
-- Deal closed
-- Contracts will have statuses
-- Statuses will be updated: Initiated, Pending, Closed, Updated
-- Amount logging
-- Will be able add contact just like logging activity
-- Managers: 
-    - They should be able to see returns on dashbaords (completed contracts)
-    - They can check all contract(pending/non pending)
+AI:
+- MIC button / better UI around AI features
 
-Sponsor 
-- Whats a general setting regarding sponsor (usually who pays) or when its sponsors
-- Should be able to add sponsor while logging activty if sponsored by someone else
-- Should have some analytics visible in dashbaord
+Title Software
+- CSV Qualia/Softpro import for onbaording
 
+Contracts: New Inputs
+- GF Pound/File Number
+- Status: Opened / Closed / Cancelled
+- ?: Reg/Refi/Commerical
 
-Alternative
-- Razi
+Contacts visible to all
+
+Changes: 
+- Agent: Sales Reps
+- Sponsors > Vendors
+- Activties/Contracts should have: Multi Contact
+- Sponsors should have Multi Contact
+
+Users: 
+- Manager can be Reps as well (multi-profile)
+
+Good Advice
+- Click on Contacts, Contracts, Activties from anywhere and I should be able to see them. Once clicking back, I should go back to where I was.
+
+Backend:
+- Authentication/Users
+- Database
+- Logic
+- Infra

@@ -339,7 +339,7 @@ export default function TeamRosterPage() {
             >
               {showAll
                 ? 'Show less'
-                : `View all ${(filteredAgents as any[]).length} agents`}
+                : `View all ${(filteredAgents as any[]).length} reps`}
             </button>
           )}
         </div>
@@ -349,7 +349,7 @@ export default function TeamRosterPage() {
           <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>Quick Actions</span>
           <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 12 }}>
             {[
-              { icon: Radio,        title: 'Send Team Broadcast',  sub: 'Message all agents at once', onClick: openBroadcast },
+              { icon: Radio,        title: 'Send Team Broadcast',  sub: 'Message all reps at once', onClick: openBroadcast },
               { icon: FileBarChart2, title: 'View Performance Report', sub: 'Weekly team analytics summary', onClick: undefined },
             ].map(({ icon: Icon, title, sub, onClick }) => (
               <button

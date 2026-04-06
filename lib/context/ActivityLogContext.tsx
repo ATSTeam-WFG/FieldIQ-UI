@@ -2,13 +2,32 @@
 
 import { createContext, useContext, useState } from 'react'
 
+export interface ActivityContact {
+  id: string
+  name: string
+  initials: string
+  company: string
+}
+
+export interface ActivityVendor {
+  name: string
+  company: string
+  coverage: 'Full' | 'Partial'
+  amount: string
+}
+
 export interface ActivityRecord {
   id: string
   agentName: string
   agentInitials: string
   type: string
+  // Legacy fields kept for backward compat with dashboard/contacts pages
   contactName: string
   contactCompany: string
+  sponsored: boolean
+  // New multi-contact / multi-vendor fields
+  contacts: ActivityContact[]
+  vendors: ActivityVendor[]
   date: string
   time: string
   notes: string
@@ -16,7 +35,6 @@ export interface ActivityRecord {
   followUp: string
   status: string
   label: string
-  sponsored: boolean
 }
 
 interface ActivityLogContextValue {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Users, Star } from 'lucide-react'
+import { X, Users, Building2 } from 'lucide-react'
 import { useAddContact } from '@/lib/context/AddContactContext'
 import { useSuccessToast } from '@/components/fieldiq/SuccessToast'
 import { useTheme } from '@/lib/context/ThemeContext'
@@ -15,9 +15,11 @@ const AGENT_TAGS = [
   'multi-listing', 'out-of-state-buyers',
 ]
 
-const SPONSOR_TAGS = [
-  'sponsor', 'mortgage', 'home-warranty', 'inspection',
+const VENDOR_TAGS = [
+  'vendor', 'mortgage', 'home-warranty', 'inspection',
 ]
+
+const AGENT_TYPE_OPTIONS: ('Buyer' | 'Seller' | 'Realtor')[] = ['Buyer', 'Seller', 'Realtor']
 
 // ── FieldLabel helper ─────────────────────────────────────────────────────────
 
@@ -62,7 +64,7 @@ function FieldLabel({ label, required, optional }: { label: string; required?: b
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  height: 40,
+  height: 44,
   padding: '0 12px',
   borderRadius: 8,
   border: '1px solid var(--border)',
@@ -81,21 +83,23 @@ export function AddContactPanel() {
   const { theme } = useTheme()
 
   // Form state
-  const [contactType, setContactType] = useState<'agent' | 'sponsor'>('agent')
+  const [contactType, setContactType] = useState<'agent' | 'vendor'>('agent')
   const [name, setName] = useState('')
   const [company, setCompany] = useState('')
+  const [agentType, setAgentType] = useState<'Buyer' | 'Seller' | 'Realtor'>('Realtor')
+  const [industry, setIndustry] = useState('')
   const [role, setRole] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [notes, setNotes] = useState('')
 
-  const availableTags = contactType === 'agent' ? AGENT_TAGS : SPONSOR_TAGS
+  const availableTags = contactType === 'agent' ? AGENT_TAGS : VENDOR_TAGS
 
   // Pre-populate when editing
   useEffect(() => {
     if (editingContact) {
-      setContactType(editingContact.type === 'sponsor' ? 'sponsor' : 'agent')
+      setContactType(editingContact.type === 'vendor' ? 'vendor' : 'agent')
       setName(editingContact.name)
       setCompany(editingContact.company)
       setRole(editingContact.role || '')
@@ -116,7 +120,7 @@ export function AddContactPanel() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, closeAddContact])
 
-  function handleTypeChange(type: 'agent' | 'sponsor') {
+  function handleTypeChange(type: 'agent' | 'vendor') {
     setContactType(type)
     setSelectedTags([])
   }
@@ -131,6 +135,8 @@ export function AddContactPanel() {
     setContactType('agent')
     setName('')
     setCompany('')
+    setAgentType('Realtor')
+    setIndustry('')
     setRole('')
     setEmail('')
     setPhone('')
@@ -180,9 +186,9 @@ export function AddContactPanel() {
           <div style={{ marginBottom: 20 }}>
             <FieldLabel label="Contact Type" />
             <div className="grid grid-cols-2 gap-2">
-              {(['agent', 'sponsor'] as const).map(type => {
+              {(['agent', 'vendor'] as const).map(type => {
                 const active = contactType === type
-                const Icon = type === 'agent' ? Users : Star
+                const Icon = type === 'agent' ? Users : Building2
                 return (
                   <button
                     key={type}
@@ -208,7 +214,7 @@ export function AddContactPanel() {
             </div>
           </div>
 
-          {/* Section 2 — Basic Info */}
+          {/* Section 2 — Full Name */}
           <div style={{ marginBottom: 20 }}>
             <FieldLabel label="Full Name" required />
             <input
@@ -220,6 +226,7 @@ export function AddContactPanel() {
             />
           </div>
 
+          {/* Section 3 — Company */}
           <div style={{ marginBottom: 20 }}>
             <FieldLabel label="Company" />
             <input
@@ -231,6 +238,53 @@ export function AddContactPanel() {
             />
           </div>
 
+          {/* Section 4a — Agent Type (agents only) */}
+          {contactType === 'agent' && (
+            <div style={{ marginBottom: 20 }}>
+              <FieldLabel label="Agent Type" />
+              <div
+                className="flex overflow-hidden rounded-[8px]"
+                style={{ border: '1px solid var(--border)', height: 44 }}
+              >
+                {AGENT_TYPE_OPTIONS.map((opt, i) => {
+                  const active = agentType === opt
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => setAgentType(opt)}
+                      className="flex flex-1 items-center justify-center transition-colors"
+                      style={{
+                        fontSize: 13,
+                        fontWeight: active ? 600 : 400,
+                        backgroundColor: active ? '#c4a574' : 'var(--surface)',
+                        color: active ? '#000000' : 'var(--muted)',
+                        borderRight: i < AGENT_TYPE_OPTIONS.length - 1 ? '1px solid var(--border)' : 'none',
+                      }}
+                    >
+                      {opt}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Section 4b — Industry (vendors only) */}
+          {contactType === 'vendor' && (
+            <div style={{ marginBottom: 20 }}>
+              <FieldLabel label="Industry" />
+              <input
+                type="text"
+                placeholder="e.g. Mortgage, Home Warranty, Inspection"
+                value={industry}
+                onChange={e => setIndustry(e.target.value)}
+                style={inputStyle}
+              />
+            </div>
+          )}
+
+          {/* Section 5 — Role / Title */}
           <div style={{ marginBottom: 20 }}>
             <FieldLabel label="Role / Title" />
             <input
@@ -242,7 +296,7 @@ export function AddContactPanel() {
             />
           </div>
 
-          {/* Section 3 — Contact Details */}
+          {/* Section 6 — Contact Details */}
           <div style={{ marginBottom: 20 }}>
             <FieldLabel label="Email" />
             <input
@@ -265,7 +319,7 @@ export function AddContactPanel() {
             />
           </div>
 
-          {/* Section 4 — Tags */}
+          {/* Section 7 — Tags */}
           <div style={{ marginBottom: 20 }}>
             <FieldLabel label="Tags" />
             <div className="flex flex-wrap gap-2">
@@ -295,7 +349,7 @@ export function AddContactPanel() {
             </div>
           </div>
 
-          {/* Section 5 — Notes */}
+          {/* Section 8 — Notes */}
           <div style={{ marginBottom: 20 }}>
             <FieldLabel label="Notes" optional />
             <div className="relative">

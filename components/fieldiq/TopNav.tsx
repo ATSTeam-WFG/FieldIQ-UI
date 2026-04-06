@@ -9,7 +9,7 @@ import { useSearch } from '@/lib/context/SearchContext'
 import { RoleSwitcher } from './RoleSwitcher'
 
 const roleBadgeLabel: Record<string, string> = {
-  agent: 'AGENT',
+  rep: 'REP',
   manager: 'MANAGER',
   executive: 'EXECUTIVE',
 }

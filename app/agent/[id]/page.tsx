@@ -3,6 +3,7 @@
 import { notFound } from 'next/navigation'
 import { useRouter } from 'next/navigation'
 import { Mail, Phone, Building2, MessageCircle, CalendarPlus, Flag } from 'lucide-react'
+import { AICard } from '@/components/fieldiq/AICard'
 import { AppShell } from '@/components/fieldiq/AppShell'
 import { StatusBadge } from '@/components/fieldiq/StatusBadge'
 import { ScoreRing } from '@/components/fieldiq/ScoreRing'
@@ -101,7 +102,7 @@ export default function AgentDetailPage({ params }: { params: { id: string } }) 
             {agent.name}
           </h1>
           <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--muted)' }}>
-            Agent Detail · Manager View
+            Rep Detail · Manager View
           </p>
         </div>
 
@@ -387,6 +388,37 @@ export default function AgentDetailPage({ params }: { params: { id: string } }) 
                 </div>
               ))}
             </div>
+
+            {/* Coaching Prompt Generator */}
+            <AICard
+              label="Coaching Prep"
+              collapsible
+              collapseTitle={`Coaching prep for ${agent.name.split(' ')[0]} →`}
+            >
+              <p style={{ fontSize: 11, color: 'var(--muted)', margin: '10px 0 8px', fontWeight: 500 }}>
+                Suggested talking points for your 1:1 with {agent.name.split(' ')[0]}:
+              </p>
+              <ul className="flex flex-col" style={{ gap: 8, paddingLeft: 0, listStyle: 'none', margin: 0 }}>
+                <li className="flex items-start gap-2">
+                  <span style={{ color: '#c4a574', flexShrink: 0, marginTop: 2 }}>·</span>
+                  <span style={{ fontSize: 13, color: 'var(--body)', lineHeight: 1.5 }}>
+                    {agent.name.split(' ')[0]} logged {kpi.activitiesMTD} activities vs a target of {kpi.activitiesTarget} this month — {kpi.activitiesMTD < kpi.activitiesTarget ? `${kpi.activitiesTarget - kpi.activitiesMTD} below target. What's getting in the way?` : `on track. What's driving this momentum?`}
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span style={{ color: '#c4a574', flexShrink: 0, marginTop: 2 }}>·</span>
+                  <span style={{ fontSize: 13, color: 'var(--body)', lineHeight: 1.5 }}>
+                    Days since last log: {kpi.daysLastLog} — {kpi.daysLastLog > 3 ? 'worth a direct conversation about consistency.' : 'recency looks good, keep it up.'}
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span style={{ color: '#c4a574', flexShrink: 0, marginTop: 2 }}>·</span>
+                  <span style={{ fontSize: 13, color: 'var(--body)', lineHeight: 1.5 }}>
+                    Top contact {agent.topContact.name} has a relationship score of {agent.topContact.score}/100. Discuss whether they&apos;re being leveraged for referrals.
+                  </span>
+                </li>
+              </ul>
+            </AICard>
 
             {/* Activity Trend */}
             <Card>

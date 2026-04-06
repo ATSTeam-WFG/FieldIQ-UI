@@ -1,6 +1,7 @@
 'use client'
 
 import { TrendingUp } from 'lucide-react'
+import { AICard } from '@/components/fieldiq/AICard'
 import { AppShell } from '@/components/fieldiq/AppShell'
 import { KPICard } from '@/components/fieldiq/KPICard'
 import { useRole } from '@/lib/context/RoleContext'
@@ -160,7 +161,7 @@ export default function PerformancePage() {
 
           <div className="fieldiq-card" style={{ marginTop: 16 }}>
             <div className="flex items-center" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', gap: 10 }}>
-              <span className="font-semibold" style={{ fontSize: 14, color: 'var(--foreground)' }}>Agent Performance</span>
+              <span className="font-semibold" style={{ fontSize: 14, color: 'var(--foreground)' }}>Rep Performance</span>
               <span style={{ backgroundColor: 'var(--surface)', borderRadius: 4, padding: '2px 8px', fontSize: 11, color: 'var(--muted)' }}>
                 {agents.length}
               </span>
@@ -168,7 +169,7 @@ export default function PerformancePage() {
 
             {/* Desktop table headers */}
             <div className="hidden md:grid" style={{ gridTemplateColumns: '48px 1fr 100px 80px', padding: '10px 20px', borderBottom: '1px solid var(--border)', gap: 12 }}>
-              {['RANK', 'AGENT', 'ACTIVITIES', 'SCORE'].map(col => (
+              {['RANK', 'REP', 'ACTIVITIES', 'SCORE'].map(col => (
                 <span key={col} style={{ fontSize: 10, fontWeight: 500, letterSpacing: '0.06em', color: 'var(--muted)' }}>{col}</span>
               ))}
             </div>
@@ -237,6 +238,15 @@ export default function PerformancePage() {
               Sarah Chen · Buckhead Territory · MTD
             </p>
           </div>
+        </div>
+
+        {/* ── AI Performance Summary ────────────────────── */}
+        <div style={{ marginTop: 20 }}>
+          <AICard label="Summary" sublabel="Updated today" readAloud>
+            <p style={{ fontSize: 13, color: 'var(--body)', lineHeight: 1.6, margin: 0 }}>
+              This month you&apos;ve logged 21 activities — your best March yet, up 8% from last year. You&apos;re on track to hit your Q2 target. Your strongest relationship is Michelle Tran (score 91). The contact that needs the most attention is James Ellison — you haven&apos;t touched him in 23 days.
+            </p>
+          </AICard>
         </div>
 
         {/* ── KPI row ───────────────────────────────────── */}

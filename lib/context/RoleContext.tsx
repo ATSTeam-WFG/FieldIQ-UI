@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useState } from 'react'
 
-export type Role = 'agent' | 'manager' | 'executive'
+export type Role = 'rep' | 'manager' | 'executive'
+export type UserType = 'rep' | 'manager'
 
 export interface Persona {
   name: string
@@ -12,10 +13,10 @@ export interface Persona {
 }
 
 const personas: Record<Role, Persona> = {
-  agent: {
+  rep: {
     name: 'Sarah Chen',
     initials: 'SC',
-    title: 'Senior Title Agent',
+    title: 'Senior Sales Rep',
     territory: 'Buckhead',
   },
   manager: {
@@ -34,19 +35,28 @@ interface RoleContextValue {
   role: Role
   persona: Persona
   setRole: (role: Role) => void
+  userType: UserType
+  canSwitch: boolean
 }
 
 const RoleContext = createContext<RoleContextValue>({
-  role: 'agent',
-  persona: personas.agent,
+  role: 'manager',
+  persona: personas.manager,
   setRole: () => {},
+  userType: 'manager',
+  canSwitch: true,
 })
 
 export function RoleProvider({ children }: { children: React.ReactNode }) {
-  const [role, setRole] = useState<Role>('agent')
+  // userType represents who is actually logged in — never changes at runtime.
+  // Defaults to 'manager' so the demo can showcase both views.
+  const [userType] = useState<UserType>('manager')
+  const [role, setRole] = useState<Role>('manager')
+
+  const canSwitch = userType === 'manager'
 
   return (
-    <RoleContext.Provider value={{ role, persona: personas[role], setRole }}>
+    <RoleContext.Provider value={{ role, persona: personas[role], setRole, userType, canSwitch }}>
       {children}
     </RoleContext.Provider>
   )

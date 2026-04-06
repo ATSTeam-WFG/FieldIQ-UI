@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Plus,
-  Search,
   Utensils,
   Gift,
   GraduationCap,
@@ -18,6 +17,8 @@ import type { LucideIcon } from 'lucide-react'
 import { AppShell } from '@/components/fieldiq/AppShell'
 import { StatusBadge } from '@/components/fieldiq/StatusBadge'
 import type { ActivityStatus } from '@/components/fieldiq/StatusBadge'
+import { FilterSearchBar, FilterPills, FilterDropdown } from '@/components/fieldiq/FilterBar'
+import type { FilterOption } from '@/components/fieldiq/FilterBar'
 import { useActivityLog } from '@/lib/context/ActivityLogContext'
 import { useRole } from '@/lib/context/RoleContext'
 import activitiesData from '@/lib/mock-data/activities.json'
@@ -42,6 +43,9 @@ const STATUS_FILTERS = ['All', 'Follow-up', 'Complete', 'Logged'] as const
 
 type TypeFilter   = typeof TYPE_FILTERS[number]
 type StatusFilter = typeof STATUS_FILTERS[number]
+
+const TYPE_OPTIONS: FilterOption<TypeFilter>[]   = TYPE_FILTERS.map(t => ({ value: t, label: t }))
+const STATUS_OPTIONS: FilterOption<StatusFilter>[] = STATUS_FILTERS.map(s => ({ value: s, label: s }))
 
 // ── Helper ────────────────────────────────────────────────────────────────────
 
@@ -81,10 +85,13 @@ export default function ActivitiesPage() {
   // Filtered rows
   const filteredActivities = visibleData.filter(act => {
     const q = searchQuery.toLowerCase()
+    const actContacts = (act as any).contacts as Array<{ name: string; company: string }> | undefined
+    const contactSearchStr = actContacts
+      ? actContacts.map(c => `${c.name} ${c.company}`).join(' ')
+      : `${act.contactName} ${act.contactCompany}`
     const searchMatch = !q ||
       act.type.toLowerCase().includes(q) ||
-      act.contactName.toLowerCase().includes(q) ||
-      act.contactCompany.toLowerCase().includes(q) ||
+      contactSearchStr.toLowerCase().includes(q) ||
       ((act as any).label ?? '').toLowerCase().includes(q) ||
       act.notes.toLowerCase().includes(q) ||
       (isManager && (act as any).agentName.toLowerCase().includes(q))
@@ -134,97 +141,10 @@ export default function ActivitiesPage() {
         </div>
 
         {/* ── Filter bar ──────────────────────────────────────────────────── */}
-        <div className="flex flex-col" style={{ gap: 12, marginTop: 16 }}>
-          {/* Type filter tabs */}
-          <div
-            className="flex overflow-hidden rounded-[8px]"
-            style={{
-              border: '1px solid var(--border)',
-              backgroundColor: 'var(--surface)',
-              height: 36,
-              alignSelf: 'flex-start',
-            }}
-          >
-            {TYPE_FILTERS.map((type, i) => (
-              <button
-                key={type}
-                onClick={() => setSelectedType(type)}
-                className="flex items-center justify-center font-medium transition-colors"
-                style={{
-                  height: 36,
-                  paddingLeft: 14,
-                  paddingRight: 14,
-                  fontSize: 13,
-                  backgroundColor: selectedType === type ? '#c4a574' : 'transparent',
-                  color: selectedType === type ? '#000000' : 'var(--muted)',
-                  borderRight: i < TYPE_FILTERS.length - 1 ? '1px solid var(--border)' : 'none',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {type}
-              </button>
-            ))}
-          </div>
-
-          {/* Status filter tabs */}
-          <div
-            className="flex overflow-hidden rounded-[8px]"
-            style={{
-              border: '1px solid var(--border)',
-              backgroundColor: 'var(--surface)',
-              height: 36,
-              alignSelf: 'flex-start',
-            }}
-          >
-            {STATUS_FILTERS.map((status, i) => (
-              <button
-                key={status}
-                onClick={() => setSelectedStatus(status)}
-                className="flex items-center justify-center font-medium transition-colors"
-                style={{
-                  height: 36,
-                  paddingLeft: 14,
-                  paddingRight: 14,
-                  fontSize: 13,
-                  backgroundColor: selectedStatus === status ? '#c4a574' : 'transparent',
-                  color: selectedStatus === status ? '#000000' : 'var(--muted)',
-                  borderRight: i < STATUS_FILTERS.length - 1 ? '1px solid var(--border)' : 'none',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {status}
-              </button>
-            ))}
-          </div>
-
-          {/* Search — full width */}
-          <div
-            className="flex items-center w-full rounded-[8px]"
-            style={{
-              height: 36,
-              border: '1px solid var(--border)',
-              backgroundColor: 'var(--surface)',
-              paddingLeft: 12,
-              paddingRight: 12,
-              gap: 8,
-            }}
-          >
-            <Search size={13} style={{ color: 'var(--muted)', flexShrink: 0 }} />
-            <input
-              type="text"
-              placeholder="Search activities…"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              style={{
-                flex: 1,
-                background: 'transparent',
-                border: 'none',
-                outline: 'none',
-                fontSize: 13,
-                color: 'var(--foreground)',
-              }}
-            />
-          </div>
+        <div className="flex flex-col" style={{ gap: 10, marginTop: 16 }}>
+          <FilterSearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search activities…" />
+          <FilterDropdown label="TYPE" options={TYPE_OPTIONS} value={selectedType} onChange={setSelectedType} />
+          <FilterPills options={STATUS_OPTIONS} value={selectedStatus} onChange={setSelectedStatus} />
         </div>
 
         {/* ── Summary stats row ───────────────────────────────────────────── */}
@@ -327,7 +247,7 @@ export default function ActivitiesPage() {
           >
             {([
               { label: 'TYPE',      flex: 1.2 },
-              ...(isManager ? [{ label: 'AGENT', flex: 1.4 }] : []),
+              ...(isManager ? [{ label: 'REP', flex: 1.4 }] : []),
               { label: 'CONTACT',   flex: 1.8 },
               { label: 'LABEL',     flex: 2.0 },
               { label: 'DATE',      flex: 1.0 },
@@ -402,17 +322,24 @@ export default function ActivitiesPage() {
                   )}
 
                   {/* CONTACT — full layout on desktop */}
-                  <div
-                    className="hidden md:flex flex-col justify-center"
-                    style={{ gap: 2, flex: 1.8, minWidth: 0 }}
-                  >
-                    <span className="truncate" style={{ fontSize: 13, color: 'var(--body)' }}>
-                      {act.contactName}
-                    </span>
-                    <span className="truncate" style={{ fontSize: 11, color: 'var(--muted)' }}>
-                      {act.contactCompany}
-                    </span>
-                  </div>
+                  {(() => {
+                    const contacts = (act as any).contacts as Array<{ name: string; company: string }> | undefined
+                    const primary = contacts?.[0] ?? { name: act.contactName, company: act.contactCompany }
+                    const overflow = contacts ? contacts.length - 1 : 0
+                    return (
+                      <div
+                        className="hidden md:flex flex-col justify-center"
+                        style={{ gap: 2, flex: 1.8, minWidth: 0 }}
+                      >
+                        <span className="truncate" style={{ fontSize: 13, color: 'var(--body)' }}>
+                          {primary.name}{overflow > 0 ? ` + ${overflow}` : ''}
+                        </span>
+                        <span className="truncate" style={{ fontSize: 11, color: 'var(--muted)' }}>
+                          {primary.company}
+                        </span>
+                      </div>
+                    )
+                  })()}
 
                   {/* LABEL */}
                   <div
@@ -446,22 +373,44 @@ export default function ActivitiesPage() {
                   </div>
 
                   {/* SPONSORED */}
-                  <div
-                    className="hidden md:flex items-center"
-                    style={{ flex: 0.7, minWidth: 0 }}
-                  >
-                    {(act as any).sponsored
-                      ? <Star size={13} style={{ color: '#c4a574' }} />
-                      : <span style={{ fontSize: 13, color: 'var(--muted)' }}>—</span>
+                  {(() => {
+                    const vendors = (act as any).vendors as Array<{ name: string }> | undefined
+                    let sponsorLabel: string
+                    if (!vendors || vendors.length === 0) {
+                      sponsorLabel = '—'
+                    } else if (vendors.length === 1) {
+                      sponsorLabel = vendors[0].name
+                    } else {
+                      sponsorLabel = `${vendors[0].name} + ${vendors.length - 1}`
                     }
-                  </div>
+                    return (
+                      <div
+                        className="hidden md:flex items-center"
+                        style={{ flex: 0.7, minWidth: 0 }}
+                      >
+                        <span
+                          className="truncate"
+                          style={{ fontSize: 13, color: sponsorLabel === '—' ? 'var(--muted)' : 'var(--body)' }}
+                        >
+                          {sponsorLabel}
+                        </span>
+                      </div>
+                    )
+                  })()}
 
                   {/* Mobile: contact + status stacked */}
                   <div className="flex flex-1 items-center justify-between md:hidden">
                     <div className="flex min-w-0 flex-col" style={{ gap: 2 }}>
-                      <span className="truncate" style={{ fontSize: 13, color: 'var(--body)' }}>
-                        {act.contactName}
-                      </span>
+                      {(() => {
+                        const contacts = (act as any).contacts as Array<{ name: string }> | undefined
+                        const primary = contacts?.[0]?.name ?? act.contactName
+                        const overflow = contacts ? contacts.length - 1 : 0
+                        return (
+                          <span className="truncate" style={{ fontSize: 13, color: 'var(--body)' }}>
+                            {primary}{overflow > 0 ? ` + ${overflow}` : ''}
+                          </span>
+                        )
+                      })()}
                       <span className="truncate" style={{ fontSize: 11, color: 'var(--muted)' }}>
                         {isManager ? `${(act as any).agentName} · ` : ''}{formatRelativeDate(act.date)}
                       </span>

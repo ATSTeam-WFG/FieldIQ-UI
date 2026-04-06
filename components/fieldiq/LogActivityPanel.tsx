@@ -5,12 +5,14 @@ import type { LucideIcon } from 'lucide-react'
 import { SlideOverPanel } from './SlideOverPanel'
 import {
   X, Utensils, Hand, GraduationCap, Coffee, Gift, Phone,
-  Plus, ChevronDown, Upload,
+  Plus, ChevronDown, Upload, Mic, Sparkles, Check,
 } from 'lucide-react'
 import { useActivityLog } from '@/lib/context/ActivityLogContext'
 import { useRole } from '@/lib/context/RoleContext'
 import { useSuccessToast } from '@/components/fieldiq/SuccessToast'
 import { useTheme } from '@/lib/context/ThemeContext'
+import { toast } from '@/lib/hooks/use-toast'
+import { ToastAction } from '@/components/ui/toast'
 import contactsData from '@/lib/mock-data/contacts.json'
 import { DatePickerInput } from '@/components/fieldiq/DatePickerInput'
 import { TimePickerInput } from '@/components/fieldiq/TimePickerInput'
@@ -29,6 +31,12 @@ interface Contact {
   company: string
   type?: string
   role?: string
+}
+
+interface VendorEntry {
+  contact: Contact
+  coverage: 'Full' | 'Partial'
+  amount: string
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -121,40 +129,46 @@ function VenueLine({
   )
 }
 
-const sponsorContacts = (contactsData as Contact[]).filter(c => c.type === 'sponsor')
+const vendorContacts = (contactsData as Contact[]).filter(c => c.type === 'vendor')
 
 function SponsorSection({
   isSponsored,
   setIsSponsored,
-  sponsorContact,
-  setSponsorContact,
-  sponsorSearch,
-  setSponsorSearch,
-  sponsorAmount,
-  setSponsorAmount,
-  sponsorCoverage,
-  setSponsorCoverage,
+  vendorEntries,
+  setVendorEntries,
 }: {
   isSponsored: boolean
   setIsSponsored: (v: boolean) => void
-  sponsorContact: Contact | null
-  setSponsorContact: (v: Contact | null) => void
-  sponsorSearch: string
-  setSponsorSearch: (v: string) => void
-  sponsorAmount: string
-  setSponsorAmount: (v: string) => void
-  sponsorCoverage: 'Full' | 'Partial'
-  setSponsorCoverage: (v: 'Full' | 'Partial') => void
+  vendorEntries: VendorEntry[]
+  setVendorEntries: (v: VendorEntry[]) => void
 }) {
+  const [vendorSearch, setVendorSearch] = useState('')
   const [showDrop, setShowDrop] = useState(false)
 
-  const filtered = sponsorContacts.filter(c =>
-    c.name.toLowerCase().includes(sponsorSearch.toLowerCase()) ||
-    c.company.toLowerCase().includes(sponsorSearch.toLowerCase())
+  const addedIds = new Set(vendorEntries.map(e => e.contact.id))
+  const filtered = vendorContacts.filter(c =>
+    !addedIds.has(c.id) &&
+    (c.name.toLowerCase().includes(vendorSearch.toLowerCase()) ||
+     c.company.toLowerCase().includes(vendorSearch.toLowerCase()))
   )
+
+  function addVendor(c: Contact) {
+    setVendorEntries([...vendorEntries, { contact: c, coverage: 'Full', amount: '' }])
+    setVendorSearch('')
+    setShowDrop(false)
+  }
+
+  function removeVendor(id: string) {
+    setVendorEntries(vendorEntries.filter(e => e.contact.id !== id))
+  }
+
+  function updateEntry(id: string, patch: Partial<Omit<VendorEntry, 'contact'>>) {
+    setVendorEntries(vendorEntries.map(e => e.contact.id === id ? { ...e, ...patch } : e))
+  }
 
   return (
     <div className="flex flex-col" style={{ gap: 8 }}>
+      {/* Toggle */}
       <div className="flex items-center justify-between">
         <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--foreground)' }}>Sponsored?</span>
         <button
@@ -174,124 +188,108 @@ function SponsorSection({
       </div>
 
       {isSponsored && (
-        <div className="flex flex-col" style={{ gap: 8 }}>
-          {/* Sponsor contact picker */}
-          <div className="flex flex-col" style={{ gap: 6 }}>
-            <FieldLabel>SPONSOR</FieldLabel>
-            <div className="relative">
-              {sponsorContact ? (
+        <div className="flex flex-col" style={{ gap: 10 }}>
+          {/* Added vendor entries */}
+          {vendorEntries.map(entry => (
+            <div
+              key={entry.contact.id}
+              className="flex flex-col rounded-[8px]"
+              style={{ border: '1px solid var(--border)', backgroundColor: 'var(--surface)', padding: '10px 12px', gap: 8 }}
+            >
+              {/* Vendor header */}
+              <div className="flex items-center" style={{ gap: 8 }}>
                 <div
-                  className="flex items-center rounded-[8px]"
-                  style={{
-                    height: 40, padding: '0 12px', gap: 8,
-                    border: '1.5px solid #c4a574',
-                    backgroundColor: 'var(--surface)',
-                  }}
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
+                  style={{ backgroundColor: '#c4a574', fontSize: 10, fontWeight: 600, color: '#ffffff' }}
                 >
-                  <div
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
-                    style={{ backgroundColor: '#c4a574', fontSize: 10, fontWeight: 600, color: '#ffffff' }}
-                  >
-                    {sponsorContact.initials}
-                  </div>
-                  <span style={{ fontSize: 14, color: 'var(--foreground)', flex: 1 }}>
-                    {sponsorContact.name}
-                  </span>
-                  <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-                    · {sponsorContact.company}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => { setSponsorContact(null); setSponsorSearch('') }}
-                    className="shrink-0"
-                  >
-                    <X size={16} style={{ color: 'var(--muted)' }} />
-                  </button>
+                  {entry.contact.initials}
                 </div>
-              ) : (
-                <input
-                  value={sponsorSearch}
-                  onChange={e => { setSponsorSearch(e.target.value); setShowDrop(true) }}
-                  onFocus={() => setShowDrop(true)}
-                  onBlur={() => setTimeout(() => setShowDrop(false), 150)}
-                  placeholder="Search sponsors…"
-                  className="w-full rounded-[8px] outline-none focus:ring-1 focus:ring-[#c4a574] transition-shadow"
-                  style={{
-                    height: 40, padding: '0 12px', fontSize: 14,
-                    backgroundColor: 'var(--surface)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--foreground)',
-                  }}
-                />
-              )}
-
-              {showDrop && !sponsorContact && filtered.length > 0 && (
-                <div
-                  className="absolute left-0 right-0 top-[44px] z-10 rounded-[8px] overflow-hidden"
-                  style={{
-                    backgroundColor: 'var(--card)',
-                    border: '1px solid var(--border)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                  }}
-                >
-                  {filtered.map(c => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onMouseDown={() => { setSponsorContact(c); setSponsorSearch(''); setShowDrop(false) }}
-                      className="flex w-full items-center gap-3 px-3 py-2.5 transition-colors hover:bg-[var(--surface)]"
-                    >
-                      <div
-                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-                        style={{ backgroundColor: '#c4a574', fontSize: 10, fontWeight: 600, color: '#ffffff' }}
-                      >
-                        {c.initials}
-                      </div>
-                      <div className="flex flex-col items-start" style={{ gap: 1 }}>
-                        <span style={{ fontSize: 13, color: 'var(--foreground)' }}>{c.name}</span>
-                        <span style={{ fontSize: 11, color: 'var(--muted)' }}>{c.company}</span>
-                      </div>
-                    </button>
-                  ))}
+                <div className="flex min-w-0 flex-1 flex-col" style={{ gap: 1 }}>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--foreground)' }}>{entry.contact.name}</span>
+                  <span style={{ fontSize: 11, color: 'var(--muted)' }}>{entry.contact.company}</span>
                 </div>
-              )}
-            </div>
-          </div>
+                <button type="button" onClick={() => removeVendor(entry.contact.id)} className="shrink-0">
+                  <X size={14} style={{ color: 'var(--muted)' }} />
+                </button>
+              </div>
 
-          {/* Coverage — Full is default; amount only shown for Partial */}
-          <div className="flex flex-col" style={{ gap: 6 }}>
-            <FieldLabel>COVERAGE</FieldLabel>
-            <SegmentedPill<'Full' | 'Partial'>
-              options={['Full', 'Partial']}
-              value={sponsorCoverage}
-              onChange={setSponsorCoverage}
-            />
-          </div>
-
-          {sponsorCoverage === 'Partial' && (
-            <div className="flex flex-col" style={{ gap: 6 }}>
-              <FieldLabel>SPONSOR AMOUNT ($)</FieldLabel>
-              <div
-                className="flex items-center rounded-[8px]"
-                style={{
-                  height: 40, padding: '0 12px', gap: 4,
-                  backgroundColor: 'var(--surface)',
-                  border: '1px solid var(--border)',
-                }}
-              >
-                <span style={{ fontSize: 14, color: 'var(--muted)' }}>$</span>
-                <input
-                  type="number"
-                  min="0"
-                  value={sponsorAmount}
-                  onChange={e => setSponsorAmount(e.target.value)}
-                  placeholder="0"
-                  className="flex-1 bg-transparent outline-none"
-                  style={{ fontSize: 14, color: 'var(--foreground)' }}
+              {/* Coverage pill */}
+              <div className="flex flex-col" style={{ gap: 6 }}>
+                <FieldLabel>COVERAGE</FieldLabel>
+                <SegmentedPill<'Full' | 'Partial'>
+                  options={['Full', 'Partial']}
+                  value={entry.coverage}
+                  onChange={v => updateEntry(entry.contact.id, { coverage: v })}
                 />
               </div>
+
+              {/* Amount — only for Partial */}
+              {entry.coverage === 'Partial' && (
+                <div className="flex flex-col" style={{ gap: 6 }}>
+                  <FieldLabel>AMOUNT ($)</FieldLabel>
+                  <div
+                    className="flex items-center rounded-[8px]"
+                    style={{ height: 40, padding: '0 12px', gap: 4, backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
+                  >
+                    <span style={{ fontSize: 14, color: 'var(--muted)' }}>$</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={entry.amount}
+                      onChange={e => updateEntry(entry.contact.id, { amount: e.target.value })}
+                      placeholder="0"
+                      className="flex-1 bg-transparent outline-none"
+                      style={{ fontSize: 14, color: 'var(--foreground)' }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          ))}
+
+          {/* Vendor search — always show while sponsored is on */}
+          <div className="relative">
+            <input
+              value={vendorSearch}
+              onChange={e => { setVendorSearch(e.target.value); setShowDrop(true) }}
+              onFocus={() => setShowDrop(true)}
+              onBlur={() => setTimeout(() => setShowDrop(false), 150)}
+              placeholder={vendorEntries.length > 0 ? 'Add another vendor…' : 'Search vendors…'}
+              className="w-full rounded-[8px] outline-none focus:ring-1 focus:ring-[#c4a574] transition-shadow"
+              style={{
+                height: 40, padding: '0 12px', fontSize: 14,
+                backgroundColor: 'var(--surface)',
+                border: '1px solid var(--border)',
+                color: 'var(--foreground)',
+              }}
+            />
+            {showDrop && filtered.length > 0 && (
+              <div
+                className="absolute left-0 right-0 top-[44px] z-10 overflow-hidden rounded-[8px]"
+                style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+              >
+                {filtered.map(c => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onMouseDown={() => addVendor(c)}
+                    className="flex w-full items-center gap-3 px-3 py-2.5 transition-colors hover:bg-[var(--surface)]"
+                  >
+                    <div
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+                      style={{ backgroundColor: '#c4a574', fontSize: 10, fontWeight: 600, color: '#ffffff' }}
+                    >
+                      {c.initials}
+                    </div>
+                    <div className="flex flex-col items-start" style={{ gap: 1 }}>
+                      <span style={{ fontSize: 13, color: 'var(--foreground)' }}>{c.name}</span>
+                      <span style={{ fontSize: 11, color: 'var(--muted)' }}>{c.company}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -367,20 +365,14 @@ function CeClassFields({
   attendees, setAttendees,
   venue, setVenue,
   isSponsored, setIsSponsored,
-  sponsorContact, setSponsorContact,
-  sponsorSearch, setSponsorSearch,
-  sponsorAmount, setSponsorAmount,
-  sponsorCoverage, setSponsorCoverage,
+  vendorEntries, setVendorEntries,
 }: {
   classTopic: string; setClassTopic: (v: string) => void
   ceCredits: string; setCeCredits: (v: string) => void
   attendees: string; setAttendees: (v: string) => void
   venue: string; setVenue: (v: string) => void
   isSponsored: boolean; setIsSponsored: (v: boolean) => void
-  sponsorContact: Contact | null; setSponsorContact: (v: Contact | null) => void
-  sponsorSearch: string; setSponsorSearch: (v: string) => void
-  sponsorAmount: string; setSponsorAmount: (v: string) => void
-  sponsorCoverage: 'Full' | 'Partial'; setSponsorCoverage: (v: 'Full' | 'Partial') => void
+  vendorEntries: VendorEntry[]; setVendorEntries: (v: VendorEntry[]) => void
 }) {
   return (
     <>
@@ -438,10 +430,7 @@ function CeClassFields({
       <VenueLine venue={venue} setVenue={setVenue} />
       <SponsorSection
         isSponsored={isSponsored} setIsSponsored={setIsSponsored}
-        sponsorContact={sponsorContact} setSponsorContact={setSponsorContact}
-        sponsorSearch={sponsorSearch} setSponsorSearch={setSponsorSearch}
-        sponsorAmount={sponsorAmount} setSponsorAmount={setSponsorAmount}
-        sponsorCoverage={sponsorCoverage} setSponsorCoverage={setSponsorCoverage}
+        vendorEntries={vendorEntries} setVendorEntries={setVendorEntries}
       />
     </>
   )
@@ -451,18 +440,12 @@ function ClosingGiftFields({
   giftItem, setGiftItem,
   dealRef, setDealRef,
   isSponsored, setIsSponsored,
-  sponsorContact, setSponsorContact,
-  sponsorSearch, setSponsorSearch,
-  sponsorAmount, setSponsorAmount,
-  sponsorCoverage, setSponsorCoverage,
+  vendorEntries, setVendorEntries,
 }: {
   giftItem: string; setGiftItem: (v: string) => void
   dealRef: string; setDealRef: (v: string) => void
   isSponsored: boolean; setIsSponsored: (v: boolean) => void
-  sponsorContact: Contact | null; setSponsorContact: (v: Contact | null) => void
-  sponsorSearch: string; setSponsorSearch: (v: string) => void
-  sponsorAmount: string; setSponsorAmount: (v: string) => void
-  sponsorCoverage: 'Full' | 'Partial'; setSponsorCoverage: (v: 'Full' | 'Partial') => void
+  vendorEntries: VendorEntry[]; setVendorEntries: (v: VendorEntry[]) => void
 }) {
   return (
     <>
@@ -506,10 +489,7 @@ function ClosingGiftFields({
       </div>
       <SponsorSection
         isSponsored={isSponsored} setIsSponsored={setIsSponsored}
-        sponsorContact={sponsorContact} setSponsorContact={setSponsorContact}
-        sponsorSearch={sponsorSearch} setSponsorSearch={setSponsorSearch}
-        sponsorAmount={sponsorAmount} setSponsorAmount={setSponsorAmount}
-        sponsorCoverage={sponsorCoverage} setSponsorCoverage={setSponsorCoverage}
+        vendorEntries={vendorEntries} setVendorEntries={setVendorEntries}
       />
     </>
   )
@@ -593,10 +573,7 @@ interface ActivitySpecificProps {
   activityType: string
   venue: string; setVenue: (v: string) => void
   isSponsored: boolean; setIsSponsored: (v: boolean) => void
-  sponsorContact: Contact | null; setSponsorContact: (v: Contact | null) => void
-  sponsorSearch: string; setSponsorSearch: (v: string) => void
-  sponsorAmount: string; setSponsorAmount: (v: string) => void
-  sponsorCoverage: 'Full' | 'Partial'; setSponsorCoverage: (v: 'Full' | 'Partial') => void
+  vendorEntries: VendorEntry[]; setVendorEntries: (v: VendorEntry[]) => void
   leaveBehind: string; setLeaveBehind: (v: string) => void
   occasion: string; setOccasion: (v: string) => void
   classTopic: string; setClassTopic: (v: string) => void
@@ -612,10 +589,7 @@ interface ActivitySpecificProps {
 function ActivitySpecificFields(props: ActivitySpecificProps) {
   const sponsorProps = {
     isSponsored: props.isSponsored, setIsSponsored: props.setIsSponsored,
-    sponsorContact: props.sponsorContact, setSponsorContact: props.setSponsorContact,
-    sponsorSearch: props.sponsorSearch, setSponsorSearch: props.setSponsorSearch,
-    sponsorAmount: props.sponsorAmount, setSponsorAmount: props.setSponsorAmount,
-    sponsorCoverage: props.sponsorCoverage, setSponsorCoverage: props.setSponsorCoverage,
+    vendorEntries: props.vendorEntries, setVendorEntries: props.setVendorEntries,
   }
 
   let content: React.ReactNode = null
@@ -686,6 +660,19 @@ function ActivitySpecificFields(props: ActivitySpecificProps) {
   )
 }
 
+// ── Auto-categorize helper ────────────────────────────────────────────────────
+
+function suggestActivityType(notes: string): string | null {
+  const t = notes.toLowerCase()
+  if (t.includes('lunch') || t.includes('restaurant') || t.includes('dinner') || t.includes('meal')) return 'Lunch'
+  if (t.includes('coffee') || t.includes('café') || t.includes('starbucks') || t.includes('latte')) return 'Coffee'
+  if (t.includes('pop') || t.includes('stopped by') || t.includes('dropped by') || t.includes('drop by')) return 'Pop-by'
+  if (t.includes('ce class') || t.includes('ce credit') || t.includes('continuing education') || t.includes('class')) return 'CE Class'
+  if (t.includes('closing gift') || t.includes('gift basket') || t.includes('gift bag')) return 'Closing Gift'
+  if (t.includes('called') || t.includes('phone call') || t.includes('video call') || t.includes('on the phone')) return 'Call'
+  return null
+}
+
 // ── Main component ───────────────────────────────────────────────────────────
 
 export function LogActivityPanel() {
@@ -697,7 +684,7 @@ export function LogActivityPanel() {
   const showToast = useSuccessToast()
   const { theme } = useTheme()
   const [activityType, setActivityType] = useState('Lunch')
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
+  const [selectedContacts, setSelectedContacts] = useState<Contact[]>([])
   const [contactSearch, setContactSearch] = useState('')
   const [showContactDrop, setShowContactDrop] = useState(false)
   const [date, setDate] = useState('2026-03-16')
@@ -712,10 +699,7 @@ export function LogActivityPanel() {
   // Activity-specific state
   const [venue, setVenue] = useState('')
   const [isSponsored, setIsSponsored] = useState(false)
-  const [sponsorContact, setSponsorContact] = useState<Contact | null>(null)
-  const [sponsorSearch, setSponsorSearch] = useState('')
-  const [sponsorAmount, setSponsorAmount] = useState('')
-  const [sponsorCoverage, setSponsorCoverage] = useState<'Full' | 'Partial'>('Full')
+  const [vendorEntries, setVendorEntries] = useState<VendorEntry[]>([])
   const [leaveBehind, setLeaveBehind] = useState('')
   const [occasion, setOccasion] = useState('Regular Visit')
   const [classTopic, setClassTopic] = useState('')
@@ -727,6 +711,8 @@ export function LogActivityPanel() {
   const [callOutcome, setCallOutcome] = useState('Discussed follow-up')
   const [activityName, setActivityName] = useState('')
   const [activityLabel, setActivityLabel] = useState('')
+  const [voiceListening, setVoiceListening] = useState(false)
+  const [aiAutoFilled, setAiAutoFilled] = useState(false)
 
   const contactSearchRef = useRef<HTMLInputElement>(null)
 
@@ -739,12 +725,23 @@ export function LogActivityPanel() {
     if (editingActivity) {
       setActivityType(editingActivity.type)
       setActivityLabel(editingActivity.label || '')
-      setContactSearch(editingActivity.contactName)
+      if (editingActivity.contacts?.length) {
+        setSelectedContacts(editingActivity.contacts as Contact[])
+      } else {
+        setContactSearch(editingActivity.contactName)
+      }
       setDate(editingActivity.date)
       setTime(editingActivity.time.replace(' AM', '').replace(' PM', ''))
       setCost(editingActivity.spend > 0 ? String(editingActivity.spend) : '')
       setNotes(editingActivity.notes || '')
-      setIsSponsored(editingActivity.sponsored)
+      setIsSponsored(editingActivity.vendors?.length > 0)
+      setVendorEntries(
+        (editingActivity.vendors ?? []).map(v => ({
+          contact: { id: v.name, name: v.name, initials: v.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(), company: v.company },
+          coverage: v.coverage,
+          amount: v.amount,
+        }))
+      )
       setRequiresFollowUp(!!editingActivity.followUp)
     } else if (prefilledContact) {
       setContactSearch(prefilledContact)
@@ -753,17 +750,50 @@ export function LogActivityPanel() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
 
+  const selectedContactIds = new Set(selectedContacts.map(c => c.id))
   const filteredContacts = (contactsData as Contact[]).filter(c =>
-    c.type !== 'sponsor' &&
+    c.type !== 'vendor' &&
+    !selectedContactIds.has(c.id) &&
     (c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
      c.company.toLowerCase().includes(contactSearch.toLowerCase()))
   )
 
+  function handleVoiceRecord() {
+    setVoiceListening(true)
+    setTimeout(() => {
+      setVoiceListening(false)
+      // Simulate AI-parsed voice input
+      setActivityType('Lunch')
+      const michelle = (contactsData as Contact[]).find(c => c.name === 'Michelle Tran') ?? null
+      if (michelle) {
+        setSelectedContacts([michelle])
+        setContactSearch('')
+        setShowContactDrop(false)
+      }
+      setCost('80')
+      setNotes('Had lunch with Michelle Tran at Chops, spent about $80. She mentioned she has three closings coming up next month.')
+      setAiAutoFilled(true)
+    }, 2000)
+  }
+
   function handleSave() {
     showToast('Activity logged successfully')
     closeLog()
+    // Fire follow-up suggestion if a contact was selected and notes hint at upcoming events
+    if (selectedContacts.length > 0 && notes.toLowerCase().includes('clos')) {
+      const primaryContact = selectedContacts[0]
+      setTimeout(() => {
+        toast({
+          title: `${primaryContact.name} mentioned upcoming closings — follow up in 2 weeks?`,
+          description: 'AI detected a follow-up opportunity in your notes.',
+          action: <ToastAction altText="Schedule follow-up">Schedule</ToastAction>,
+          duration: 10000,
+        })
+      }, 800)
+    }
     setActivityType('Lunch')
-    setSelectedContact(null)
+    setAiAutoFilled(false)
+    setSelectedContacts([])
     setContactSearch('')
     setCost('')
     setNotes('')
@@ -771,10 +801,7 @@ export function LogActivityPanel() {
     // Reset activity-specific fields
     setVenue('')
     setIsSponsored(false)
-    setSponsorContact(null)
-    setSponsorSearch('')
-    setSponsorAmount('')
-    setSponsorCoverage('Full')
+    setVendorEntries([])
     setLeaveBehind('')
     setOccasion('Regular Visit')
     setClassTopic('')
@@ -786,18 +813,19 @@ export function LogActivityPanel() {
     setCallOutcome('Discussed follow-up')
     setActivityName('')
     setActivityLabel('')
+    setVoiceListening(false)
+    setAiAutoFilled(false)
   }
 
   function selectContact(c: Contact) {
-    setSelectedContact(c)
+    setSelectedContacts(prev => [...prev, c])
     setContactSearch('')
     setShowContactDrop(false)
+    setTimeout(() => contactSearchRef.current?.focus(), 50)
   }
 
-  function clearContact() {
-    setSelectedContact(null)
-    setContactSearch('')
-    setTimeout(() => contactSearchRef.current?.focus(), 50)
+  function removeContact(id: string) {
+    setSelectedContacts(prev => prev.filter(c => c.id !== id))
   }
 
   if (!mounted) return null
@@ -808,10 +836,7 @@ export function LogActivityPanel() {
     activityType,
     venue, setVenue,
     isSponsored, setIsSponsored,
-    sponsorContact, setSponsorContact,
-    sponsorSearch, setSponsorSearch,
-    sponsorAmount, setSponsorAmount,
-    sponsorCoverage, setSponsorCoverage,
+    vendorEntries, setVendorEntries,
     leaveBehind, setLeaveBehind,
     occasion, setOccasion,
     classTopic, setClassTopic,
@@ -832,9 +857,11 @@ export function LogActivityPanel() {
             <span style={{ fontSize: 17, fontWeight: 600, color: 'var(--foreground)' }}>
               {isViewMode ? 'View Activity' : isEditMode ? 'Edit Activity' : 'Log Activity'}
             </span>
-            <button onClick={closeLog} className="rounded-[6px] p-1 transition-colors hover:bg-[var(--surface)]">
-              <X size={20} style={{ color: 'var(--muted)' }} />
-            </button>
+            <div className="flex items-center gap-2">
+              <button onClick={closeLog} className="rounded-[6px] p-1 transition-colors hover:bg-[var(--surface)]">
+                <X size={20} style={{ color: 'var(--muted)' }} />
+              </button>
+            </div>
           </div>
           <span style={{ fontSize: 13, color: 'var(--muted)' }}>
             {isViewMode ? 'Activity details (read-only)' : isEditMode ? 'Edit the details for this activity' : 'Fill in the details for your field activity'}
@@ -848,9 +875,97 @@ export function LogActivityPanel() {
           style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 20, ...(isViewMode ? { pointerEvents: 'none', opacity: 0.75 } : {}) }}
         >
 
+          {/* AI Auto-fill banner */}
+          {aiAutoFilled && (
+            <div
+              className="flex items-center gap-2 rounded-[8px]"
+              style={{
+                padding: '10px 14px',
+                backgroundColor: 'rgba(196,165,116,0.08)',
+                border: '1px solid rgba(196,165,116,0.3)',
+              }}
+            >
+              <Sparkles size={13} style={{ color: '#c4a574', flexShrink: 0 }} />
+              <span style={{ fontSize: 13, color: 'var(--body)' }}>
+                AI filled this in — review and save.
+              </span>
+              <button
+                type="button"
+                onClick={() => setAiAutoFilled(false)}
+                className="ml-auto transition-opacity hover:opacity-70"
+                style={{ color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                <X size={12} />
+              </button>
+            </div>
+          )}
+
+          {/* Voice log button */}
+          {!isViewMode && !isEditMode && (
+            <div className="flex flex-col items-center" style={{ gap: 8, paddingTop: 4, paddingBottom: 4 }}>
+              <button
+                type="button"
+                onClick={handleVoiceRecord}
+                disabled={voiceListening}
+                className="flex items-center justify-center rounded-full transition-all"
+                style={{
+                  width: 100,
+                  height: 100,
+                  backgroundColor: voiceListening ? 'rgba(196,165,116,0.85)' : '#c4a574',
+                  boxShadow: voiceListening
+                    ? '0 0 0 8px rgba(196,165,116,0.2), 0 0 0 16px rgba(196,165,116,0.08)'
+                    : '0 4px 16px rgba(196,165,116,0.35)',
+                  cursor: voiceListening ? 'default' : 'pointer',
+                  animation: voiceListening ? 'pulse 1s ease-in-out infinite' : 'none',
+                  border: 'none',
+                  outline: 'none',
+                  flexShrink: 0,
+                }}
+                aria-label={voiceListening ? 'Listening…' : 'Voice log'}
+              >
+                <Mic size={26} style={{ color: '#000000' }} />
+              </button>
+              <span style={{ fontSize: 12, fontWeight: 500, color: voiceListening ? '#c4a574' : 'var(--muted)', letterSpacing: '0.02em' }}>
+                {voiceListening ? 'Listening…' : 'Tap to voice log'}
+              </span>
+              {!voiceListening && (
+                <span style={{ fontSize: 11, color: 'var(--muted)', opacity: 0.7, textAlign: 'center', maxWidth: 220 }}>
+                  Describe your activity and AI will fill in the fields
+                </span>
+              )}
+            </div>
+          )}
+
           {/* Section 1 — Activity type tiles */}
           <div className="flex flex-col" style={{ gap: 8 }}>
-            <FieldLabel>ACTIVITY TYPE</FieldLabel>
+            <div className="flex items-center justify-between">
+              <FieldLabel>ACTIVITY TYPE</FieldLabel>
+              {(() => {
+                const suggested = suggestActivityType(notes)
+                if (!suggested || suggested === activityType) return null
+                return (
+                  <button
+                    type="button"
+                    onClick={() => setActivityType(suggested)}
+                    className="flex items-center gap-1 rounded-full transition-colors hover:opacity-80"
+                    style={{
+                      height: 22,
+                      paddingLeft: 8,
+                      paddingRight: 8,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: '#c4a574',
+                      border: '1px solid rgba(196,165,116,0.5)',
+                      backgroundColor: 'rgba(196,165,116,0.08)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <Check size={10} />
+                    Suggested: {suggested}
+                  </button>
+                )
+              })()}
+            </div>
             {tileRows.map((row, ri) => (
               <div
                 key={ri}
@@ -902,43 +1017,46 @@ export function LogActivityPanel() {
             />
           </div>
 
-          {/* Section 3 — Contact */}
+          {/* Section 3 — Contacts (multi-select) */}
           <div className="flex flex-col" style={{ gap: 6 }}>
-            <FieldLabel>CONTACT</FieldLabel>
-            <div className="relative">
-              {selectedContact ? (
+            <FieldLabel>CONTACTS</FieldLabel>
+            <div className="flex flex-col" style={{ gap: 8 }}>
+              {/* Added contact rows */}
+              {selectedContacts.map(c => (
                 <div
+                  key={c.id}
                   className="flex items-center rounded-[8px]"
                   style={{
-                    height: 40, padding: '0 12px', gap: 8,
-                    border: '1.5px solid #c4a574',
+                    padding: '8px 12px', gap: 8,
                     backgroundColor: 'var(--surface)',
+                    border: '1px solid var(--border)',
                   }}
                 >
                   <div
                     className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
                     style={{ backgroundColor: '#c4a574', fontSize: 10, fontWeight: 600, color: '#ffffff' }}
                   >
-                    {selectedContact.initials}
+                    {c.initials}
                   </div>
-                  <span style={{ fontSize: 14, color: 'var(--foreground)', flex: 1 }}>
-                    {selectedContact.name}
-                  </span>
-                  <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-                    · {selectedContact.company}
-                  </span>
-                  <button onClick={clearContact} className="shrink-0">
-                    <X size={16} style={{ color: 'var(--muted)' }} />
+                  <div className="flex min-w-0 flex-1 flex-col" style={{ gap: 1 }}>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--foreground)' }}>{c.name}</span>
+                    <span style={{ fontSize: 11, color: 'var(--muted)' }}>{c.company}</span>
+                  </div>
+                  <button type="button" onClick={() => removeContact(c.id)} className="shrink-0">
+                    <X size={14} style={{ color: 'var(--muted)' }} />
                   </button>
                 </div>
-              ) : (
+              ))}
+
+              {/* Search input — always shown */}
+              <div className="relative">
                 <input
                   ref={contactSearchRef}
                   value={contactSearch}
                   onChange={e => { setContactSearch(e.target.value); setShowContactDrop(true) }}
                   onFocus={() => setShowContactDrop(true)}
                   onBlur={() => setTimeout(() => setShowContactDrop(false), 150)}
-                  placeholder="Search by name or company"
+                  placeholder={selectedContacts.length > 0 ? 'Add another contact…' : 'Search by name or company'}
                   className="w-full rounded-[8px] outline-none focus:ring-1 focus:ring-[#c4a574] transition-shadow"
                   style={{
                     height: 40, padding: '0 12px', fontSize: 14,
@@ -947,43 +1065,37 @@ export function LogActivityPanel() {
                     color: 'var(--foreground)',
                   }}
                 />
-              )}
-
-              {showContactDrop && !selectedContact && filteredContacts.length > 0 && (
-                <div
-                  className="absolute left-0 right-0 top-[44px] z-10 rounded-[8px] overflow-hidden"
-                  style={{
-                    backgroundColor: 'var(--card)',
-                    border: '1px solid var(--border)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                  }}
-                >
-                  {filteredContacts.map(c => (
-                    <button
-                      key={c.id}
-                      onMouseDown={() => selectContact(c)}
-                      className="flex w-full items-center gap-3 px-3 py-2.5 transition-colors hover:bg-[var(--surface)]"
-                    >
-                      <div
-                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-                        style={{ backgroundColor: '#c4a574', fontSize: 10, fontWeight: 600, color: '#ffffff' }}
+                {showContactDrop && filteredContacts.length > 0 && (
+                  <div
+                    className="absolute left-0 right-0 top-[44px] z-10 rounded-[8px] overflow-hidden"
+                    style={{
+                      backgroundColor: 'var(--card)',
+                      border: '1px solid var(--border)',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    }}
+                  >
+                    {filteredContacts.map(c => (
+                      <button
+                        key={c.id}
+                        onMouseDown={() => selectContact(c)}
+                        className="flex w-full items-center gap-3 px-3 py-2.5 transition-colors hover:bg-[var(--surface)]"
                       >
-                        {c.initials}
-                      </div>
-                      <div className="flex flex-col items-start" style={{ gap: 1 }}>
-                        <span style={{ fontSize: 13, color: 'var(--foreground)' }}>{c.name}</span>
-                        <span style={{ fontSize: 11, color: 'var(--muted)' }}>{c.company}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
+                        <div
+                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+                          style={{ backgroundColor: '#c4a574', fontSize: 10, fontWeight: 600, color: '#ffffff' }}
+                        >
+                          {c.initials}
+                        </div>
+                        <div className="flex flex-col items-start" style={{ gap: 1 }}>
+                          <span style={{ fontSize: 13, color: 'var(--foreground)' }}>{c.name}</span>
+                          <span style={{ fontSize: 11, color: 'var(--muted)' }}>{c.company}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-            {!selectedContact && (
-              <span style={{ fontSize: 12, color: 'var(--muted)' }}>
-                Search by name or company
-              </span>
-            )}
           </div>
 
           {/* Section 3 — Date / Time */}

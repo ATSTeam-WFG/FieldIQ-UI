@@ -20,7 +20,7 @@ const config: Config = {
         warning: '#d97706',
       },
       fontFamily: {
-        sans: ['var(--font-inter)', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
         card: '8px',

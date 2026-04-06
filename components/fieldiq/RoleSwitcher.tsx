@@ -12,13 +12,15 @@ import {
 import { useRole } from '@/lib/context/RoleContext'
 
 export function RoleSwitcher() {
-  const { role, persona, setRole } = useRole()
+  const { role, persona, setRole, canSwitch } = useRole()
   const router = useRouter()
 
+  if (!canSwitch) return null
+
   const switchTarget =
-    role === 'agent'
-      ? { role: 'manager' as const, name: 'Jane Doe', label: 'Regional Sales Manager', action: 'Switch to Manager' }
-      : { role: 'agent' as const, name: 'Sarah Chen', label: 'Senior Title Agent', action: 'Switch to Agent' }
+    role === 'manager'
+      ? { role: 'rep' as const, name: 'Sarah Chen', label: 'Senior Sales Rep', action: 'Switch to Rep View' }
+      : { role: 'manager' as const, name: 'Jane Doe', label: 'Regional Sales Manager', action: 'Switch to Manager View' }
 
   return (
     <DropdownMenu>

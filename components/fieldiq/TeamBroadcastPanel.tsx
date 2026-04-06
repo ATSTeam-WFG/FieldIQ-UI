@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Radio } from 'lucide-react'
+import { X, Radio, Sparkles } from 'lucide-react'
 import { useTeamBroadcast } from '@/lib/context/TeamBroadcastContext'
 import { useNotifications } from '@/lib/context/NotificationContext'
 import { useSuccessToast } from '@/components/fieldiq/SuccessToast'
@@ -21,7 +21,7 @@ export function TeamBroadcastPanel() {
       message: `${subject}: ${message}`,
       timestamp: 'Just now',
     })
-    showToast('Broadcast sent to all agents')
+    showToast('Broadcast sent to all reps')
     closeBroadcast()
     setSubject('')
     setMessage('')
@@ -91,16 +91,29 @@ export function TeamBroadcastPanel() {
             <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.06em', color: 'var(--muted)', textTransform: 'uppercase' }}>
               Message <span style={{ color: '#c4a574' }}>*</span>
             </span>
-            <span style={{ fontSize: 11, color: 'var(--muted)' }}>{message.length}/500</span>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setMessage("Hey Kevin — noticed you haven't logged any activity this week. I know it's been busy. Even a quick pop-by or call counts. Your Q2 target is within reach. Let me know if you need anything.")
+                }}
+                className="flex items-center gap-1 transition-opacity hover:opacity-70"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#c4a574', fontSize: 12, fontWeight: 600 }}
+              >
+                <Sparkles size={11} />
+                AI Draft
+              </button>
+              <span style={{ fontSize: 11, color: 'var(--muted)' }}>{message.length}/500</span>
+            </div>
           </div>
           <textarea
-            placeholder="Write your message to all agents…"
+            placeholder="Write your message to all reps…"
             value={message}
             onChange={e => setMessage(e.target.value.slice(0, 500))}
             style={{ ...inputStyle, height: 140, paddingTop: 10, paddingBottom: 10, resize: 'none', fontFamily: 'inherit' }}
           />
           <p style={{ marginTop: 6, fontSize: 12, color: 'var(--muted)' }}>
-            This message will be sent to all 9 agents on your team and appear in their notifications.
+            This message will be sent to all 9 reps on your team and appear in their notifications.
           </p>
         </div>
       </div>

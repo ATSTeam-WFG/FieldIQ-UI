@@ -1,7 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus,
   Utensils,
@@ -16,6 +17,7 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import { AppShell } from '@/components/fieldiq/AppShell'
 import { KPICard } from '@/components/fieldiq/KPICard'
+import { AICard } from '@/components/fieldiq/AICard'
 import { StatusBadge } from '@/components/fieldiq/StatusBadge'
 import type { ActivityStatus } from '@/components/fieldiq/StatusBadge'
 import { useRole } from '@/lib/context/RoleContext'
@@ -59,9 +61,10 @@ const recentActivities = activitiesData.slice(0, 5)
 
 export default function DashboardPage() {
   const { persona } = useRole()
-  const { openLog } = useActivityLog()
+  const { openLog, openLogWithContact } = useActivityLog()
   const { openLog: openContract } = useContract()
   const firstName = persona.name.split(' ')[0]
+  const [nudgeDismissed, setNudgeDismissed] = useState(false)
 
   return (
     <AppShell activeItem="Dashboard">
@@ -118,6 +121,32 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* ── AI Priority Nudge ─────────────────────────── */}
+        <AnimatePresence>
+          {!nudgeDismissed && (
+            <motion.div
+              key="nudge"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0, transition: { duration: 0.2 } }}
+              exit={{ opacity: 0, height: 0, marginTop: 0, overflow: 'hidden', transition: { duration: 0.18 } }}
+              style={{ marginTop: 16 }}
+            >
+              <AICard label="Daily Nudge" onDismiss={() => setNudgeDismissed(true)}>
+                <p style={{ fontSize: 13, color: 'var(--body)', lineHeight: 1.6, maxWidth: 560, margin: 0 }}>
+                  David Okafor hasn&apos;t been contacted in 18 days — his score is dropping. A pop-by today would help.{' '}
+                  <button
+                    onClick={() => openLogWithContact('david-okafor')}
+                    className="hover:underline"
+                    style={{ color: '#c4a574', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 'inherit' }}
+                  >
+                    Log activity now →
+                  </button>
+                </p>
+              </AICard>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* ── KPI cards ─────────────────────────────────── */}
         <motion.div
           className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4"
@@ -142,6 +171,15 @@ export default function DashboardPage() {
             </motion.div>
           ))}
         </motion.div>
+
+        {/* ── AI Performance Summary ────────────────────── */}
+        <div style={{ marginTop: 16 }}>
+          <AICard label="Summary" sublabel="Updated today" readAloud>
+            <p style={{ fontSize: 13, color: 'var(--body)', lineHeight: 1.6, margin: 0 }}>
+              This month you&apos;ve logged 21 activities — your best March yet, up 8% from last year. You&apos;re on track to hit your Q2 target. Your strongest relationship is Michelle Tran (score 91). The contact that needs the most attention is James Ellison — you haven&apos;t touched him in 23 days.
+            </p>
+          </AICard>
+        </div>
 
         {/* ── Two-column row ────────────────────────────── */}
         <div

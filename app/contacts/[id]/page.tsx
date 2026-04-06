@@ -11,6 +11,7 @@ import type { LucideIcon } from 'lucide-react'
 import { AppShell } from '@/components/fieldiq/AppShell'
 import { StatusBadge } from '@/components/fieldiq/StatusBadge'
 import type { ActivityStatus } from '@/components/fieldiq/StatusBadge'
+import { AICard } from '@/components/fieldiq/AICard'
 import { useActivityLog } from '@/lib/context/ActivityLogContext'
 import { useAddContact } from '@/lib/context/AddContactContext'
 import contactsData from '@/lib/mock-data/contacts.json'
@@ -95,7 +96,8 @@ type ContactContractStatus = 'initiated' | 'pending' | 'closed' | 'updated'
 
 interface ContactContract {
   id: string
-  title: string
+  fileNumber?: string
+  address?: string
   status: ContactContractStatus
   amount: number
   expectedClosingDate?: string
@@ -145,8 +147,8 @@ export default function ContactPage({ params }: ContactPageProps) {
     )
   }
 
-  // Sponsor profile view
-  if (rawContact.type === 'sponsor') {
+  // Vendor profile view
+  if (rawContact.type === 'vendor') {
     const sponsor = rawContact as { id: string; name: string; initials: string; company: string; role: string; type: string; tags: string[]; email: string; phone: string }
     return (
       <AppShell activeItem="Contacts">
@@ -164,7 +166,7 @@ export default function ContactPage({ params }: ContactPageProps) {
               <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>{sponsor.name}</p>
               <p style={{ fontSize: 12, color: 'var(--muted)', margin: '2px 0 4px' }}>{sponsor.role}</p>
               <span style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 4, padding: '2px 8px', fontSize: 11, color: 'var(--muted)' }}>
-                Sponsor
+                Vendor
               </span>
             </div>
 
@@ -200,7 +202,7 @@ export default function ContactPage({ params }: ContactPageProps) {
             <div style={cardStyle}>
               <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)', margin: '0 0 12px' }}>Relationship Notes</p>
               <p style={{ fontSize: 13, color: 'var(--body)', lineHeight: 1.6, margin: 0 }}>
-                Sponsor relationship managed through the Buckhead Business Association. Co-sponsors quarterly CE classes and networking events.
+                Vendor relationship managed through the Buckhead Business Association. Co-sponsors quarterly CE classes and networking events.
                 Regular check-ins scheduled monthly.
               </p>
             </div>
@@ -208,7 +210,7 @@ export default function ContactPage({ params }: ContactPageProps) {
             {/* Sponsorship history stub */}
             <div style={cardStyle}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)', margin: 0 }}>Sponsorship History</p>
+                <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)', margin: 0 }}>Vendor History</p>
                 <span style={{ fontSize: 12, color: 'var(--muted)' }}>YTD</span>
               </div>
               {[
@@ -435,14 +437,14 @@ export default function ContactPage({ params }: ContactPageProps) {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: '1fr 80px 80px 80px',
+              gridTemplateColumns: '110px 1fr 80px 72px 64px',
               gap: 8,
               padding: '0 0 8px',
               borderBottom: '1px solid var(--border)',
               marginBottom: 4,
             }}
           >
-            {['TITLE', 'AMOUNT', 'STATUS', 'CLOSING'].map(col => (
+            {['FILE #', 'ADDRESS', 'AMOUNT', 'STATUS', 'CLOSING'].map(col => (
               <span key={col} style={{ fontSize: 10, fontWeight: 500, letterSpacing: '0.06em', color: 'var(--muted)' }}>
                 {col}
               </span>
@@ -460,13 +462,27 @@ export default function ContactPage({ params }: ContactPageProps) {
                 key={c.id}
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: '1fr 80px 80px 80px',
+                  gridTemplateColumns: '110px 1fr 80px 72px 64px',
                   gap: 8,
-                  height: 48,
+                  minHeight: 48,
                   alignItems: 'center',
                   borderBottom: isLast ? 'none' : '1px solid var(--border)',
+                  padding: '8px 0',
                 }}
               >
+                <span
+                  style={{
+                    fontSize: 12,
+                    fontFamily: 'monospace',
+                    letterSpacing: '0.04em',
+                    color: 'var(--muted)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {c.fileNumber ?? '—'}
+                </span>
                 <span
                   style={{
                     fontSize: 13,
@@ -476,7 +492,7 @@ export default function ContactPage({ params }: ContactPageProps) {
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {c.title}
+                  {c.address ?? '—'}
                 </span>
                 <span style={{ fontSize: 13, fontWeight: 600, color: '#c4a574' }}>
                   ${c.amount.toLocaleString()}
@@ -517,14 +533,22 @@ export default function ContactPage({ params }: ContactPageProps) {
         <>
           {visibleActivities.map(activity => {
             const Icon = ACTIVITY_ICONS[activity.type] ?? Plus
+            const label = (activity as any).label as string | undefined
+            const allContacts = (activity as any).contacts as Array<{ id: string; name: string }> | undefined
+            const otherContacts = allContacts?.filter(c => c.name !== contact.name) ?? []
+            const othersLabel = otherContacts.length === 1
+              ? `with ${otherContacts[0].name}`
+              : otherContacts.length > 1
+                ? `with ${otherContacts[0].name} + ${otherContacts.length - 1}`
+                : null
             return (
               <div
                 key={activity.id}
                 style={{
-                  height: 56,
+                  padding: '10px 0',
                   borderBottom: '1px solid var(--border)',
                   display: 'flex',
-                  alignItems: 'center',
+                  alignItems: 'flex-start',
                   gap: 12,
                 }}
               >
@@ -539,23 +563,32 @@ export default function ContactPage({ params }: ContactPageProps) {
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
+                    marginTop: 2,
                   }}
                 >
                   <Icon size={16} style={{ color: 'var(--muted)' }} />
                 </div>
 
                 {/* Content */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', margin: 0 }}>
-                    {activity.type}
-                  </p>
-                  <p style={{ fontSize: 11, color: 'var(--muted)', margin: 0 }}>
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>
+                      {activity.type}
+                    </span>
+                    {label && (
+                      <span style={{ fontSize: 12, color: 'var(--muted)' }}>· {label}</span>
+                    )}
+                  </div>
+                  <span style={{ fontSize: 11, color: 'var(--muted)' }}>
                     {activity.date} · {activity.time}
-                  </p>
+                  </span>
+                  {othersLabel && (
+                    <span style={{ fontSize: 11, color: 'var(--muted)' }}>{othersLabel}</span>
+                  )}
                 </div>
 
                 {/* Right: spend + status */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, paddingTop: 2 }}>
                   {activity.spend > 0 && (
                     <span style={{ fontSize: 12, color: '#c4a574', fontWeight: 600 }}>
                       ${activity.spend}
@@ -641,6 +674,15 @@ export default function ContactPage({ params }: ContactPageProps) {
     </div>
   )
 
+  // ── AI Insight Card ────────────────────────────────────────────────────────
+  const AIInsightCard = (
+    <AICard label="Insight">
+      <p style={{ fontSize: 13, color: 'var(--body)', lineHeight: 1.6, margin: 0 }}>
+        {contact.name} has been one of your most engaged contacts this quarter. They respond best to lunches and CE classes. Based on closing activity, they likely have 2–3 referrals available in the next 30 days. Your relationship score has increased {Math.round(contact.score * 0.13)} points since January.
+      </p>
+    </AICard>
+  )
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <AppShell activeItem="Contacts">
@@ -663,13 +705,14 @@ export default function ContactPage({ params }: ContactPageProps) {
         {/* Left column */}
         <div style={{ width: 380, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
           {ProfileHeaderCard}
+          {SpendBreakdownCard}
         </div>
 
         {/* Right column */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
           {StatsGrid}
+          {AIInsightCard}
           {ActivityHistoryCard}
-          {SpendBreakdownCard}
           {ContractsCard}
         </div>
       </div>
@@ -678,6 +721,7 @@ export default function ContactPage({ params }: ContactPageProps) {
       <div className="flex flex-col md:hidden" style={{ gap: 16 }}>
         {ProfileHeaderCard}
         {StatsGrid}
+        {AIInsightCard}
         {ActivityHistoryCard}
         {SpendBreakdownCard}
         {ContractsCard}

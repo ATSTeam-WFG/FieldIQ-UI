@@ -10,9 +10,9 @@ import { SlideOverPanel } from './SlideOverPanel'
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const ROLES = [
-  { value: 'agent',        label: 'Title Agent' },
-  { value: 'senior-agent', label: 'Senior Title Agent' },
-  { value: 'team-lead',    label: 'Team Lead' },
+  { value: 'rep',         label: 'Sales Rep' },
+  { value: 'senior-rep',  label: 'Senior Sales Rep' },
+  { value: 'team-lead',   label: 'Team Lead' },
 ]
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -66,14 +66,14 @@ export function InviteAgentPanel() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
-  const [role, setRole] = useState('agent')
+  const [role, setRole] = useState('rep')
   const [welcomeNote, setWelcomeNote] = useState('')
 
   function resetForm() {
     setName('')
     setEmail('')
     setPhone('')
-    setRole('agent')
+    setRole('rep')
     setWelcomeNote('')
   }
 
@@ -101,7 +101,7 @@ export function InviteAgentPanel() {
         <div className="flex items-center gap-2">
           <UserPlus size={16} style={{ color: '#c4a574' }} />
           <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--foreground)' }}>
-            Invite Agent
+            Invite Rep
           </span>
         </div>
         <button
@@ -118,7 +118,7 @@ export function InviteAgentPanel() {
 
         {/* ── Section 1: Identity ── */}
         <div style={{ marginBottom: 24 }}>
-          <SectionHeading icon={User} label="Agent Identity" />
+          <SectionHeading icon={User} label="Rep Identity" />
 
           <div style={{ marginBottom: 16 }}>
             <FieldLabel label="Full Name" required />
@@ -127,7 +127,7 @@ export function InviteAgentPanel() {
 
           <div style={{ marginBottom: 16 }}>
             <FieldLabel label="Email" required />
-            <input type="email" placeholder="agent@premiertitle.com" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} />
+            <input type="email" placeholder="rep@premiertitle.com" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} />
           </div>
 
           <div>

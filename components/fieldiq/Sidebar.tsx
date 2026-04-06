@@ -22,7 +22,7 @@ interface NavItemDef {
   href: string
 }
 
-const agentMainNav: NavItemDef[] = [
+const repMainNav: NavItemDef[] = [
   { label: 'Dashboard',  icon: LayoutDashboard, href: '/dashboard'  },
   { label: 'Activities', icon: Activity,        href: '/activities' },
   { label: 'Contracts',  icon: FileText,        href: '/contracts'  },
@@ -30,7 +30,7 @@ const agentMainNav: NavItemDef[] = [
   { label: 'Follow-ups', icon: CalendarCheck,   href: '/follow-ups' },
 ]
 
-const agentInsightNav: NavItemDef[] = [
+const repInsightNav: NavItemDef[] = [
   { label: 'My Performance', icon: TrendingUp, href: '/performance' },
 ]
 
@@ -60,8 +60,8 @@ export function Sidebar({ activeItem }: SidebarProps) {
   const { persona, role } = useRole()
 
   const isManager = role === 'manager'
-  const mainNav = isManager ? managerMainNav : agentMainNav
-  const insightNav = isManager ? managerInsightNav : agentInsightNav
+  const mainNav = isManager ? managerMainNav : repMainNav
+  const insightNav = isManager ? managerInsightNav : repInsightNav
 
   function isActive(href: string, label: string): boolean {
     if (activeItem) return activeItem === label
