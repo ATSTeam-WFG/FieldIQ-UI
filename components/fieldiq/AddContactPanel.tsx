@@ -6,6 +6,7 @@ import { useAddContact } from '@/lib/context/AddContactContext'
 import { useSuccessToast } from '@/components/fieldiq/SuccessToast'
 import { useTheme } from '@/lib/context/ThemeContext'
 import { SlideOverPanel } from './SlideOverPanel'
+import { useCreateContact } from '@/lib/hooks/useContacts'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -81,6 +82,7 @@ export function AddContactPanel() {
   const isEditMode = editingContact !== null
   const showToast = useSuccessToast()
   const { theme } = useTheme()
+  const createContact = useCreateContact()
 
   // Form state
   const [contactType, setContactType] = useState<'agent' | 'vendor'>('agent')
@@ -144,10 +146,21 @@ export function AddContactPanel() {
     setNotes('')
   }
 
-  function handleSave() {
-    showToast(isEditMode ? 'Contact updated successfully' : 'Contact added successfully')
-    closeAddContact()
-    resetForm()
+  async function handleSave() {
+    try {
+      await createContact.mutateAsync({
+        name,
+        company: company || null,
+        job_title: role || null,
+        type: contactType === 'vendor' ? 'sponsor' : 'referral_agent',
+        email: email || null,
+        phone: phone || null,
+        tags: selectedTags,
+      })
+      showToast(isEditMode ? 'Contact updated successfully' : 'Contact added successfully')
+      closeAddContact()
+      resetForm()
+    } catch {}
   }
 
   function handleCancel() {
@@ -414,6 +427,7 @@ export function AddContactPanel() {
           <button
             type="button"
             onClick={handleSave}
+            disabled={createContact.isPending}
             style={{
               height: 40,
               padding: '0 20px',
@@ -423,10 +437,11 @@ export function AddContactPanel() {
               backgroundColor: theme === 'dark' ? '#c4a574' : '#000000',
               color: theme === 'dark' ? '#000000' : '#ffffff',
               border: 'none',
-              cursor: 'pointer',
+              cursor: createContact.isPending ? 'not-allowed' : 'pointer',
+              opacity: createContact.isPending ? 0.6 : 1,
             }}
           >
-            {isEditMode ? 'Save Changes' : 'Add Contact'}
+            {createContact.isPending ? 'Saving…' : isEditMode ? 'Save Changes' : 'Add Contact'}
           </button>
         </div>
     </SlideOverPanel>

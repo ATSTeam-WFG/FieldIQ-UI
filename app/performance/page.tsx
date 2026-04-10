@@ -5,7 +5,6 @@ import { AICard } from '@/components/fieldiq/AICard'
 import { AppShell } from '@/components/fieldiq/AppShell'
 import { KPICard } from '@/components/fieldiq/KPICard'
 import { useRole } from '@/lib/context/RoleContext'
-import teamData from '@/lib/mock-data/team.json'
 import {
   BarChart,
   Bar as BarRecharts,
@@ -27,28 +26,11 @@ import {
   Legend,
 } from 'recharts'
 
-// ── Inline data ───────────────────────────────────────────────────────────────
+// ── Data (empty until backend endpoints available) ────────────────────────────
 
-const monthlySpend = [
-  { month: 'Oct', spend: 780,  activities: 8  },
-  { month: 'Nov', spend: 920,  activities: 10 },
-  { month: 'Dec', spend: 640,  activities: 7  },
-  { month: 'Jan', spend: 1050, activities: 11 },
-  { month: 'Feb', spend: 1180, activities: 13 },
-  { month: 'Mar', spend: 1240, activities: 12 },
-]
-
-const activityTypeBreakdown = [
-  { type: 'Lunch',        count: 18, spend: 1620 },
-  { type: 'Pop-by',       count: 24, spend: 480  },
-  { type: 'Coffee',       count: 12, spend: 216  },
-  { type: 'CE Class',     count: 3,  spend: 960  },
-  { type: 'Closing Gift', count: 9,  spend: 720  },
-  { type: 'Sponsorship',  count: 2,  spend: 500  },
-  { type: 'Call',         count: 11, spend: 0    },
-]
-
-const maxCount = Math.max(...activityTypeBreakdown.map(r => r.count))
+const monthlySpend: Array<{ month: string; spend: number; activities: number }> = []
+const activityTypeBreakdown: Array<{ type: string; count: number; spend: number }> = []
+const maxCount = 0
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
 
@@ -77,20 +59,13 @@ function CustomTooltip({ active, payload, label }: any) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-const teamWeeklyData = [
-  { week: 'Wk 1', count: 34 },
-  { week: 'Wk 2', count: 41 },
-  { week: 'Wk 3', count: 38 },
-  { week: 'Wk 4', count: 47 },
-]
+const teamWeeklyData: Array<{ week: string; count: number }> = []
 
 export default function PerformancePage() {
   const { role } = useRole()
 
   if (role === 'manager') {
-    const agents = [...(teamData.roster?.agents ?? [])].sort(
-      (a: any, b: any) => (b.activities ?? 0) - (a.activities ?? 0)
-    )
+    const agents: any[] = []
     return (
       <AppShell activeItem="Performance">
         <div className="flex flex-col">

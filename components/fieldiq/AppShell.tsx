@@ -104,7 +104,7 @@ export function AppShell({ activeItem, children }: AppShellProps) {
           <MobileMoreSheet
             isOpen={moreOpen}
             onClose={() => setMoreOpen(false)}
-            role={role as 'rep' | 'manager'}
+            role={role === 'rep' ? 'agent' : 'manager'}
           />
         )}
       </AnimatePresence>

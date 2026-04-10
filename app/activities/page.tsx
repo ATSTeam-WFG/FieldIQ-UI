@@ -21,7 +21,7 @@ import { FilterSearchBar, FilterPills, FilterDropdown } from '@/components/field
 import type { FilterOption } from '@/components/fieldiq/FilterBar'
 import { useActivityLog } from '@/lib/context/ActivityLogContext'
 import { useRole } from '@/lib/context/RoleContext'
-import activitiesData from '@/lib/mock-data/activities.json'
+import { useActivities } from '@/lib/hooks/useActivities'
 
 // ── Icon map ──────────────────────────────────────────────────────────────────
 
@@ -73,28 +73,22 @@ export default function ActivitiesPage() {
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>('All')
   const [searchQuery,    setSearchQuery]    = useState('')
 
-  // Agent view: only show Sarah Chen's activities
-  const visibleData = isManager
-    ? activitiesData
-    : activitiesData.filter(a => (a as any).agentName === 'Sarah Chen')
+  const { data: activitiesResult, isLoading } = useActivities({ page_size: 100 })
+  const allActivities = activitiesResult?.items ?? []
 
-  // Derived stats (from visible dataset)
-  const totalSpend    = visibleData.reduce((sum, a) => sum + (a.spend ?? 0), 0)
-  const followUpCount = visibleData.filter(a => a.status === 'follow-up').length
+  // Derived stats
+  const totalSpend    = allActivities.reduce((sum, a) => sum + (a.spend ?? 0), 0)
+  const followUpCount = allActivities.filter(a => a.status === 'follow-up').length
 
-  // Filtered rows
-  const filteredActivities = visibleData.filter(act => {
+  // Filtered rows (client-side for now)
+  const filteredActivities = allActivities.filter(act => {
     const q = searchQuery.toLowerCase()
-    const actContacts = (act as any).contacts as Array<{ name: string; company: string }> | undefined
-    const contactSearchStr = actContacts
-      ? actContacts.map(c => `${c.name} ${c.company}`).join(' ')
-      : `${act.contactName} ${act.contactCompany}`
+    const contactSearchStr = act.contacts.map(c => `${c.name} ${c.company}`).join(' ')
     const searchMatch = !q ||
       act.type.toLowerCase().includes(q) ||
       contactSearchStr.toLowerCase().includes(q) ||
-      ((act as any).label ?? '').toLowerCase().includes(q) ||
-      act.notes.toLowerCase().includes(q) ||
-      (isManager && (act as any).agentName.toLowerCase().includes(q))
+      (act.label ?? '').toLowerCase().includes(q) ||
+      act.notes.toLowerCase().includes(q)
     const typeMatch   = selectedType === 'All' || act.type === selectedType
     const statusMatch =
       selectedStatus === 'All' ||
@@ -157,7 +151,7 @@ export default function ActivitiesPage() {
               className="font-semibold"
               style={{ fontSize: 15, color: '#c4a574' }}
             >
-              {activitiesData.length}
+              {activitiesResult?.total ?? allActivities.length}
             </span>
             <span style={{ fontSize: 13, color: 'var(--muted)' }}>activities</span>
           </div>

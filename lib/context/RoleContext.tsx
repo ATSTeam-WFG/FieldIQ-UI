@@ -1,6 +1,7 @@
 'use client'
 
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
+import { getMe } from '@/lib/api/auth'
 
 export type Role = 'rep' | 'manager' | 'executive'
 export type UserType = 'rep' | 'manager'
@@ -12,24 +13,7 @@ export interface Persona {
   territory?: string
 }
 
-const personas: Record<Role, Persona> = {
-  rep: {
-    name: 'Sarah Chen',
-    initials: 'SC',
-    title: 'Senior Sales Rep',
-    territory: 'Buckhead',
-  },
-  manager: {
-    name: 'Jane Doe',
-    initials: 'JD',
-    title: 'Regional Sales Manager',
-  },
-  executive: {
-    name: 'Robert Mills',
-    initials: 'RM',
-    title: 'VP of Operations',
-  },
-}
+const emptyPersona: Persona = { name: '', initials: '', title: '' }
 
 interface RoleContextValue {
   role: Role
@@ -37,26 +21,55 @@ interface RoleContextValue {
   setRole: (role: Role) => void
   userType: UserType
   canSwitch: boolean
+  loaded: boolean
 }
 
 const RoleContext = createContext<RoleContextValue>({
-  role: 'manager',
-  persona: personas.manager,
+  role: 'rep',
+  persona: emptyPersona,
   setRole: () => {},
-  userType: 'manager',
-  canSwitch: true,
+  userType: 'rep',
+  canSwitch: false,
+  loaded: false,
 })
 
 export function RoleProvider({ children }: { children: React.ReactNode }) {
-  // userType represents who is actually logged in — never changes at runtime.
-  // Defaults to 'manager' so the demo can showcase both views.
-  const [userType] = useState<UserType>('manager')
-  const [role, setRole] = useState<Role>('manager')
+  const [userType, setUserType] = useState<UserType>('rep')
+  const [role, setRole] = useState<Role>('rep')
+  const [persona, setPersona] = useState<Persona>(emptyPersona)
+  const [loaded, setLoaded] = useState(false)
 
+  useEffect(() => {
+    const token = typeof window !== 'undefined' && localStorage.getItem('fieldiq_token')
+    if (!token) {
+      setLoaded(true)
+      return
+    }
+    getMe()
+      .then(user => {
+        const r: Role = user.role === 'manager' ? 'manager' : 'rep'
+        setRole(r)
+        setUserType(r as UserType)
+        setPersona({
+          name: user.name,
+          initials: user.initials,
+          title: user.title ?? (r === 'manager' ? 'Sales Manager' : 'Sales Rep'),
+          territory: user.territory ?? undefined,
+        })
+      })
+      .catch(() => {
+        // 401 is already handled by the API client (redirects to /login)
+      })
+      .finally(() => {
+        setLoaded(true)
+      })
+  }, [])
+
+  // Managers who also act as reps can switch views
   const canSwitch = userType === 'manager'
 
   return (
-    <RoleContext.Provider value={{ role, persona: personas[role], setRole, userType, canSwitch }}>
+    <RoleContext.Provider value={{ role, persona, setRole, userType, canSwitch, loaded }}>
       {children}
     </RoleContext.Provider>
   )

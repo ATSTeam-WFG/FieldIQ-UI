@@ -5,17 +5,30 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, EyeOff, Building2, Moon, Sun } from 'lucide-react'
 import { useTheme } from '@/lib/context/ThemeContext'
+import { login } from '@/lib/api/auth'
 
 export default function LoginPage() {
   const router = useRouter()
   const { theme, toggleTheme } = useTheme()
   const [showPassword, setShowPassword] = useState(false)
-  const [email, setEmail] = useState('demo@fieldiq.ai')
-  const [password, setPassword] = useState('demo1234')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  function handleSignIn(e: React.FormEvent) {
+  async function handleSignIn(e: React.FormEvent) {
     e.preventDefault()
-    router.push('/dashboard')
+    setError(null)
+    setLoading(true)
+    try {
+      await login(email, password)
+      // Full navigation so RoleContext remounts and re-fetches /auth/me with the new token
+      window.location.href = '/dashboard'
+    } catch (err: any) {
+      setError(err.message ?? 'Sign in failed')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const inputStyle: React.CSSProperties = {
@@ -78,16 +91,25 @@ export default function LoginPage() {
       <div className="fieldiq-card w-full max-w-[400px] p-10">
 
         {/* Logo block */}
-        <div className="flex flex-col" style={{ gap: 6 }}>
-          <span
-            className="font-semibold leading-none"
-            style={{ fontSize: 22, color: 'var(--foreground)' }}
+        <div className="flex items-start justify-between">
+          <div className="flex flex-col" style={{ gap: 6 }}>
+            <span
+              className="font-semibold leading-none"
+              style={{ fontSize: 22, color: 'var(--foreground)' }}
+            >
+              FieldIQ
+            </span>
+            <span style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.4 }}>
+              Field Sales Intelligence for Title Professionals
+            </span>
+          </div>
+          <Link
+            href="/onboarding"
+            style={{ fontSize: 12, color: 'var(--gold)', whiteSpace: 'nowrap', marginTop: 2 }}
+            className="hover:underline"
           >
-            FieldIQ
-          </span>
-          <span style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.4 }}>
-            Field Sales Intelligence for Title Professionals
-          </span>
+            New? Start here →
+          </Link>
         </div>
 
         <div style={{ height: 32 }} />
@@ -181,10 +203,15 @@ export default function LoginPage() {
 
           <div style={{ height: 24 }} />
 
+          {error && (
+            <p style={{ fontSize: 13, color: '#d97706', marginBottom: 12 }}>{error}</p>
+          )}
+
           {/* Sign in button */}
           <button
             type="submit"
-            className="w-full rounded-[8px] font-semibold transition-opacity hover:opacity-90 active:opacity-80"
+            disabled={loading}
+            className="w-full rounded-[8px] font-semibold transition-opacity hover:opacity-90 active:opacity-80 disabled:opacity-50"
             style={{
               height: 42,
               fontSize: 14,
@@ -192,7 +219,7 @@ export default function LoginPage() {
               color: theme === 'dark' ? '#000000' : '#fafaf9',
             }}
           >
-            Sign in
+            {loading ? 'Signing in…' : 'Sign in'}
           </button>
 
           <div style={{ height: 20 }} />
@@ -227,7 +254,10 @@ export default function LoginPage() {
 
           {/* Footer note */}
           <p className="text-center" style={{ fontSize: 12, color: 'var(--muted)' }}>
-            Don&apos;t have an account? Contact your agency admin.
+            Don&apos;t have an account?{' '}
+            <Link href="/signup" style={{ color: 'var(--gold)' }} className="hover:underline">
+              Sign up
+            </Link>
           </p>
         </form>
       </div>

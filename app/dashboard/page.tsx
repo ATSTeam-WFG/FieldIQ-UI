@@ -23,25 +23,12 @@ import type { ActivityStatus } from '@/components/fieldiq/StatusBadge'
 import { useRole } from '@/lib/context/RoleContext'
 import { useActivityLog } from '@/lib/context/ActivityLogContext'
 import { useContract } from '@/lib/context/ContractContext'
-import activitiesData from '@/lib/mock-data/activities.json'
-import agentKpis from '@/lib/mock-data/agent-kpis.json'
-import contractsData from '@/lib/mock-data/contracts.json'
-
-// ── Contract KPI helpers ──────────────────────────────────────────────────────
-
-const agentContracts = contractsData.filter(c => c.agentName === 'Sarah Chen')
-
-const closedThisMonth = agentContracts.filter(c => {
-  if (c.status !== 'closed' || !c.actualClosingDate) return false
-  const d = new Date(c.actualClosingDate)
-  return d.getFullYear() === 2026 && d.getMonth() === 2 // March = 2
-}).length
-
-const pipelineValue = agentContracts
-  .filter(c => c.status !== 'closed')
-  .reduce((sum, c) => sum + c.amount, 0)
+import { useAgentKpis } from '@/lib/hooks/useAgentKpis'
+import { useActivities } from '@/lib/hooks/useActivities'
+import { useContracts } from '@/lib/hooks/useContracts'
 
 function formatPipelineValue(n: number): string {
+  if (n >= 1_000_000) return '$' + (n / 1_000_000).toFixed(1) + 'M'
   if (n >= 1000) return '$' + (n / 1000).toFixed(0) + 'k'
   return '$' + n
 }
@@ -57,14 +44,29 @@ const activityIconMap: Record<string, LucideIcon> = {
   'Other':        Circle,
 }
 
-const recentActivities = activitiesData.slice(0, 5)
-
 export default function DashboardPage() {
   const { persona } = useRole()
   const { openLog, openLogWithContact } = useActivityLog()
   const { openLog: openContract } = useContract()
   const firstName = persona.name.split(' ')[0]
   const [nudgeDismissed, setNudgeDismissed] = useState(false)
+
+  const { data: kpis } = useAgentKpis()
+  const { data: activitiesData } = useActivities({ page_size: 5 })
+  const { data: contractsData } = useContracts()
+
+  const recentActivities = activitiesData?.items ?? []
+
+  const now = new Date()
+  const closedThisMonth = (contractsData?.items ?? []).filter(c => {
+    if (c.status !== 'closed' || !c.actual_closing_date) return false
+    const d = new Date(c.actual_closing_date)
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
+  }).length
+
+  const pipelineValue = (contractsData?.items ?? [])
+    .filter(c => c.status !== 'closed')
+    .reduce((sum, c) => sum + (c.amount ?? 0), 0)
 
   return (
     <AppShell activeItem="Dashboard">
@@ -156,11 +158,11 @@ export default function DashboardPage() {
           animate="show"
         >
           {[
-            { label: 'ACTIVITIES THIS WEEK', value: agentKpis.activitiesThisWeek, subLabel: agentKpis.activitiesWeekDelta, subLabelColor: '#16a34a' },
-            { label: 'TOTAL SPEND MTD',      value: agentKpis.totalSpendMTD,       subLabel: agentKpis.spendSubLabel },
-            { label: 'CONTACTS ENGAGED',     value: agentKpis.contactsEngaged,     subLabel: agentKpis.contactsSubLabel },
-            { label: 'FOLLOW-UPS PENDING',   value: agentKpis.followUpsPending,    subLabel: `${agentKpis.followUpsOverdue} overdue`, subLabelColor: '#d97706' },
-            { label: 'CLOSED THIS MONTH',    value: closedThisMonth,               subLabel: 'Contracts closed MTD', subLabelColor: '#16a34a' },
+            { label: 'ACTIVITIES THIS WEEK', value: kpis?.activitiesThisWeek ?? '—', subLabel: kpis?.activitiesWeekDelta ?? '', subLabelColor: kpis?.activitiesWeekDeltaPositive ? '#16a34a' : '#d97706' },
+            { label: 'TOTAL SPEND MTD',      value: kpis?.totalSpendMTD ?? '—',       subLabel: kpis?.spendSubLabel ?? '' },
+            { label: 'CONTACTS ENGAGED',     value: kpis?.contactsEngaged ?? '—',     subLabel: kpis?.contactsSubLabel ?? '' },
+            { label: 'FOLLOW-UPS PENDING',   value: kpis?.followUpsPending ?? '—',    subLabel: `${kpis?.followUpsOverdue ?? 0} overdue`, subLabelColor: '#d97706' },
+            { label: 'CLOSED THIS MONTH',    value: closedThisMonth,                  subLabel: 'Contracts closed MTD', subLabelColor: '#16a34a' },
             { label: 'PIPELINE VALUE',       value: formatPipelineValue(pipelineValue), subLabel: 'Non-closed contracts' },
           ].map(card => (
             <motion.div
@@ -328,7 +330,7 @@ export default function DashboardPage() {
                 className="font-semibold"
                 style={{ fontSize: 13, color: '#c4a574' }}
               >
-                {agentKpis.weekStreak.label}
+                {kpis?.weekStreak.label ?? '—'}
               </span>
             </div>
 
@@ -337,9 +339,9 @@ export default function DashboardPage() {
               className="flex items-center justify-between"
               style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', gap: 4 }}
             >
-              {agentKpis.weekStreak.days.map((day, i) => {
-                const active = agentKpis.weekStreak.active[i]
-                const isToday = agentKpis.weekStreak.isToday[i]
+              {(kpis?.weekStreak.days ?? ['M','T','W','T','F','S','S']).map((day, i) => {
+                const active = kpis?.weekStreak.active[i] ?? false
+                const isToday = kpis?.weekStreak.isToday[i] ?? false
                 return (
                   <div
                     key={i}
@@ -365,9 +367,9 @@ export default function DashboardPage() {
             {/* Stats */}
             <div className="flex flex-col" style={{ padding: '12px 20px' }}>
               {[
-                { label: 'Avg cost per activity', value: agentKpis.streakStats.avgCostPerActivity, gold: false },
-                { label: 'Most active type',      value: agentKpis.streakStats.mostActiveType,     gold: false },
-                { label: 'Longest streak',        value: agentKpis.streakStats.longestStreak,      gold: true  },
+                { label: 'Avg cost per activity', value: kpis?.streakStats.avgCostPerActivity ?? '—', gold: false },
+                { label: 'Most active type',      value: kpis?.streakStats.mostActiveType ?? '—',     gold: false },
+                { label: 'Longest streak',        value: kpis?.streakStats.longestStreak ?? '—',      gold: true  },
               ].map(({ label, value, gold }, i, arr) => (
                 <div
                   key={label}

@@ -1,6 +1,11 @@
 'use client'
 
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
+import { getNotifications, markAllRead as apiMarkAllRead } from '@/lib/api/notifications'
+
+function hasToken() {
+  return typeof window !== 'undefined' && !!localStorage.getItem('fieldiq_token')
+}
 
 export interface Notification {
   id: string
@@ -10,43 +15,7 @@ export interface Notification {
   read: boolean
 }
 
-const INITIAL_NOTIFICATIONS: Notification[] = [
-  {
-    id: 'n-001',
-    type: 'activity',
-    message: 'Marcus Webb logged a Lunch · $142',
-    timestamp: '2 hours ago',
-    read: false,
-  },
-  {
-    id: 'n-002',
-    type: 'follow-up',
-    message: 'Follow-up overdue: Jennifer Hartley',
-    timestamp: '1 day ago',
-    read: false,
-  },
-  {
-    id: 'n-003',
-    type: 'alert',
-    message: 'Kevin Ross is below weekly target (4/7 activities)',
-    timestamp: '2 days ago',
-    read: false,
-  },
-  {
-    id: 'n-004',
-    type: 'activity',
-    message: 'CE Class hosted — 14 attendees',
-    timestamp: '4 days ago',
-    read: true,
-  },
-  {
-    id: 'n-005',
-    type: 'activity',
-    message: 'Brendan Mills: Quarterly lunch completed',
-    timestamp: '5 days ago',
-    read: true,
-  },
-]
+const INITIAL_NOTIFICATIONS: Notification[] = []
 
 interface NotificationContextValue {
   isOpen: boolean
@@ -72,6 +41,21 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [isOpen, setIsOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS)
 
+  useEffect(() => {
+    if (!hasToken()) return
+    getNotifications()
+      .then(({ items }) => {
+        setNotifications(items.map(n => ({
+          id: n.id,
+          type: n.type as Notification['type'],
+          message: n.message,
+          timestamp: n.created_at,
+          read: n.read,
+        })))
+      })
+      .catch(() => {})
+  }, [])
+
   const unreadCount = notifications.filter(n => !n.read).length
 
   function addNotification(n: Omit<Notification, 'id' | 'read'>) {
@@ -81,8 +65,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     ])
   }
 
-  function markAllRead() {
+  async function markAllRead() {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+    try {
+      await apiMarkAllRead()
+    } catch {}
   }
 
   return (

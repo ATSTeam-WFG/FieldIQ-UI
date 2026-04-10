@@ -1,86 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Utensils, Package, Star, Circle, Phone, Coffee, CalendarPlus } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
+import { Plus, Circle, CalendarPlus } from 'lucide-react'
 import { AppShell } from '@/components/fieldiq/AppShell'
 import { useActivityLog } from '@/lib/context/ActivityLogContext'
-
-// ── Types ──────────────────────────────────────────────────────────────────
-
-interface FollowUpItem {
-  id: string
-  type: string
-  contactName: string
-  company: string
-  date: string         // ISO date string
-  spend: number
-  followUpNote: string
-}
-
-// ── Static data (hardcoded, no import) ────────────────────────────────────
-
-const ALL_FOLLOW_UPS: FollowUpItem[] = [
-  {
-    id: 'act-001',
-    type: 'Lunch',
-    contactName: 'Marcus Webb',
-    company: 'Peachtree Realty Group',
-    date: '2026-03-11',
-    spend: 142,
-    followUpNote: 'Send CE class invite by Friday',
-  },
-  {
-    id: 'act-005',
-    type: 'Closing Gift',
-    contactName: 'Jennifer Hartley',
-    company: 'Hartley Homes',
-    date: '2026-03-06',
-    spend: 95,
-    followUpNote: 'Send thank-you card',
-  },
-  {
-    id: 'act-006',
-    type: 'Lunch',
-    contactName: 'Brendan Mills',
-    company: 'Compass Real Estate – Atlanta',
-    date: '2026-03-05',
-    spend: 178,
-    followUpNote: 'Confirm Q2 breakfast dates',
-  },
-  {
-    id: 'act-008',
-    type: 'Sponsorship',
-    contactName: 'Event Sponsor',
-    company: 'Buckhead Business Association',
-    date: '2026-03-03',
-    spend: 250,
-    followUpNote: 'Connect with all 7 contacts on LinkedIn',
-  },
-  {
-    id: 'act-fu-001',
-    type: 'Call',
-    contactName: 'Priya Nair',
-    company: 'Nair & Associates',
-    date: '2026-03-19',
-    spend: 0,
-    followUpNote: 'Check if deal closed successfully',
-  },
-  {
-    id: 'act-fu-002',
-    type: 'Coffee',
-    contactName: 'Derek Okafor',
-    company: 'Okafor Properties LLC',
-    date: '2026-03-22',
-    spend: 18,
-    followUpNote: 'Send luxury endorsement overview packet',
-  },
-]
+import { useFollowUps, useUpdateFollowUp } from '@/lib/hooks/useFollowUps'
+import type { FollowUp } from '@/lib/api/follow-ups'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-
-const TODAY = new Date(2026, 2, 17) // March 17, 2026
-const WEEK_START = new Date(2026, 2, 10) // March 10, 2026
 
 function parseDate(str: string): Date {
   const [y, m, d] = str.split('-').map(Number)
@@ -92,46 +19,43 @@ function formatDateChip(str: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-function getGroup(item: FollowUpItem): 'overdue' | 'thisWeek' | 'upcoming' {
-  const d = parseDate(item.date)
-  if (d < WEEK_START) return 'overdue'
-  if (d <= TODAY) return 'thisWeek'
+function getGroup(item: FollowUp): 'overdue' | 'thisWeek' | 'upcoming' {
+  if (!item.due_date) return 'upcoming'
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const weekStart = new Date(today)
+  weekStart.setDate(today.getDate() - today.getDay()) // start of current week (Sunday)
+  const d = parseDate(item.due_date)
+  if (d < weekStart) return 'overdue'
+  if (d <= today) return 'thisWeek'
   return 'upcoming'
-}
-
-const iconMap: Record<string, LucideIcon> = {
-  Lunch: Utensils,
-  'Closing Gift': Package,
-  Sponsorship: Star,
-  Call: Phone,
-  Coffee: Coffee,
-}
-
-function getIcon(type: string): LucideIcon {
-  return iconMap[type] ?? Circle
 }
 
 // ── Calendar URL helpers ────────────────────────────────────────────────────
 
-function buildGoogleCalendarUrl(item: FollowUpItem): string {
-  const d = parseDate(item.date)
+function buildGoogleCalendarUrl(item: FollowUp): string {
+  if (!item.due_date) return ''
+  const d = parseDate(item.due_date)
   const pad = (n: number) => String(n).padStart(2, '0')
   const dateStr = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`
-  const title = encodeURIComponent(`Follow-up: ${item.contactName} (${item.type})`)
-  const details = encodeURIComponent(item.followUpNote)
+  const contactName = item.contact?.name ?? 'Contact'
+  const title = encodeURIComponent(`Follow-up: ${contactName}`)
+  const details = encodeURIComponent(item.note ?? '')
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dateStr}/${dateStr}&details=${details}`
 }
 
-function buildOutlookCalendarUrl(item: FollowUpItem): string {
-  const dateStr = item.date
-  const subject = encodeURIComponent(`Follow-up: ${item.contactName} (${item.type})`)
-  const body = encodeURIComponent(item.followUpNote)
+function buildOutlookCalendarUrl(item: FollowUp): string {
+  if (!item.due_date) return ''
+  const dateStr = item.due_date
+  const contactName = item.contact?.name ?? 'Contact'
+  const subject = encodeURIComponent(`Follow-up: ${contactName}`)
+  const body = encodeURIComponent(item.note ?? '')
   return `https://outlook.live.com/calendar/0/action/compose?subject=${subject}&startdt=${dateStr}&enddt=${dateStr}&body=${body}`
 }
 
 // ── CalendarDropdown subcomponent ──────────────────────────────────────────
 
-function CalendarDropdown({ item }: { item: FollowUpItem }) {
+function CalendarDropdown({ item }: { item: FollowUp }) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -276,13 +200,14 @@ function CalendarDropdown({ item }: { item: FollowUpItem }) {
 // ── Subcomponents ──────────────────────────────────────────────────────────
 
 interface FollowUpRowProps {
-  item: FollowUpItem
+  item: FollowUp
   isLast: boolean
 }
 
 function FollowUpRow({ item, isLast }: FollowUpRowProps) {
-  const [status, setStatus] = useState<'pending' | 'done' | 'cancelled'>('pending')
-  const Icon = getIcon(item.type)
+  const initialStatus = item.status === 'completed' ? 'done' : item.status === 'cancelled' ? 'cancelled' : 'pending'
+  const [status, setStatus] = useState<'pending' | 'done' | 'cancelled'>(initialStatus)
+  const { mutate: updateFollowUp } = useUpdateFollowUp()
 
   const opacity = status === 'done' ? 0.5 : status === 'cancelled' ? 0.4 : 1
 
@@ -311,15 +236,7 @@ function FollowUpRow({ item, isLast }: FollowUpRowProps) {
             backgroundColor: 'var(--surface)',
           }}
         >
-          <Icon size={14} style={{ color: 'var(--muted)' }} />
-        </div>
-
-        {/* Type label */}
-        <div
-          className="shrink-0 hidden sm:block"
-          style={{ width: 100, fontSize: 13, color: 'var(--body)' }}
-        >
-          {item.type}
+          <Circle size={14} style={{ color: 'var(--muted)' }} />
         </div>
 
         {/* Contact / company / note */}
@@ -335,25 +252,27 @@ function FollowUpRow({ item, isLast }: FollowUpRowProps) {
               textDecoration: status !== 'pending' ? 'line-through' : 'none',
             }}
           >
-            {item.contactName}
+            {item.contact?.name ?? '—'}
           </span>
           <span
             className="truncate"
             style={{ fontSize: 11, color: 'var(--muted)' }}
           >
-            {item.company}
+            {item.contact?.company ?? ''}
           </span>
-          <span
-            className="truncate"
-            style={{
-              fontSize: 13,
-              color: 'var(--body)',
-              fontStyle: 'italic',
-              marginTop: 4,
-            }}
-          >
-            {item.followUpNote}
-          </span>
+          {item.note && (
+            <span
+              className="truncate"
+              style={{
+                fontSize: 13,
+                color: 'var(--body)',
+                fontStyle: 'italic',
+                marginTop: 4,
+              }}
+            >
+              {item.note}
+            </span>
+          )}
         </div>
 
         {/* Right side: date chip + calendar + action buttons */}
@@ -362,19 +281,21 @@ function FollowUpRow({ item, isLast }: FollowUpRowProps) {
           style={{ gap: 8 }}
         >
           {/* Date chip */}
-          <span
-            className="rounded hidden sm:block"
-            style={{
-              fontSize: 11,
-              color: 'var(--muted)',
-              backgroundColor: 'var(--surface)',
-              padding: '3px 8px',
-              borderRadius: 4,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {formatDateChip(item.date)}
-          </span>
+          {item.due_date && (
+            <span
+              className="rounded hidden sm:block"
+              style={{
+                fontSize: 11,
+                color: 'var(--muted)',
+                backgroundColor: 'var(--surface)',
+                padding: '3px 8px',
+                borderRadius: 4,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {formatDateChip(item.due_date)}
+            </span>
+          )}
 
           {status === 'pending' ? (
             <>
@@ -383,7 +304,10 @@ function FollowUpRow({ item, isLast }: FollowUpRowProps) {
 
               {/* Mark Complete */}
               <button
-                onClick={() => setStatus('done')}
+                onClick={() => {
+                  setStatus('done')
+                  updateFollowUp({ id: item.id, payload: { status: 'completed' } })
+                }}
                 style={{
                   height: 32,
                   paddingLeft: 10,
@@ -403,7 +327,10 @@ function FollowUpRow({ item, isLast }: FollowUpRowProps) {
 
               {/* Cancel */}
               <button
-                onClick={() => setStatus('cancelled')}
+                onClick={() => {
+                  setStatus('cancelled')
+                  updateFollowUp({ id: item.id, payload: { status: 'cancelled' } })
+                }}
                 style={{
                   height: 32,
                   paddingLeft: 10,
@@ -456,7 +383,7 @@ function FollowUpRow({ item, isLast }: FollowUpRowProps) {
 
 interface GroupSectionProps {
   label: string
-  items: FollowUpItem[]
+  items: FollowUp[]
   isOverdue?: boolean
 }
 
@@ -539,10 +466,12 @@ function GroupSection({ label, items, isOverdue }: GroupSectionProps) {
 
 export default function FollowUpsPage() {
   const { openLog } = useActivityLog()
+  const { data, isLoading } = useFollowUps()
 
-  const overdue = ALL_FOLLOW_UPS.filter(i => getGroup(i) === 'overdue')
-  const thisWeek = ALL_FOLLOW_UPS.filter(i => getGroup(i) === 'thisWeek')
-  const upcoming = ALL_FOLLOW_UPS.filter(i => getGroup(i) === 'upcoming')
+  const allItems = (data?.items ?? []).filter(i => i.status === 'pending' || i.status === 'follow_up')
+  const overdue = allItems.filter(i => getGroup(i) === 'overdue')
+  const thisWeek = allItems.filter(i => getGroup(i) === 'thisWeek')
+  const upcoming = allItems.filter(i => getGroup(i) === 'upcoming')
 
   return (
     <AppShell activeItem="Follow-ups">
@@ -558,7 +487,7 @@ export default function FollowUpsPage() {
               Follow-ups
             </h1>
             <p style={{ fontSize: 14, color: 'var(--muted)' }}>
-              {overdue.length + thisWeek.length + upcoming.length} pending · {overdue.length} overdue
+              {isLoading ? 'Loading…' : `${overdue.length + thisWeek.length + upcoming.length} pending · ${overdue.length} overdue`}
             </p>
           </div>
 

@@ -2,35 +2,15 @@
 
 import { AppShell } from '@/components/fieldiq/AppShell'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
-import contactsData from '@/lib/mock-data/contacts.json'
-
-// ── Types ──────────────────────────────────────────────────────────────────
-
-interface Contact {
-  id: string
-  name: string
-  initials: string
-  company: string
-  role: string
-  type: string
-  score: number
-  lastActivityDate: string | null
-  scoreBreakdown?: {
-    recency: 'high' | 'medium' | 'low'
-    frequency: 'high' | 'medium' | 'low'
-    diversity: 'high' | 'medium' | 'low'
-    engagement: 'high' | 'medium' | 'low'
-  }
-}
+import { useContacts } from '@/lib/hooks/useContacts'
+import type { Contact } from '@/lib/api/contacts'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-
-const TODAY = new Date(2026, 2, 16) // March 16, 2026
 
 function formatRelativeDate(dateStr: string | null): string {
   if (!dateStr) return '—'
   const date = new Date(dateStr)
-  const diffMs = TODAY.getTime() - date.getTime()
+  const diffMs = new Date().getTime() - date.getTime()
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
   if (diffDays === 0) return 'Today'
   if (diffDays === 1) return 'Yesterday'
@@ -39,13 +19,13 @@ function formatRelativeDate(dateStr: string | null): string {
   return `${diffWeeks} week${diffWeeks > 1 ? 's' : ''} ago`
 }
 
-function levelColor(level: 'high' | 'medium' | 'low'): string {
+function levelColor(level: string): string {
   if (level === 'high') return '#16a34a'
   if (level === 'medium') return '#d97706'
   return 'var(--muted)'
 }
 
-function levelWidth(level: 'high' | 'medium' | 'low'): string {
+function levelWidth(level: string): string {
   if (level === 'high') return '100%'
   if (level === 'medium') return '60%'
   return '30%'
@@ -105,14 +85,16 @@ function ScoreRingSmall({ score }: { score: number }) {
 
 // ── Score breakdown mini bars ──────────────────────────────────────────────
 
-const BREAKDOWN_LABELS: Array<{ key: keyof NonNullable<Contact['scoreBreakdown']>; label: string }> = [
+const BREAKDOWN_LABELS: Array<{ key: string; label: string }> = [
   { key: 'recency',    label: 'Recency' },
   { key: 'frequency',  label: 'Frequency' },
   { key: 'diversity',  label: 'Diversity' },
   { key: 'engagement', label: 'Engagement' },
 ]
 
-function BreakdownBars({ breakdown }: { breakdown: NonNullable<Contact['scoreBreakdown']> }) {
+type ScoreBreakdown = NonNullable<Contact['score_breakdown']>
+
+function BreakdownBars({ breakdown }: { breakdown: ScoreBreakdown }) {
   return (
     <div
       style={{
@@ -123,7 +105,7 @@ function BreakdownBars({ breakdown }: { breakdown: NonNullable<Contact['scoreBre
       }}
     >
       {BREAKDOWN_LABELS.map(({ key, label }) => {
-        const level = breakdown[key]
+        const level = (breakdown as Record<string, string>)[key] ?? 'low'
         return (
           <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <span style={{ fontSize: 9, color: 'var(--muted)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
@@ -186,8 +168,9 @@ function LegendDot({ color }: { color: string }) {
 // ── Page ───────────────────────────────────────────────────────────────────
 
 export default function ScoresPage() {
-  // Filter to agent contacts, sort by score descending
-  const agents = (contactsData as Contact[])
+  const { data, isLoading } = useContacts()
+
+  const agents = (data?.items ?? [])
     .filter(c => c.type === 'agent')
     .sort((a, b) => b.score - a.score)
 
@@ -348,10 +331,22 @@ export default function ScoresPage() {
             ))}
           </div>
 
+          {/* Loading / empty state */}
+          {isLoading && (
+            <div className="flex items-center justify-center" style={{ padding: '48px 20px' }}>
+              <span style={{ fontSize: 14, color: 'var(--muted)' }}>Loading…</span>
+            </div>
+          )}
+          {!isLoading && agents.length === 0 && (
+            <div className="flex items-center justify-center" style={{ padding: '48px 20px' }}>
+              <span style={{ fontSize: 14, color: 'var(--muted)' }}>No contacts tracked yet.</span>
+            </div>
+          )}
+
           {/* Table rows */}
           {agents.map((contact, idx) => {
             const isLast = idx === agents.length - 1
-            const breakdown = contact.scoreBreakdown
+            const breakdown = contact.score_breakdown
 
             return (
               <div
@@ -407,7 +402,7 @@ export default function ScoresPage() {
                       className="truncate"
                       style={{ fontSize: 11, color: 'var(--muted)' }}
                     >
-                      {contact.role}
+                      {contact.job_title ?? ''}
                     </span>
                   </div>
                 </div>
@@ -453,7 +448,7 @@ export default function ScoresPage() {
                   className="hidden md:block shrink-0"
                   style={{ width: 120, fontSize: 13, color: 'var(--muted)' }}
                 >
-                  {formatRelativeDate(contact.lastActivityDate)}
+                  {formatRelativeDate(contact.last_activity_date)}
                 </span>
 
                 {/* TREND — desktop only */}

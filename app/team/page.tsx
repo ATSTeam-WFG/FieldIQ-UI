@@ -6,9 +6,18 @@ import { Download, UserPlus, ChevronRight, Radio, FileBarChart2, Search, Sliders
 import { AppShell } from '@/components/fieldiq/AppShell'
 import { useInviteAgent } from '@/lib/context/InviteAgentContext'
 import { useTeamBroadcast } from '@/lib/context/TeamBroadcastContext'
-import teamData from '@/lib/mock-data/team.json'
-
-const { roster } = teamData as any
+const roster = {
+  kpi: {
+    totalAgents: 0,
+    onLeave: 0,
+    avgScore: 0,
+    scoreDelta: 0,
+    teamActivitiesMTD: 0,
+    activitiesDeltaPct: 0,
+    topPerformer: { name: '—', score: 0, activities: 0 },
+  },
+  agents: [] as any[],
+}
 
 type EmploymentStatus = 'active' | 'on-leave' | 'inactive'
 
@@ -55,7 +64,7 @@ export default function TeamRosterPage() {
                 Team
               </h1>
               <p style={{ fontSize: 13, color: 'var(--muted)', margin: 0 }}>
-                {agents.length} agents in your team
+                {agents.length} reps in your team
               </p>
             </div>
 
@@ -84,12 +93,12 @@ export default function TeamRosterPage() {
                 }}
               >
                 <UserPlus size={14} />
-                Invite Agent
+                Invite Rep
               </button>
             </div>
           </div>
 
-          {/* Mobile: full-width Invite Agent button */}
+          {/* Mobile: full-width Invite Rep button */}
           <button
             onClick={openInviteAgent}
             className="flex md:hidden w-full items-center justify-center"
@@ -100,7 +109,7 @@ export default function TeamRosterPage() {
             }}
           >
             <UserPlus size={15} />
-            Invite Agent
+            Invite Rep
           </button>
         </div>
 
@@ -116,7 +125,7 @@ export default function TeamRosterPage() {
           <Search size={15} style={{ color: 'var(--muted)', flexShrink: 0 }} />
           <input
             type="text"
-            placeholder="Search agents..."
+            placeholder="Search reps..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="flex-1 bg-transparent outline-none"
@@ -129,7 +138,7 @@ export default function TeamRosterPage() {
         {/* Desktop: 4 columns */}
         <div className="hidden md:grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
           <div style={{ ...cardStyle, padding: 20, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <span style={{ fontSize: 10, letterSpacing: '0.06em', color: 'var(--muted)', textTransform: 'uppercase' }}>Total Agents</span>
+            <span style={{ fontSize: 10, letterSpacing: '0.06em', color: 'var(--muted)', textTransform: 'uppercase' }}>Total Reps</span>
             <span style={{ fontSize: 28, fontWeight: 600, color: '#c4a574', lineHeight: 1 }}>{kpi.totalAgents}</span>
             <span style={{ fontSize: 12, color: 'var(--muted)' }}>{kpi.onLeave} on leave</span>
           </div>
@@ -153,7 +162,7 @@ export default function TeamRosterPage() {
         {/* Mobile: 2×2 grid */}
         <div className="grid md:hidden" style={{ gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           {[
-            { label: 'Total Agents',   value: kpi.totalAgents,   isName: false },
+            { label: 'Total Reps',   value: kpi.totalAgents,   isName: false },
             { label: 'Active Now',     value: activeCount,        isName: false },
             { label: 'Avg Score',      value: kpi.avgScore,       isName: false },
             { label: 'Top Performer',  value: kpi.topPerformer.name.split(' ').map((w: string, i: number) => i === 0 ? w[0] + '.' : w).join(' '), isName: true },
@@ -189,7 +198,7 @@ export default function TeamRosterPage() {
           <table className="w-full" style={{ borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                {['Agent', 'Territory', 'Activities', 'Score', 'Status', 'Last Active', 'Actions'].map(col => (
+                {['Rep', 'Territory', 'Activities', 'Score', 'Status', 'Last Active', 'Actions'].map(col => (
                   <th
                     key={col}
                     className="text-left"
@@ -264,7 +273,7 @@ export default function TeamRosterPage() {
               borderBottom: '1px solid var(--border)',
             }}
           >
-            {['Agent', 'Last Active', 'Status'].map(col => (
+            {['Rep', 'Last Active', 'Status'].map(col => (
               <span
                 key={col}
                 style={{ fontSize: 10, letterSpacing: '0.06em', fontWeight: 500, color: 'var(--muted)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}

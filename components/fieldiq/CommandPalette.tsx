@@ -6,8 +6,8 @@ import { Search, Users, Activity, Circle, Utensils, Gift, GraduationCap, Coffee,
 import Link from 'next/link'
 import type { LucideIcon } from 'lucide-react'
 import { useSearch } from '@/lib/context/SearchContext'
-import contactsData from '@/lib/mock-data/contacts.json'
-import activitiesData from '@/lib/mock-data/activities.json'
+import { useContacts } from '@/lib/hooks/useContacts'
+import { useActivities } from '@/lib/hooks/useActivities'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -159,13 +159,22 @@ export function CommandPalette() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [closeSearch])
 
-  const contacts = contactsData as Contact[]
-  const activities = activitiesData as ActivityItem[]
+  const { data: contactsData } = useContacts()
+  const { data: activitiesData } = useActivities()
+
+  const contacts: Contact[] = (contactsData?.items ?? []) as Contact[]
+  const activities: ActivityItem[] = (activitiesData?.items ?? []).map(a => ({
+    id: a.id,
+    type: a.type,
+    contactName: a.contactName,
+    date: a.date,
+    notes: a.notes,
+  }))
 
   // Filtered results
   const filteredContacts = query
     ? contacts.filter(c =>
-        fuzzyMatch(c.name, query) || fuzzyMatch(c.company, query)
+        fuzzyMatch(c.name, query) || fuzzyMatch(c.company ?? '', query)
       )
     : []
 
@@ -177,12 +186,12 @@ export function CommandPalette() {
       )
     : []
 
-  // Recent contacts (zero-query state): last 5 by lastActivityDate
+  // Recent contacts (zero-query state): last 5 by last_activity_date
   const recentContacts = [...contacts]
-    .filter(c => (c as any).lastActivityDate)
+    .filter(c => (c as any).last_activity_date)
     .sort((a, b) =>
-      new Date((b as any).lastActivityDate).getTime() -
-      new Date((a as any).lastActivityDate).getTime()
+      new Date((b as any).last_activity_date).getTime() -
+      new Date((a as any).last_activity_date).getTime()
     )
     .slice(0, 5)
 

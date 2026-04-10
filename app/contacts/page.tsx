@@ -7,22 +7,8 @@ import { AppShell } from '@/components/fieldiq/AppShell'
 import { FilterSearchBar, FilterPills } from '@/components/fieldiq/FilterBar'
 import type { FilterOption } from '@/components/fieldiq/FilterBar'
 import { useAddContact } from '@/lib/context/AddContactContext'
-import contactsData from '@/lib/mock-data/contacts.json'
-
-interface Contact {
-  id: string
-  name: string
-  initials: string
-  company: string
-  role: string
-  type: 'agent' | 'vendor'
-  score: number
-  lastActivityType: string | null
-  lastActivityDate: string | null
-  tags: string[]
-  spend: number
-  closings: number
-}
+import { useContacts } from '@/lib/hooks/useContacts'
+import type { Contact } from '@/lib/api/contacts'
 
 // ── Sub-components ──────────────────────────────────────────────────────────
 
@@ -212,7 +198,7 @@ function MobileContactRow({
             className="truncate"
             style={{ fontSize: 12, color: 'var(--muted)' }}
           >
-            {contact.role}
+            {contact.job_title ?? ''}
           </span>
         </div>
         {/* Right side: score (or type badge) + chevron */}
@@ -244,10 +230,10 @@ function MobileContactRow({
       >
         {contact.type === 'agent' && (
           <span style={{ fontSize: 11, color: 'var(--muted)' }}>
-            {contact.lastActivityType && contact.lastActivityDate ? (
+            {contact.last_activity_type && contact.last_activity_date ? (
               <>
-                {contact.lastActivityType} ·{' '}
-                {new Date(contact.lastActivityDate).toLocaleDateString('en-US', {
+                {contact.last_activity_type} ·{' '}
+                {new Date(contact.last_activity_date).toLocaleDateString('en-US', {
                   month: 'short',
                   day: 'numeric',
                 })}
@@ -268,14 +254,16 @@ function MobileContactRow({
 export default function ContactsPage() {
   const router = useRouter()
   const { openAddContact } = useAddContact()
+  const { data, isLoading } = useContacts()
   const [activeTab, setActiveTab] = useState<'all' | 'agents' | 'vendors'>('all')
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState('score')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
-  const allCount = contactsData.length
-  const agentCount = contactsData.filter(c => c.type === 'agent').length
-  const vendorCount = contactsData.filter(c => c.type === 'vendor').length
+  const allContacts = data?.items ?? []
+  const allCount = allContacts.length
+  const agentCount = allContacts.filter(c => c.type === 'agent').length
+  const vendorCount = allContacts.filter(c => c.type === 'vendor').length
 
   function handleSort(key: string) {
     if (key === sortKey) {
@@ -287,7 +275,7 @@ export default function ContactsPage() {
   }
 
   const visibleContacts = useMemo(() => {
-    let list = contactsData as Contact[]
+    let list = allContacts
     if (activeTab === 'agents') list = list.filter(c => c.type === 'agent')
     if (activeTab === 'vendors') list = list.filter(c => c.type === 'vendor')
     if (search.trim()) {
@@ -295,7 +283,7 @@ export default function ContactsPage() {
       list = list.filter(
         c =>
           c.name.toLowerCase().includes(q) ||
-          c.company.toLowerCase().includes(q)
+          (c.company ?? '').toLowerCase().includes(q)
       )
     }
     list = [...list].sort((a, b) => {
@@ -310,7 +298,7 @@ export default function ContactsPage() {
         : String(bVal).localeCompare(String(aVal))
     })
     return list
-  }, [activeTab, search, sortKey, sortDir])
+  }, [allContacts, activeTab, search, sortKey, sortDir])
 
   const tabs = [
     { key: 'all' as const,      label: `All ${allCount}` },
@@ -339,7 +327,7 @@ export default function ContactsPage() {
             Contacts
           </h1>
           <p style={{ fontSize: 13, color: 'var(--muted)' }}>
-            {allCount} contacts · Sarah Chen · Buckhead Territory
+            {allCount} contacts
           </p>
         </div>
         <button
@@ -389,7 +377,11 @@ export default function ContactsPage() {
 
         {/* ── Mobile list (hidden on md+) ── */}
         <div className="md:hidden">
-          {visibleContacts.length === 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center" style={{ padding: '48px 20px' }}>
+              <span style={{ fontSize: 14, color: 'var(--muted)' }}>Loading…</span>
+            </div>
+          ) : visibleContacts.length === 0 ? (
             <EmptyState />
           ) : (
             visibleContacts.map(contact => (
@@ -449,7 +441,11 @@ export default function ContactsPage() {
           </div>
 
           {/* Rows */}
-          {visibleContacts.length === 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center" style={{ padding: '48px 20px' }}>
+              <span style={{ fontSize: 14, color: 'var(--muted)' }}>Loading…</span>
+            </div>
+          ) : visibleContacts.length === 0 ? (
             <EmptyState />
           ) : (
             visibleContacts.map(contact => (
@@ -477,7 +473,7 @@ export default function ContactsPage() {
                       {contact.name}
                     </span>
                     <span className="truncate" style={{ fontSize: 11, color: 'var(--muted)' }}>
-                      {contact.role}
+                      {contact.job_title ?? ''}
                     </span>
                   </div>
                 </div>
@@ -490,7 +486,7 @@ export default function ContactsPage() {
                   <>
                     <TypeBadge type={contact.type} />
                     <ScoreBadge score={contact.score} type={contact.type} />
-                    <ActivityCell type={contact.lastActivityType} date={contact.lastActivityDate} />
+                    <ActivityCell type={contact.last_activity_type} date={contact.last_activity_date} />
                     <TagChips tags={contact.tags} />
                   </>
                 )}
@@ -498,7 +494,7 @@ export default function ContactsPage() {
                 {activeTab === 'agents' && (
                   <>
                     <ScoreBadge score={contact.score} type={contact.type} />
-                    <ActivityCell type={contact.lastActivityType} date={contact.lastActivityDate} />
+                    <ActivityCell type={contact.last_activity_type} date={contact.last_activity_date} />
                     <span style={{ fontSize: 13, color: 'var(--body)', textAlign: 'right' }}>
                       ${contact.spend}
                     </span>

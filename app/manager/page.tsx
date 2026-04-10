@@ -9,8 +9,6 @@ import { AppShell } from '@/components/fieldiq/AppShell'
 import { StatusBadge } from '@/components/fieldiq/StatusBadge'
 import type { ActivityStatus } from '@/components/fieldiq/StatusBadge'
 import { useTheme } from '@/lib/context/ThemeContext'
-import teamData from '@/lib/mock-data/team.json'
-
 type Period = 'mtd' | 'qtd' | 'ytd'
 
 const PERIOD_LABELS: Record<Period, string> = { mtd: 'MTD', qtd: 'QTD', ytd: 'YTD' }
@@ -39,21 +37,30 @@ export default function ManagerPage() {
   const { theme } = useTheme()
   const isDark = theme === 'dark'
 
-  const kpis = teamData[period]
-  const breakdown = (teamData.activityBreakdown as Record<Period, typeof teamData.activityBreakdown.mtd>)[period]
-  const leaderboard = teamData.leaderboard
-  const alerts = teamData.alerts
-  const agentActivity = teamData.agentActivity as Array<{
+  const kpis = {
+    totalActivities: 0,
+    activitiesDelta: '0',
+    totalSpend: 0,
+    avgSpendPerAgent: 0,
+    activeAgents: 0,
+    totalAgents: 0,
+    avgActivitiesPerAgent: 0,
+    target: 0,
+  }
+  const breakdown: Array<{ type: string; count: number; spend: number }> = []
+  const leaderboard: any[] = []
+  const alerts: any[] = []
+  const agentActivity: Array<{
     name: string
     initials: string
     activities: number
     level: string
     status: string
     weeks: number[]
-  }>
+  }> = []
 
-  const maxCount = Math.max(...breakdown.map(b => b.count))
-  const totalActivities = breakdown.reduce((s, b) => s + b.count, 0)
+  const maxCount = 0
+  const totalActivities = 0
 
   // Heatmap square colors — dark and light variants
   const heatmapColor: Record<string, string> = isDark
@@ -74,7 +81,7 @@ export default function ManagerPage() {
               Dashboard
             </h1>
             <p style={{ fontSize: 14, color: 'var(--muted)' }}>
-              Team performance overview · Premier Title Agency
+              Team performance overview
             </p>
           </div>
 

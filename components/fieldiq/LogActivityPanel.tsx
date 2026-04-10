@@ -13,9 +13,11 @@ import { useSuccessToast } from '@/components/fieldiq/SuccessToast'
 import { useTheme } from '@/lib/context/ThemeContext'
 import { toast } from '@/lib/hooks/use-toast'
 import { ToastAction } from '@/components/ui/toast'
-import contactsData from '@/lib/mock-data/contacts.json'
 import { DatePickerInput } from '@/components/fieldiq/DatePickerInput'
 import { TimePickerInput } from '@/components/fieldiq/TimePickerInput'
+import { useContacts } from '@/lib/hooks/useContacts'
+import { useCreateActivity } from '@/lib/hooks/useActivities'
+import { TYPE_ENUM } from '@/lib/api/activities'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -129,7 +131,6 @@ function VenueLine({
   )
 }
 
-const vendorContacts = (contactsData as Contact[]).filter(c => c.type === 'vendor')
 
 function SponsorSection({
   isSponsored,
@@ -144,6 +145,10 @@ function SponsorSection({
 }) {
   const [vendorSearch, setVendorSearch] = useState('')
   const [showDrop, setShowDrop] = useState(false)
+  const { data: sponsorResult } = useContacts({ type: 'sponsor', page_size: 100 })
+  const vendorContacts: Contact[] = (sponsorResult?.items ?? []).map(c => ({
+    id: c.id, name: c.name, initials: c.initials, company: c.company ?? '', type: c.type,
+  }))
 
   const addedIds = new Set(vendorEntries.map(e => e.contact.id))
   const filtered = vendorContacts.filter(c =>
@@ -683,6 +688,16 @@ export function LogActivityPanel() {
   const isEditMode = !isManager && editingActivity !== null
   const showToast = useSuccessToast()
   const { theme } = useTheme()
+  const { data: contactsResult } = useContacts({ page_size: 100 })
+  const allContacts: Contact[] = (contactsResult?.items ?? []).map(c => ({
+    id: c.id,
+    name: c.name,
+    initials: c.initials,
+    company: c.company ?? '',
+    type: c.type,
+    role: c.job_title ?? undefined,
+  }))
+  const createActivity = useCreateActivity()
   const [activityType, setActivityType] = useState('Lunch')
   const [selectedContacts, setSelectedContacts] = useState<Contact[]>([])
   const [contactSearch, setContactSearch] = useState('')
@@ -751,11 +766,11 @@ export function LogActivityPanel() {
   }, [isOpen])
 
   const selectedContactIds = new Set(selectedContacts.map(c => c.id))
-  const filteredContacts = (contactsData as Contact[]).filter(c =>
-    c.type !== 'vendor' &&
+  const filteredContacts = allContacts.filter(c =>
+    c.type !== 'sponsor' &&
     !selectedContactIds.has(c.id) &&
     (c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
-     c.company.toLowerCase().includes(contactSearch.toLowerCase()))
+     (c.company ?? '').toLowerCase().includes(contactSearch.toLowerCase()))
   )
 
   function handleVoiceRecord() {
@@ -764,7 +779,7 @@ export function LogActivityPanel() {
       setVoiceListening(false)
       // Simulate AI-parsed voice input
       setActivityType('Lunch')
-      const michelle = (contactsData as Contact[]).find(c => c.name === 'Michelle Tran') ?? null
+      const michelle = allContacts.find(c => c.name === 'Michelle Tran') ?? null
       if (michelle) {
         setSelectedContacts([michelle])
         setContactSearch('')
@@ -776,12 +791,34 @@ export function LogActivityPanel() {
     }, 2000)
   }
 
-  function handleSave() {
+  async function handleSave() {
+    const typeEnum = TYPE_ENUM[activityType] ?? 'other'
+    const primaryContact = selectedContacts[0] ?? null
+    const primaryVendor = vendorEntries[0]?.contact ?? null
+
+    try {
+      await createActivity.mutateAsync({
+        type: typeEnum,
+        date: date || new Date().toISOString().slice(0, 10),
+        time: time || null,
+        contact_id: primaryContact?.id ?? null,
+        sponsor_id: primaryVendor?.id ?? null,
+        notes: notes || null,
+        spend: cost ? parseFloat(cost) : 0,
+        label: activityLabel || null,
+        is_sponsored: isSponsored,
+        follow_up_note: requiresFollowUp && notes ? notes : null,
+        follow_up_due_date: requiresFollowUp ? followUpDate || null : null,
+      })
+    } catch {
+      // Error is handled by React Query; show generic toast
+    }
+
     showToast('Activity logged successfully')
     closeLog()
-    // Fire follow-up suggestion if a contact was selected and notes hint at upcoming events
-    if (selectedContacts.length > 0 && notes.toLowerCase().includes('clos')) {
-      const primaryContact = selectedContacts[0]
+
+    // AI follow-up suggestion
+    if (primaryContact && notes.toLowerCase().includes('clos')) {
       setTimeout(() => {
         toast({
           title: `${primaryContact.name} mentioned upcoming closings — follow up in 2 weeks?`,
@@ -791,6 +828,8 @@ export function LogActivityPanel() {
         })
       }, 800)
     }
+
+    // Reset form
     setActivityType('Lunch')
     setAiAutoFilled(false)
     setSelectedContacts([])
@@ -798,7 +837,6 @@ export function LogActivityPanel() {
     setCost('')
     setNotes('')
     setRequiresFollowUp(true)
-    // Reset activity-specific fields
     setVenue('')
     setIsSponsored(false)
     setVendorEntries([])
@@ -814,7 +852,6 @@ export function LogActivityPanel() {
     setActivityName('')
     setActivityLabel('')
     setVoiceListening(false)
-    setAiAutoFilled(false)
   }
 
   function selectContact(c: Contact) {

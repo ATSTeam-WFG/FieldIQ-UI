@@ -7,7 +7,8 @@ import { useContract } from '@/lib/context/ContractContext'
 import { useRole } from '@/lib/context/RoleContext'
 import { useAddContact } from '@/lib/context/AddContactContext'
 import { useSuccessToast } from '@/components/fieldiq/SuccessToast'
-import contactsData from '@/lib/mock-data/contacts.json'
+import { useContacts } from '@/lib/hooks/useContacts'
+import { useCreateContract } from '@/lib/hooks/useContracts'
 import { DatePickerInput } from '@/components/fieldiq/DatePickerInput'
 import { TimePickerInput } from '@/components/fieldiq/TimePickerInput'
 
@@ -17,7 +18,7 @@ interface Contact {
   id: string
   name: string
   initials: string
-  company: string
+  company: string | null
   type?: string
 }
 
@@ -145,6 +146,8 @@ export function LogContractPanel() {
   const isEditMode = !isManager && editingContract !== null
   const { openAddContact } = useAddContact()
   const showToast = useSuccessToast()
+  const { data: contactsData } = useContacts()
+  const createContract = useCreateContract()
 
   // Form state
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
@@ -181,9 +184,9 @@ export function LogContractPanel() {
       setStatus(editingContract.status)
       setExpectedDate(editingContract.expectedClosingDate || editingContract.actualClosingDate || '')
       setNotes(editingContract.notes || '')
-      const match = (contactsData as Contact[]).find(
-        c => c.name === editingContract.contactName
-      ) ?? null
+      const match = (contactsData?.items ?? []).find(
+        c => c.name === (editingContract as any).contactName
+      ) as Contact | undefined ?? null
       setSelectedContact(match)
       setContactSearch('')
     } else {
@@ -193,19 +196,42 @@ export function LogContractPanel() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingContract])
 
-  const repContacts = (contactsData as Contact[]).filter(c => c.type !== 'vendor')
+  const repContacts = (contactsData?.items ?? []).filter(c => c.type !== 'vendor') as Contact[]
   const filteredContacts = contactSearch
     ? repContacts.filter(
         c =>
           c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
-          c.company.toLowerCase().includes(contactSearch.toLowerCase())
+          (c.company ?? '').toLowerCase().includes(contactSearch.toLowerCase())
       )
     : repContacts
 
-  function handleSubmit() {
+  const TYPE_MAP: Record<ContractType, string> = {
+    Regular: 'purchase',
+    Refinance: 'refinance',
+    Commercial: 'commercial',
+  }
+  const STATUS_MAP: Record<ContractStatus, string> = {
+    opened: 'initiated',
+    closed: 'closed',
+    cancelled: 'cancelled',
+  }
+
+  async function handleSubmit() {
     if (!selectedContact || !address.trim()) return
-    showToast('Contract logged successfully')
-    closeLog()
+    try {
+      await createContract.mutateAsync({
+        contact_id: selectedContact.id,
+        property_address: address,
+        transaction_type: TYPE_MAP[contractType],
+        status: STATUS_MAP[status],
+        file_number: fileNumber || null,
+        amount: amount ? parseFloat(amount) : null,
+        expected_closing_date: expectedDate || null,
+        notes: notes || null,
+      })
+      showToast('Contract logged successfully')
+      closeLog()
+    } catch {}
   }
 
   const canSubmit = !!selectedContact && address.trim().length > 0
@@ -509,10 +535,11 @@ export function LogContractPanel() {
                 </button>
                 <button
                   onClick={handleSubmit}
+                  disabled={createContract.isPending}
                   className="flex items-center justify-center rounded-[8px] font-semibold transition-opacity"
-                  style={{ height: 40, paddingLeft: 24, paddingRight: 24, fontSize: 14, backgroundColor: '#c4a574', color: '#000000', border: 'none', cursor: 'pointer' }}
+                  style={{ height: 40, paddingLeft: 24, paddingRight: 24, fontSize: 14, backgroundColor: '#c4a574', color: '#000000', border: 'none', cursor: createContract.isPending ? 'not-allowed' : 'pointer', opacity: createContract.isPending ? 0.6 : 1 }}
                 >
-                  Save Changes
+                  {createContract.isPending ? 'Saving…' : 'Save Changes'}
                 </button>
               </div>
             </>
@@ -528,17 +555,18 @@ export function LogContractPanel() {
               </button>
               <button
                 onClick={handleSubmit}
-                disabled={!canSubmit}
+                disabled={!canSubmit || createContract.isPending}
                 className="flex items-center justify-center rounded-[8px] font-semibold transition-opacity"
                 style={{
                   height: 40, paddingLeft: 24, paddingRight: 24, fontSize: 14,
                   backgroundColor: canSubmit ? '#c4a574' : 'var(--surface)',
                   color: canSubmit ? '#000000' : 'var(--muted)',
-                  cursor: canSubmit ? 'pointer' : 'not-allowed',
+                  cursor: (canSubmit && !createContract.isPending) ? 'pointer' : 'not-allowed',
                   border: 'none',
+                  opacity: createContract.isPending ? 0.6 : 1,
                 }}
               >
-                Add Contract
+                {createContract.isPending ? 'Saving…' : 'Add Contract'}
               </button>
             </>
           )}

@@ -7,29 +7,12 @@ import { FilterSearchBar, FilterPills } from '@/components/fieldiq/FilterBar'
 import type { FilterOption } from '@/components/fieldiq/FilterBar'
 import { useContract } from '@/lib/context/ContractContext'
 import { useRole } from '@/lib/context/RoleContext'
-import contractsData from '@/lib/mock-data/contracts.json'
+import { useContracts } from '@/lib/hooks/useContracts'
+import type { Contract } from '@/lib/api/contracts'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type ContractStatus = 'opened' | 'closed' | 'cancelled'
-type ContractType = 'Regular' | 'Refinance' | 'Commercial'
-
-interface Contract {
-  id: string
-  agentName: string
-  contactId: string
-  contactName: string
-  contactCompany: string
-  fileNumber: string
-  address: string
-  type: ContractType
-  status: ContractStatus
-  amount: number
-  expectedClosingDate?: string
-  actualClosingDate?: string
-  createdDate: string
-  notes?: string
-}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -38,7 +21,7 @@ function formatCurrency(n: number): string {
 }
 
 function closingDate(contract: Contract): string {
-  const raw = contract.actualClosingDate ?? contract.expectedClosingDate
+  const raw = contract.actual_closing_date ?? contract.expected_closing_date
   if (!raw) return '—'
   const d = new Date(raw)
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -46,14 +29,14 @@ function closingDate(contract: Contract): string {
 
 // ── Contract Status Badge ─────────────────────────────────────────────────────
 
-const STATUS_CONFIG: Record<ContractStatus, { label: string; color: string; border: string }> = {
+const STATUS_CONFIG: Record<string, { label: string; color: string; border: string }> = {
   opened:    { label: 'Opened',    color: 'var(--muted)', border: 'var(--border)' },
   closed:    { label: 'Closed',    color: '#16a34a',      border: '#16a34a'       },
   cancelled: { label: 'Cancelled', color: '#d97706',      border: '#d97706'       },
 }
 
-function ContractBadge({ status }: { status: ContractStatus }) {
-  const cfg = STATUS_CONFIG[status]
+function ContractBadge({ status }: { status: string }) {
+  const cfg = STATUS_CONFIG[status] ?? { label: status, color: 'var(--muted)', border: 'var(--border)' }
   return (
     <span
       className="inline-flex items-center justify-center rounded-[4px]"
@@ -74,7 +57,7 @@ function ContractBadge({ status }: { status: ContractStatus }) {
 
 // ── Type Badge ────────────────────────────────────────────────────────────────
 
-function TypeBadge({ type }: { type: ContractType }) {
+function TypeBadge({ type }: { type: string }) {
   return (
     <span
       className="inline-flex items-center justify-center rounded-[4px]"
@@ -95,7 +78,7 @@ function TypeBadge({ type }: { type: ContractType }) {
 
 // ── Filter options ────────────────────────────────────────────────────────────
 
-const STATUS_OPTIONS: FilterOption<ContractStatus | 'all'>[] = [
+const STATUS_OPTIONS: FilterOption<string>[] = [
   { value: 'all',       label: 'All'       },
   { value: 'opened',    label: 'Opened'    },
   { value: 'closed',    label: 'Closed'    },
@@ -104,31 +87,26 @@ const STATUS_OPTIONS: FilterOption<ContractStatus | 'all'>[] = [
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-function repInitials(name: string): string {
-  return name.split(' ').map(w => w[0]).join('')
-}
 
 export default function ContractsPage() {
   const { openLog, openContract } = useContract()
   const { role } = useRole()
   const isManager = role === 'manager'
 
-  const [activeFilter, setActiveFilter] = useState<ContractStatus | 'all'>('all')
+  const [activeFilter, setActiveFilter] = useState<string>('all')
   const [search, setSearch] = useState('')
 
-  const baseContracts = isManager
-    ? (contractsData as Contract[])
-    : (contractsData as Contract[]).filter(c => c.agentName === 'Sarah Chen')
+  const { data, isLoading } = useContracts()
+  const allContracts = data?.items ?? []
 
-  const filtered = baseContracts.filter(c => {
+  const filtered = allContracts.filter(c => {
     const matchesStatus = activeFilter === 'all' || c.status === activeFilter
     const q = search.toLowerCase()
     const matchesSearch =
       !q ||
-      c.contactName.toLowerCase().includes(q) ||
-      c.address.toLowerCase().includes(q) ||
-      c.fileNumber.toLowerCase().includes(q) ||
-      (isManager && c.agentName.toLowerCase().includes(q))
+      (c.contact?.name ?? '').toLowerCase().includes(q) ||
+      (c.property_address ?? '').toLowerCase().includes(q) ||
+      (c.file_number ?? '').toLowerCase().includes(q)
     return matchesStatus && matchesSearch
   })
 
@@ -214,8 +192,12 @@ export default function ContractsPage() {
             ))}
           </div>
 
-          {/* Empty state */}
-          {filtered.length === 0 && (
+          {/* Loading / empty state */}
+          {isLoading ? (
+            <div className="flex items-center justify-center" style={{ padding: '48px 20px' }}>
+              <span style={{ fontSize: 14, color: 'var(--muted)' }}>Loading…</span>
+            </div>
+          ) : filtered.length === 0 ? (
             <div
               className="flex flex-col items-center justify-center"
               style={{ padding: '48px 20px', gap: 8 }}
@@ -223,7 +205,7 @@ export default function ContractsPage() {
               <FileText size={28} style={{ color: 'var(--border)' }} />
               <p style={{ fontSize: 14, color: 'var(--muted)' }}>No contracts found.</p>
             </div>
-          )}
+          ) : null}
 
           {/* Desktop rows */}
           {filtered.map((contract, idx) => {
@@ -232,7 +214,7 @@ export default function ContractsPage() {
               <div key={contract.id}>
                 {/* Desktop row */}
                 <div
-                  onClick={() => openContract(contract)}
+                  onClick={() => openContract(contract as any)}
                   className="hidden md:flex items-center hover:bg-[var(--surface)]"
                   style={{
                     height: 56,
@@ -244,37 +226,37 @@ export default function ContractsPage() {
                   {/* FILE NUMBER */}
                   <div style={{ flex: 1.4, minWidth: 0 }}>
                     <span className="truncate block" style={{ fontSize: 12, fontFamily: 'monospace', color: 'var(--body)' }}>
-                      {contract.fileNumber}
+                      {contract.file_number ?? '—'}
                     </span>
                   </div>
 
                   {/* ADDRESS */}
                   <div style={{ flex: 2.2, minWidth: 0 }}>
                     <span className="truncate block" style={{ fontSize: 13, fontWeight: 500, color: 'var(--foreground)' }}>
-                      {contract.address}
+                      {contract.property_address ?? '—'}
                     </span>
                   </div>
 
                   {/* CONTACT */}
                   <div style={{ flex: 1.5, minWidth: 0 }}>
                     <span className="truncate block" style={{ fontSize: 13, color: 'var(--body)' }}>
-                      {contract.contactName}
+                      {contract.contact?.name ?? '—'}
                     </span>
                     <span className="truncate block" style={{ fontSize: 11, color: 'var(--muted)' }}>
-                      {contract.contactCompany}
+                      {contract.contact?.company ?? ''}
                     </span>
                   </div>
 
                   {/* AMOUNT */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ fontSize: 13, fontWeight: 600, color: '#c4a574' }}>
-                      {formatCurrency(contract.amount)}
+                      {formatCurrency(contract.amount ?? 0)}
                     </span>
                   </div>
 
                   {/* TYPE */}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <TypeBadge type={contract.type} />
+                    <TypeBadge type={contract.transaction_type} />
                   </div>
 
                   {/* STATUS */}
@@ -291,16 +273,8 @@ export default function ContractsPage() {
 
                   {/* REP — manager only */}
                   {isManager && (
-                    <div style={{ flex: 1.2, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div
-                        className="flex items-center justify-center rounded-full shrink-0"
-                        style={{ width: 24, height: 24, backgroundColor: '#c4a574', fontSize: 9, fontWeight: 600, color: '#000000' }}
-                      >
-                        {repInitials(contract.agentName)}
-                      </div>
-                      <span className="truncate" style={{ fontSize: 13, color: 'var(--body)' }}>
-                        {contract.agentName}
-                      </span>
+                    <div style={{ flex: 1.2, minWidth: 0 }}>
+                      <span className="truncate" style={{ fontSize: 13, color: 'var(--muted)' }}>—</span>
                     </div>
                   )}
 
@@ -308,7 +282,7 @@ export default function ContractsPage() {
 
                 {/* Mobile card row */}
                 <div
-                  onClick={() => openContract(contract)}
+                  onClick={() => openContract(contract as any)}
                   className="flex items-center md:hidden"
                   style={{
                     padding: '14px 16px',
@@ -322,18 +296,18 @@ export default function ContractsPage() {
                       className="truncate font-medium"
                       style={{ fontSize: 13, color: 'var(--foreground)' }}
                     >
-                      {contract.address}
+                      {contract.property_address ?? '—'}
                     </span>
                     <span
                       className="truncate"
                       style={{ fontSize: 11, color: 'var(--muted)' }}
                     >
-                      {isManager ? `${contract.agentName} · ` : ''}{contract.contactName} · {closingDate(contract)}
+                      {contract.contact?.name ?? '—'} · {closingDate(contract)}
                     </span>
                   </div>
                   <div className="flex shrink-0 flex-col items-end" style={{ gap: 4 }}>
                     <span style={{ fontSize: 13, fontWeight: 600, color: '#c4a574' }}>
-                      {formatCurrency(contract.amount)}
+                      {formatCurrency(contract.amount ?? 0)}
                     </span>
                     <ContractBadge status={contract.status} />
                   </div>

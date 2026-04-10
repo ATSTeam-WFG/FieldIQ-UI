@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import {
-  Mail, Phone, Building2, MapPin,
+  Mail, Phone, Building2,
   Utensils, Hand, GraduationCap, Coffee, Gift, Star, Plus,
   Phone as PhoneIcon,
 } from 'lucide-react'
@@ -14,44 +14,13 @@ import type { ActivityStatus } from '@/components/fieldiq/StatusBadge'
 import { AICard } from '@/components/fieldiq/AICard'
 import { useActivityLog } from '@/lib/context/ActivityLogContext'
 import { useAddContact } from '@/lib/context/AddContactContext'
-import contactsData from '@/lib/mock-data/contacts.json'
-import activitiesData from '@/lib/mock-data/activities.json'
-import contractsData from '@/lib/mock-data/contracts.json'
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-interface AgentContact {
-  id: string
-  name: string
-  initials: string
-  company: string
-  role: string
-  type: string
-  score: number
-  lastActivityDate: string | null
-  tags: string[]
-  spend: number
-  closings: number
-  email: string
-  phone: string
-  address: string
-  activityRate: string
-  totalActivities: number
-  scoreBreakdown: { recency: string; frequency: string; diversity: string; engagement: string }
-}
-
-interface Activity {
-  id: string
-  type: string
-  contactName: string
-  contactCompany: string
-  date: string
-  time: string
-  notes: string
-  spend: number
-  followUp: string
-  status: string
-}
+import { useQuery } from '@tanstack/react-query'
+import { getContact } from '@/lib/api/contacts'
+import type { Contact } from '@/lib/api/contacts'
+import type { Contract } from '@/lib/api/contracts'
+import { useActivities } from '@/lib/hooks/useActivities'
+import { useContracts } from '@/lib/hooks/useContracts'
+import type { ActivityRecord } from '@/lib/context/ActivityLogContext'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -92,28 +61,15 @@ interface ContactPageProps {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-type ContactContractStatus = 'initiated' | 'pending' | 'closed' | 'updated'
-
-interface ContactContract {
-  id: string
-  fileNumber?: string
-  address?: string
-  status: ContactContractStatus
-  amount: number
-  expectedClosingDate?: string
-  actualClosingDate?: string
-  contactId: string
-}
-
-const CONTRACT_BADGE: Record<ContactContractStatus, { label: string; color: string; border: string }> = {
+const CONTRACT_BADGE: Record<string, { label: string; color: string; border: string }> = {
   initiated: { label: 'Initiated', color: 'var(--muted)',  border: 'var(--border)' },
   pending:   { label: 'Pending',   color: '#d97706',       border: '#d97706'       },
   closed:    { label: 'Closed',    color: '#16a34a',       border: '#16a34a'       },
   updated:   { label: 'Updated',   color: '#60a5fa',       border: '#60a5fa'       },
 }
 
-function ContactContractBadge({ status }: { status: ContactContractStatus }) {
-  const cfg = CONTRACT_BADGE[status]
+function ContactContractBadge({ status }: { status: string }) {
+  const cfg = CONTRACT_BADGE[status] ?? { label: status, color: 'var(--muted)', border: 'var(--border)' }
   return (
     <span
       style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: 20, padding: '0 7px', fontSize: 10, color: cfg.color, border: `1px solid ${cfg.border}`, borderRadius: 4, backgroundColor: 'transparent', whiteSpace: 'nowrap' }}
@@ -128,10 +84,27 @@ export default function ContactPage({ params }: ContactPageProps) {
   const { openEditContact } = useAddContact()
   const [showAllActivities, setShowAllActivities] = useState(false)
 
-  const rawContact = contactsData.find(c => c.id === params.id)
+  const { data: contact, isLoading: contactLoading } = useQuery({
+    queryKey: ['contact', params.id],
+    queryFn: () => getContact(params.id),
+  })
+  const { data: activitiesResult, isLoading: activitiesLoading } = useActivities({ contact_id: params.id })
+  const { data: contractsResult, isLoading: contractsLoading } = useContracts({ contact_id: params.id })
+
+  const isLoading = contactLoading || activitiesLoading || contractsLoading
+
+  if (isLoading) {
+    return (
+      <AppShell activeItem="Contacts">
+        <div style={{ padding: '48px 24px', textAlign: 'center' }}>
+          <p style={{ fontSize: 14, color: 'var(--muted)' }}>Loading...</p>
+        </div>
+      </AppShell>
+    )
+  }
 
   // Fallback for not found
-  if (!rawContact) {
+  if (!contact) {
     return (
       <AppShell activeItem="Contacts">
         <div style={cardStyle} className="text-center p-8">
@@ -148,8 +121,8 @@ export default function ContactPage({ params }: ContactPageProps) {
   }
 
   // Vendor profile view
-  if (rawContact.type === 'vendor') {
-    const sponsor = rawContact as { id: string; name: string; initials: string; company: string; role: string; type: string; tags: string[]; email: string; phone: string }
+  if (contact.type === 'vendor') {
+    const sponsor = contact
     return (
       <AppShell activeItem="Contacts">
         <Link href="/contacts" style={{ display: 'inline-block', fontSize: 12, color: 'var(--muted)', textDecoration: 'none', marginBottom: 20 }}>
@@ -164,7 +137,7 @@ export default function ContactPage({ params }: ContactPageProps) {
                 <span style={{ color: 'var(--muted)', fontWeight: 700, fontSize: 18 }}>{sponsor.initials}</span>
               </div>
               <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>{sponsor.name}</p>
-              <p style={{ fontSize: 12, color: 'var(--muted)', margin: '2px 0 4px' }}>{sponsor.role}</p>
+              <p style={{ fontSize: 12, color: 'var(--muted)', margin: '2px 0 4px' }}>{sponsor.job_title ?? 'Vendor'}</p>
               <span style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 4, padding: '2px 8px', fontSize: 11, color: 'var(--muted)' }}>
                 Vendor
               </span>
@@ -238,13 +211,10 @@ export default function ContactPage({ params }: ContactPageProps) {
     )
   }
 
-  const contact = rawContact as unknown as AgentContact
-  const allActivities = (activitiesData as Activity[]).filter(a => a.contactName === contact.name)
+  const allActivities: ActivityRecord[] = activitiesResult?.items ?? []
   const visibleActivities = showAllActivities ? allActivities : allActivities.slice(0, 5)
 
-  const contactContracts = (contractsData as ContactContract[]).filter(
-    c => c.contactId === contact.id
-  )
+  const contactContracts: Contract[] = contractsResult?.items ?? []
 
   // Spend breakdown by activity type
   const spendByType: Record<string, number> = {}
@@ -256,7 +226,7 @@ export default function ContactPage({ params }: ContactPageProps) {
   const spendCategories = Object.entries(spendByType).filter(([, v]) => v > 0)
   const totalSpend = spendCategories.reduce((sum, [, v]) => sum + v, 0)
 
-  const lastContactedLabel = relativeDays(contact.lastActivityDate)
+  const lastContactedLabel = relativeDays(contact.last_activity_date)
 
   // ── Profile Header Card ────────────────────────────────────────────────────
   const ProfileHeaderCard = (
@@ -278,7 +248,7 @@ export default function ContactPage({ params }: ContactPageProps) {
           <span style={{ color: '#fff', fontWeight: 700, fontSize: 18 }}>{contact.initials}</span>
         </div>
         <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>{contact.name}</p>
-        <p style={{ fontSize: 12, color: 'var(--muted)', margin: '2px 0 0' }}>{contact.role}</p>
+        <p style={{ fontSize: 12, color: 'var(--muted)', margin: '2px 0 0' }}>{contact.job_title ?? ''}</p>
       </div>
 
       <div style={{ height: 1, backgroundColor: 'var(--border)' }} />
@@ -296,10 +266,6 @@ export default function ContactPage({ params }: ContactPageProps) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Building2 size={14} style={{ color: 'var(--muted)', flexShrink: 0 }} />
           <span style={{ fontSize: 13, color: 'var(--body)' }}>{contact.company}</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <MapPin size={14} style={{ color: 'var(--muted)', flexShrink: 0 }} />
-          <span style={{ fontSize: 13, color: 'var(--body)' }}>{contact.address}</span>
         </div>
       </div>
 
@@ -378,10 +344,10 @@ export default function ContactPage({ params }: ContactPageProps) {
   const StatsGrid = (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
       {[
-        { label: 'Total Activities', value: String(contact.totalActivities) },
+        { label: 'Total Activities', value: String(allActivities.length) },
         { label: 'Total Spend', value: `$${contact.spend}` },
         { label: 'Last Contact', value: lastContactedLabel },
-        { label: 'Activity Rate', value: contact.activityRate },
+        { label: 'Activity Rate', value: '—' },
       ].map(({ label, value }) => (
         <div
           key={label}
@@ -452,7 +418,7 @@ export default function ContactPage({ params }: ContactPageProps) {
           </div>
 
           {contactContracts.map((c, i) => {
-            const raw = c.actualClosingDate ?? c.expectedClosingDate
+            const raw = c.actual_closing_date ?? c.expected_closing_date
             const dateLabel = raw
               ? new Date(raw).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
               : '—'
@@ -481,7 +447,7 @@ export default function ContactPage({ params }: ContactPageProps) {
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {c.fileNumber ?? '—'}
+                  {c.file_number ?? '—'}
                 </span>
                 <span
                   style={{
@@ -492,10 +458,10 @@ export default function ContactPage({ params }: ContactPageProps) {
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {c.address ?? '—'}
+                  {c.property_address ?? '—'}
                 </span>
                 <span style={{ fontSize: 13, fontWeight: 600, color: '#c4a574' }}>
-                  ${c.amount.toLocaleString()}
+                  ${(c.amount ?? 0).toLocaleString()}
                 </span>
                 <ContactContractBadge status={c.status} />
                 <span style={{ fontSize: 12, color: 'var(--muted)' }}>{dateLabel}</span>
@@ -533,9 +499,8 @@ export default function ContactPage({ params }: ContactPageProps) {
         <>
           {visibleActivities.map(activity => {
             const Icon = ACTIVITY_ICONS[activity.type] ?? Plus
-            const label = (activity as any).label as string | undefined
-            const allContacts = (activity as any).contacts as Array<{ id: string; name: string }> | undefined
-            const otherContacts = allContacts?.filter(c => c.name !== contact.name) ?? []
+            const label = activity.label
+            const otherContacts = (activity.contacts ?? []).filter((c: { name: string }) => c.name !== contact.name)
             const othersLabel = otherContacts.length === 1
               ? `with ${otherContacts[0].name}`
               : otherContacts.length > 1

@@ -6,6 +6,7 @@ import { useInviteAgent } from '@/lib/context/InviteAgentContext'
 import { useSuccessToast } from '@/components/fieldiq/SuccessToast'
 import { useTheme } from '@/lib/context/ThemeContext'
 import { SlideOverPanel } from './SlideOverPanel'
+import { createInvites } from '@/lib/api/agencies'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -68,6 +69,7 @@ export function InviteAgentPanel() {
   const [phone, setPhone] = useState('')
   const [role, setRole] = useState('rep')
   const [welcomeNote, setWelcomeNote] = useState('')
+  const [loading, setLoading] = useState(false)
 
   function resetForm() {
     setName('')
@@ -77,10 +79,30 @@ export function InviteAgentPanel() {
     setWelcomeNote('')
   }
 
-  function handleSend() {
-    showToast('Invitation sent successfully')
-    closeInviteAgent()
-    resetForm()
+  const REP_TIER_MAP: Record<string, string> = {
+    'rep': 'sales_rep',
+    'senior-rep': 'senior_sales_rep',
+    'team-lead': 'team_lead',
+  }
+
+  async function handleSend() {
+    setLoading(true)
+    try {
+      await createInvites([{
+        email,
+        full_name: name,
+        phone: phone || null,
+        rep_tier: REP_TIER_MAP[role] ?? 'sales_rep',
+        welcome_note: welcomeNote || null,
+      }])
+      showToast('Invitation sent successfully')
+      closeInviteAgent()
+      resetForm()
+    } catch {
+      showToast('Failed to send invite — please try again')
+    } finally {
+      setLoading(false)
+    }
   }
 
   function handleCancel() {
@@ -207,17 +229,18 @@ export function InviteAgentPanel() {
         <button
           type="button"
           onClick={handleSend}
-          disabled={!canSend}
+          disabled={!canSend || loading}
           style={{
             height: 40, padding: '0 20px', borderRadius: 8, fontSize: 14, fontWeight: 600,
             backgroundColor: canSend ? (theme === 'dark' ? '#c4a574' : '#000000') : 'var(--surface)',
             color: canSend ? (theme === 'dark' ? '#000000' : '#ffffff') : 'var(--muted)',
             border: canSend ? 'none' : '1px solid var(--border)',
-            cursor: canSend ? 'pointer' : 'not-allowed',
+            cursor: (canSend && !loading) ? 'pointer' : 'not-allowed',
             transition: 'all 0.15s',
+            opacity: loading ? 0.6 : 1,
           }}
         >
-          Send Invite
+          {loading ? 'Sending…' : 'Send Invite'}
         </button>
       </div>
     </SlideOverPanel>
