@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { House, Activity, Users, CalendarCheck, Ellipsis, LayoutDashboard, FileText } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
@@ -54,7 +54,8 @@ const managerMobileTabItems: TabItem[] = [
 
 export function AppShell({ activeItem, children }: AppShellProps) {
   const pathname = usePathname()
-  const { role } = useRole()
+  const router = useRouter()
+  const { role, loaded, isAuthenticated } = useRole()
   const { isOpen: logOpen } = useActivityLog()
   const { isOpen: addOpen } = useAddContact()
   const { isOpen: contractOpen } = useContract()
@@ -63,6 +64,21 @@ export function AppShell({ activeItem, children }: AppShellProps) {
   const { isOpen: broadcastOpen } = useTeamBroadcast()
   const { isOpen: searchOpen } = useSearch()
   const [moreOpen, setMoreOpen] = useState(false)
+
+  useEffect(() => {
+    if (loaded && !isAuthenticated) {
+      router.replace('/login')
+    }
+  }, [loaded, isAuthenticated, router])
+
+  if (!loaded || !isAuthenticated) {
+    return (
+      <div
+        className="flex h-screen items-center justify-center"
+        style={{ backgroundColor: 'var(--background)' }}
+      />
+    )
+  }
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">

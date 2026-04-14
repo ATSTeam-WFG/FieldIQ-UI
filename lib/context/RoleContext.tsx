@@ -22,6 +22,7 @@ interface RoleContextValue {
   userType: UserType
   canSwitch: boolean
   loaded: boolean
+  isAuthenticated: boolean
 }
 
 const RoleContext = createContext<RoleContextValue>({
@@ -31,6 +32,7 @@ const RoleContext = createContext<RoleContextValue>({
   userType: 'rep',
   canSwitch: false,
   loaded: false,
+  isAuthenticated: false,
 })
 
 export function RoleProvider({ children }: { children: React.ReactNode }) {
@@ -67,9 +69,10 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
 
   // Managers who also act as reps can switch views
   const canSwitch = userType === 'manager'
+  const isAuthenticated = loaded && persona.name !== ''
 
   return (
-    <RoleContext.Provider value={{ role, persona, setRole, userType, canSwitch, loaded }}>
+    <RoleContext.Provider value={{ role, persona, setRole, userType, canSwitch, loaded, isAuthenticated }}>
       {children}
     </RoleContext.Provider>
   )

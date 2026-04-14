@@ -6,25 +6,27 @@ import { Download, UserPlus, ChevronRight, Radio, FileBarChart2, Search, Sliders
 import { AppShell } from '@/components/fieldiq/AppShell'
 import { useInviteAgent } from '@/lib/context/InviteAgentContext'
 import { useTeamBroadcast } from '@/lib/context/TeamBroadcastContext'
-const roster = {
-  kpi: {
-    totalAgents: 0,
-    onLeave: 0,
-    avgScore: 0,
-    scoreDelta: 0,
-    teamActivitiesMTD: 0,
-    activitiesDeltaPct: 0,
-    topPerformer: { name: '—', score: 0, activities: 0 },
-  },
-  agents: [] as any[],
-}
+import { useMyTeam } from '@/lib/hooks/useMyTeam'
+import type { TeamAgentEntry } from '@/lib/api/teams'
 
 type EmploymentStatus = 'active' | 'on-leave' | 'inactive'
 
 const statusConfig: Record<EmploymentStatus, { dot: string; label: string; textColor: string; borderColor: string }> = {
   active:     { dot: '#4ade80', label: 'Active',   textColor: '#4ade80', borderColor: '#4ade80' },
-  'on-leave': { dot: '#d97706', label: 'On Leave', textColor: '#d97706', borderColor: '#d97706' },
+  'on-leave': { dot: '#d97706', label: 'Watch',    textColor: '#d97706', borderColor: '#d97706' },
   inactive:   { dot: '#71717a', label: 'Inactive', textColor: '#71717a', borderColor: '#71717a' },
+}
+
+function toEmploymentStatus(status: string): EmploymentStatus {
+  if (status === 'on-track') return 'active'
+  if (status === 'watch') return 'on-leave'
+  return 'inactive'
+}
+
+function formatLastActive(isoDate: string | null): string {
+  if (!isoDate) return '—'
+  const d = new Date(isoDate)
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 const cardStyle = {
@@ -37,19 +39,30 @@ const cardStyle = {
 } as const
 
 export default function TeamRosterPage() {
-  const { kpi, agents } = roster
   const { openInviteAgent } = useInviteAgent()
   const { openBroadcast } = useTeamBroadcast()
   const [showAll, setShowAll] = useState(false)
   const [search, setSearch] = useState('')
 
-  const activeCount = (agents as any[]).filter((a: any) => a.employmentStatus === 'active').length
+  const { data } = useMyTeam()
+  const agents: TeamAgentEntry[] = data?.agents ?? []
+
+  // Derived KPIs
+  const totalAgents = data?.totalAgents ?? 0
+  const activeCount = agents.filter(a => a.status === 'on-track').length
+  const watchCount = agents.filter(a => a.status === 'watch').length
+  const avgScore = agents.length > 0
+    ? Math.round(agents.reduce((s, a) => s + a.avgScore, 0) / agents.length)
+    : 0
+  const teamActivitiesMTD = agents.reduce((s, a) => s + a.activitiesMtd, 0)
+  const topPerformer = agents[0] ?? null
+
   const filteredAgents = search
-    ? (agents as any[]).filter((a: any) => a.name.toLowerCase().includes(search.toLowerCase()))
+    ? agents.filter(a => a.name.toLowerCase().includes(search.toLowerCase()))
     : agents
 
   const MOBILE_PREVIEW = 4
-  const mobileAgents = showAll ? filteredAgents : (filteredAgents as any[]).slice(0, MOBILE_PREVIEW)
+  const mobileAgents = showAll ? filteredAgents : filteredAgents.slice(0, MOBILE_PREVIEW)
 
   return (
     <AppShell activeItem="Team">
@@ -64,7 +77,7 @@ export default function TeamRosterPage() {
                 Team
               </h1>
               <p style={{ fontSize: 13, color: 'var(--muted)', margin: 0 }}>
-                {agents.length} reps in your team
+                {totalAgents} reps in your team
               </p>
             </div>
 
@@ -139,33 +152,39 @@ export default function TeamRosterPage() {
         <div className="hidden md:grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
           <div style={{ ...cardStyle, padding: 20, display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={{ fontSize: 10, letterSpacing: '0.06em', color: 'var(--muted)', textTransform: 'uppercase' }}>Total Reps</span>
-            <span style={{ fontSize: 28, fontWeight: 600, color: '#c4a574', lineHeight: 1 }}>{kpi.totalAgents}</span>
-            <span style={{ fontSize: 12, color: 'var(--muted)' }}>{kpi.onLeave} on leave</span>
+            <span style={{ fontSize: 28, fontWeight: 600, color: '#c4a574', lineHeight: 1 }}>{totalAgents}</span>
+            <span style={{ fontSize: 12, color: 'var(--muted)' }}>{watchCount} need attention</span>
           </div>
           <div style={{ ...cardStyle, padding: 20, display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={{ fontSize: 10, letterSpacing: '0.06em', color: 'var(--muted)', textTransform: 'uppercase' }}>Avg Relationship Score</span>
-            <span style={{ fontSize: 28, fontWeight: 600, color: '#c4a574', lineHeight: 1 }}>{kpi.avgScore}</span>
-            <span style={{ fontSize: 12, color: 'var(--muted)' }}>↑{kpi.scoreDelta}pts from last month</span>
+            <span style={{ fontSize: 28, fontWeight: 600, color: '#c4a574', lineHeight: 1 }}>{avgScore}</span>
+            <span style={{ fontSize: 12, color: 'var(--muted)' }}>Across {totalAgents} reps</span>
           </div>
           <div style={{ ...cardStyle, padding: 20, display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={{ fontSize: 10, letterSpacing: '0.06em', color: 'var(--muted)', textTransform: 'uppercase' }}>Team Activities (MTD)</span>
-            <span style={{ fontSize: 28, fontWeight: 600, color: '#c4a574', lineHeight: 1 }}>{kpi.teamActivitiesMTD}</span>
-            <span style={{ fontSize: 12, color: 'var(--muted)' }}>↑{kpi.activitiesDeltaPct}% from last month</span>
+            <span style={{ fontSize: 28, fontWeight: 600, color: '#c4a574', lineHeight: 1 }}>{teamActivitiesMTD}</span>
+            <span style={{ fontSize: 12, color: 'var(--muted)' }}>{activeCount} reps active this month</span>
           </div>
           <div style={{ ...cardStyle, padding: 20, display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={{ fontSize: 10, letterSpacing: '0.06em', color: 'var(--muted)', textTransform: 'uppercase' }}>Top Performer</span>
-            <span style={{ fontSize: 20, fontWeight: 600, color: '#c4a574', lineHeight: 1.2 }}>{kpi.topPerformer.name}</span>
-            <span style={{ fontSize: 12, color: 'var(--muted)' }}>Score: {kpi.topPerformer.score} · {kpi.topPerformer.activities} activities</span>
+            <span style={{ fontSize: 20, fontWeight: 600, color: '#c4a574', lineHeight: 1.2 }}>
+              {topPerformer?.name ?? '—'}
+            </span>
+            <span style={{ fontSize: 12, color: 'var(--muted)' }}>
+              {topPerformer
+                ? `Score: ${topPerformer.avgScore} · ${topPerformer.activitiesMtd} activities`
+                : 'No activity yet'}
+            </span>
           </div>
         </div>
 
         {/* Mobile: 2×2 grid */}
         <div className="grid md:hidden" style={{ gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           {[
-            { label: 'Total Reps',   value: kpi.totalAgents,   isName: false },
-            { label: 'Active Now',     value: activeCount,        isName: false },
-            { label: 'Avg Score',      value: kpi.avgScore,       isName: false },
-            { label: 'Top Performer',  value: kpi.topPerformer.name.split(' ').map((w: string, i: number) => i === 0 ? w[0] + '.' : w).join(' '), isName: true },
+            { label: 'Total Reps',    value: totalAgents,                    isName: false },
+            { label: 'Active Now',    value: activeCount,                    isName: false },
+            { label: 'Avg Score',     value: avgScore,                       isName: false },
+            { label: 'Top Performer', value: topPerformer?.name.split(' ').map((w, i) => i === 0 ? w[0] + '.' : w).join(' ') ?? '—', isName: true },
           ].map(({ label, value, isName }) => (
             <div
               key={label}
@@ -213,9 +232,10 @@ export default function TeamRosterPage() {
               </tr>
             </thead>
             <tbody>
-              {(agents as any[]).map((agent: any, i: number) => {
-                const status = statusConfig[agent.employmentStatus as EmploymentStatus]
-                const isLast = i === agents.length - 1
+              {filteredAgents.map((agent, i) => {
+                const empStatus = toEmploymentStatus(agent.status)
+                const statusCfg = statusConfig[empStatus]
+                const isLast = i === filteredAgents.length - 1
                 return (
                   <tr
                     key={agent.id}
@@ -234,16 +254,18 @@ export default function TeamRosterPage() {
                         <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--foreground)' }}>{agent.name}</span>
                       </div>
                     </td>
-                    <td style={{ padding: '0 16px', fontSize: 13, color: 'var(--body)' }}>{agent.territory}</td>
-                    <td style={{ padding: '0 16px', fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>{agent.activities}</td>
-                    <td style={{ padding: '0 16px', fontSize: 13, color: '#c4a574', fontWeight: 600 }}>{agent.score}</td>
+                    <td style={{ padding: '0 16px', fontSize: 13, color: 'var(--body)' }}>{agent.territory ?? '—'}</td>
+                    <td style={{ padding: '0 16px', fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>{agent.activitiesMtd}</td>
+                    <td style={{ padding: '0 16px', fontSize: 13, color: '#c4a574', fontWeight: 600 }}>{agent.avgScore}</td>
                     <td style={{ padding: '0 16px' }}>
                       <span className="flex items-center" style={{ gap: 6 }}>
-                        <span className="rounded-full shrink-0" style={{ width: 6, height: 6, backgroundColor: status.dot, display: 'inline-block' }} />
-                        <span style={{ fontSize: 13, color: status.textColor }}>{status.label}</span>
+                        <span className="rounded-full shrink-0" style={{ width: 6, height: 6, backgroundColor: statusCfg.dot, display: 'inline-block' }} />
+                        <span style={{ fontSize: 13, color: statusCfg.textColor }}>{statusCfg.label}</span>
                       </span>
                     </td>
-                    <td style={{ padding: '0 16px', fontSize: 13, color: 'var(--muted)' }}>{agent.lastActive}</td>
+                    <td style={{ padding: '0 16px', fontSize: 13, color: 'var(--muted)' }}>
+                      {formatLastActive(agent.lastActivity)}
+                    </td>
                     <td style={{ padding: '0 16px' }}>
                       <Link href={`/agent/${agent.id}`} style={{ fontSize: 13, fontWeight: 500, color: '#c4a574', textDecoration: 'none' }}>
                         View
@@ -284,8 +306,9 @@ export default function TeamRosterPage() {
           </div>
 
           {/* Rows */}
-          {(mobileAgents as any[]).map((agent: any, i: number) => {
-            const status = statusConfig[agent.employmentStatus as EmploymentStatus]
+          {mobileAgents.map((agent, i) => {
+            const empStatus = toEmploymentStatus(agent.status)
+            const statusCfg = statusConfig[empStatus]
             const isLast = i === mobileAgents.length - 1
             return (
               <Link
@@ -314,7 +337,7 @@ export default function TeamRosterPage() {
 
                 {/* Last Active */}
                 <span style={{ fontSize: 12, color: 'var(--muted)', whiteSpace: 'nowrap', paddingRight: 16 }}>
-                  {agent.lastActive}
+                  {formatLastActive(agent.lastActivity)}
                 </span>
 
                 {/* Status badge */}
@@ -323,19 +346,19 @@ export default function TeamRosterPage() {
                   style={{
                     height: 22, paddingLeft: 8, paddingRight: 8,
                     fontSize: 11, fontWeight: 500, whiteSpace: 'nowrap',
-                    color: status.textColor,
-                    border: `1px solid ${status.borderColor}`,
+                    color: statusCfg.textColor,
+                    border: `1px solid ${statusCfg.borderColor}`,
                     borderRadius: 4,
                   }}
                 >
-                  {status.label}
+                  {statusCfg.label}
                 </span>
               </Link>
             )
           })}
 
           {/* View all / collapse */}
-          {(filteredAgents as any[]).length > MOBILE_PREVIEW && (
+          {filteredAgents.length > MOBILE_PREVIEW && (
             <button
               onClick={() => setShowAll(v => !v)}
               className="w-full flex items-center justify-center"
@@ -348,7 +371,7 @@ export default function TeamRosterPage() {
             >
               {showAll
                 ? 'Show less'
-                : `View all ${(filteredAgents as any[]).length} reps`}
+                : `View all ${filteredAgents.length} reps`}
             </button>
           )}
         </div>
@@ -358,7 +381,7 @@ export default function TeamRosterPage() {
           <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>Quick Actions</span>
           <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 12 }}>
             {[
-              { icon: Radio,        title: 'Send Team Broadcast',  sub: 'Message all reps at once', onClick: openBroadcast },
+              { icon: Radio,         title: 'Send Team Broadcast',    sub: 'Message all reps at once', onClick: openBroadcast },
               { icon: FileBarChart2, title: 'View Performance Report', sub: 'Weekly team analytics summary', onClick: undefined },
             ].map(({ icon: Icon, title, sub, onClick }) => (
               <button

@@ -9,7 +9,8 @@ import { AppShell } from '@/components/fieldiq/AppShell'
 import { StatusBadge } from '@/components/fieldiq/StatusBadge'
 import type { ActivityStatus } from '@/components/fieldiq/StatusBadge'
 import { useTheme } from '@/lib/context/ThemeContext'
-type Period = 'mtd' | 'qtd' | 'ytd'
+import { useManagerDashboard } from '@/lib/hooks/useManagerDashboard'
+import type { Period } from '@/lib/api/analytics'
 
 const PERIOD_LABELS: Record<Period, string> = { mtd: 'MTD', qtd: 'QTD', ytd: 'YTD' }
 
@@ -37,7 +38,9 @@ export default function ManagerPage() {
   const { theme } = useTheme()
   const isDark = theme === 'dark'
 
-  const kpis = {
+  const { data } = useManagerDashboard(period)
+
+  const kpis = data?.kpis ?? {
     totalActivities: 0,
     activitiesDelta: '0',
     totalSpend: 0,
@@ -45,22 +48,15 @@ export default function ManagerPage() {
     activeAgents: 0,
     totalAgents: 0,
     avgActivitiesPerAgent: 0,
-    target: 0,
+    target: 20,
   }
-  const breakdown: Array<{ type: string; count: number; spend: number }> = []
-  const leaderboard: any[] = []
-  const alerts: any[] = []
-  const agentActivity: Array<{
-    name: string
-    initials: string
-    activities: number
-    level: string
-    status: string
-    weeks: number[]
-  }> = []
+  const breakdown = data?.breakdown ?? []
+  const leaderboard = data?.leaderboard ?? []
+  const alerts = data?.alerts ?? []
+  const agentActivity = data?.agentActivity ?? []
 
-  const maxCount = 0
-  const totalActivities = 0
+  const maxCount = breakdown.reduce((m, i) => Math.max(m, i.count), 0)
+  const totalActivities = breakdown.reduce((s, i) => s + i.count, 0)
 
   // Heatmap square colors — dark and light variants
   const heatmapColor: Record<string, string> = isDark
@@ -456,7 +452,7 @@ export default function ManagerPage() {
                     className="hidden shrink-0 lg:block"
                     style={{ width: 90, fontSize: 12, color: 'var(--muted)' }}
                   >
-                    {formatDate(agent.lastLog)}
+                    {agent.lastLog ? formatDate(agent.lastLog) : '—'}
                   </span>
 
                   {/* STATUS */}
@@ -492,7 +488,7 @@ export default function ManagerPage() {
                 style={{ fontSize: 12, color: '#c4a574' }}
                 className="hover:underline"
               >
-                View all 12 reps →
+                View all {kpis.totalAgents} reps →
               </button>
             </div>
           </div>

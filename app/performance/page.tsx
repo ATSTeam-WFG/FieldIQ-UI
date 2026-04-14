@@ -5,6 +5,8 @@ import { AICard } from '@/components/fieldiq/AICard'
 import { AppShell } from '@/components/fieldiq/AppShell'
 import { KPICard } from '@/components/fieldiq/KPICard'
 import { useRole } from '@/lib/context/RoleContext'
+import { useAgentPerformance } from '@/lib/hooks/useAgentPerformance'
+import { useManagerPerformance } from '@/lib/hooks/useManagerPerformance'
 import {
   BarChart,
   Bar as BarRecharts,
@@ -25,12 +27,6 @@ import {
   Tooltip,
   Legend,
 } from 'recharts'
-
-// ── Data (empty until backend endpoints available) ────────────────────────────
-
-const monthlySpend: Array<{ month: string; spend: number; activities: number }> = []
-const activityTypeBreakdown: Array<{ type: string; count: number; spend: number }> = []
-const maxCount = 0
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
 
@@ -57,133 +53,149 @@ function CustomTooltip({ active, payload, label }: any) {
   )
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// ── Manager view ──────────────────────────────────────────────────────────────
 
-const teamWeeklyData: Array<{ week: string; count: number }> = []
+function ManagerPerformancePage() {
+  const { data } = useManagerPerformance()
 
-export default function PerformancePage() {
-  const { role } = useRole()
+  const teamWeeklyData = data?.teamWeekly ?? []
+  const activityTypeBreakdown = data?.activityBreakdown ?? []
+  const agents = data?.agents ?? []
+  const maxCount = activityTypeBreakdown.reduce((m, r) => Math.max(m, r.count), 0)
 
-  if (role === 'manager') {
-    const agents: any[] = []
-    return (
-      <AppShell activeItem="Performance">
-        <div className="flex flex-col">
-          <div className="flex flex-col" style={{ gap: 4 }}>
-            <h1 className="font-semibold leading-tight" style={{ fontSize: 22, color: 'var(--foreground)' }}>
-              Team Performance
-            </h1>
-            <p style={{ fontSize: 14, color: 'var(--muted)' }}>
-              Premier Title Agency · MTD
-            </p>
-          </div>
+  return (
+    <AppShell activeItem="Performance">
+      <div className="flex flex-col">
+        <div className="flex flex-col" style={{ gap: 4 }}>
+          <h1 className="font-semibold leading-tight" style={{ fontSize: 22, color: 'var(--foreground)' }}>
+            Team Performance
+          </h1>
+          <p style={{ fontSize: 14, color: 'var(--muted)' }}>
+            Premier Title Agency · MTD
+          </p>
+        </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: 16, marginTop: 24 }}>
-            <KPICard label="TOTAL ACTIVITIES" value="47" subLabel="MTD" />
-            <KPICard label="TOTAL SPEND" value="$4,120" subLabel="MTD" />
-            <KPICard label="AVG SCORE" value="82" subLabel="Across team" />
-            <KPICard label="MOST ACTIVE" value="Sarah Chen" subLabel="This month" />
-          </div>
+        <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: 16, marginTop: 24 }}>
+          <KPICard label="TOTAL ACTIVITIES" value={String(data?.totalActivitiesMtd ?? 0)} subLabel="MTD" />
+          <KPICard label="TOTAL SPEND" value={data ? `$${data.totalSpendMtd.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '$0'} subLabel="MTD" />
+          <KPICard label="AVG SCORE" value={String(data?.avgScore ?? 0)} subLabel="Across team" />
+          <KPICard label="MOST ACTIVE" value={data?.mostActiveAgent ?? '—'} subLabel="This month" />
+        </div>
 
-          <div className="flex flex-col md:flex-row" style={{ gap: 16, marginTop: 16 }}>
-            <div className="fieldiq-card flex-1 min-w-0">
-              <div className="flex items-center" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
-                <span className="font-semibold" style={{ fontSize: 14, color: 'var(--foreground)' }}>
-                  Team Activities by Week
-                </span>
-              </div>
-              <div style={{ padding: '20px 20px 12px' }}>
-                <ResponsiveContainerRecharts width="100%" height={240}>
-                  <BarChart data={teamWeeklyData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-                    <CartesianGridRecharts strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                    <XAxisRecharts dataKey="week" tick={{ fontSize: 12, fill: '#a1a1aa' }} axisLine={false} tickLine={false} />
-                    <YAxisRecharts tick={{ fontSize: 12, fill: '#a1a1aa' }} axisLine={false} tickLine={false} width={28} />
-                    <TooltipRecharts
-                      contentStyle={{ backgroundColor: '#171717', border: '1px solid #27272a', borderRadius: 8, fontSize: 13, color: '#fff' }}
-                      cursor={{ fill: 'rgba(196,165,116,0.06)' }}
-                    />
-                    <BarRecharts dataKey="count" name="Activities" fill="#c4a574" radius={[4, 4, 0, 0]} maxBarSize={48} />
-                  </BarChart>
-                </ResponsiveContainerRecharts>
-              </div>
-            </div>
-
-            <div className="fieldiq-card shrink-0 w-full md:w-[300px]">
-              <div className="flex items-center" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
-                <span className="font-semibold" style={{ fontSize: 14, color: 'var(--foreground)' }}>
-                  Activity Type Breakdown
-                </span>
-              </div>
-              <div className="flex flex-col" style={{ padding: '16px 20px', gap: 8 }}>
-                {activityTypeBreakdown.map(row => {
-                  const pct = Math.round((row.count / maxCount) * 100)
-                  return (
-                    <div key={row.type} className="flex items-center" style={{ height: 36, gap: 12 }}>
-                      <span style={{ fontSize: 13, color: 'var(--body)', minWidth: 100, flexShrink: 0 }}>{row.type}</span>
-                      <span className="flex items-center justify-center rounded-full shrink-0"
-                        style={{ height: 20, minWidth: 28, paddingLeft: 8, paddingRight: 8, fontSize: 11, fontWeight: 600, backgroundColor: 'var(--surface)', color: 'var(--muted)', border: '1px solid var(--border)' }}>
-                        {row.count}
-                      </span>
-                      <div className="flex-1 overflow-hidden" style={{ height: 8, borderRadius: 4, backgroundColor: 'var(--surface)' }}>
-                        <div style={{ width: `${pct}%`, height: '100%', borderRadius: 4, backgroundColor: '#c4a574', transition: 'width 0.4s ease' }} />
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-
-          <div className="fieldiq-card" style={{ marginTop: 16 }}>
-            <div className="flex items-center" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', gap: 10 }}>
-              <span className="font-semibold" style={{ fontSize: 14, color: 'var(--foreground)' }}>Rep Performance</span>
-              <span style={{ backgroundColor: 'var(--surface)', borderRadius: 4, padding: '2px 8px', fontSize: 11, color: 'var(--muted)' }}>
-                {agents.length}
+        <div className="flex flex-col md:flex-row" style={{ gap: 16, marginTop: 16 }}>
+          <div className="fieldiq-card flex-1 min-w-0">
+            <div className="flex items-center" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+              <span className="font-semibold" style={{ fontSize: 14, color: 'var(--foreground)' }}>
+                Team Activities by Week
               </span>
             </div>
-
-            {/* Desktop table headers */}
-            <div className="hidden md:grid" style={{ gridTemplateColumns: '48px 1fr 100px 80px', padding: '10px 20px', borderBottom: '1px solid var(--border)', gap: 12 }}>
-              {['RANK', 'REP', 'ACTIVITIES', 'SCORE'].map(col => (
-                <span key={col} style={{ fontSize: 10, fontWeight: 500, letterSpacing: '0.06em', color: 'var(--muted)' }}>{col}</span>
-              ))}
+            <div style={{ padding: '20px 20px 12px' }}>
+              <ResponsiveContainerRecharts width="100%" height={240}>
+                <BarChart data={teamWeeklyData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+                  <CartesianGridRecharts strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+                  <XAxisRecharts dataKey="week" tick={{ fontSize: 12, fill: '#a1a1aa' }} axisLine={false} tickLine={false} />
+                  <YAxisRecharts tick={{ fontSize: 12, fill: '#a1a1aa' }} axisLine={false} tickLine={false} width={28} />
+                  <TooltipRecharts
+                    contentStyle={{ backgroundColor: '#171717', border: '1px solid #27272a', borderRadius: 8, fontSize: 13, color: '#fff' }}
+                    cursor={{ fill: 'rgba(196,165,116,0.06)' }}
+                  />
+                  <BarRecharts dataKey="count" name="Activities" fill="#c4a574" radius={[4, 4, 0, 0]} maxBarSize={48} />
+                </BarChart>
+              </ResponsiveContainerRecharts>
             </div>
+          </div>
 
-            {agents.map((agent: any, i: number) => (
-              <div key={agent.name}>
-                {/* Desktop row */}
-                <div className="hidden md:grid items-center" style={{ gridTemplateColumns: '48px 1fr 100px 80px', padding: '14px 20px', borderBottom: i < agents.length - 1 ? '1px solid var(--border)' : 'none', gap: 12 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--muted)' }}>#{i + 1}</span>
-                  <div className="flex items-center" style={{ gap: 10 }}>
-                    <div className="flex items-center justify-center rounded-full shrink-0"
-                      style={{ width: 32, height: 32, backgroundColor: '#c4a574', fontSize: 12, fontWeight: 700, color: '#000' }}>
-                      {(agent.initials ?? agent.name.slice(0, 2)).toUpperCase()}
+          <div className="fieldiq-card shrink-0 w-full md:w-[300px]">
+            <div className="flex items-center" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+              <span className="font-semibold" style={{ fontSize: 14, color: 'var(--foreground)' }}>
+                Activity Type Breakdown
+              </span>
+            </div>
+            <div className="flex flex-col" style={{ padding: '16px 20px', gap: 8 }}>
+              {activityTypeBreakdown.map(row => {
+                const pct = maxCount > 0 ? Math.round((row.count / maxCount) * 100) : 0
+                return (
+                  <div key={row.type} className="flex items-center" style={{ height: 36, gap: 12 }}>
+                    <span style={{ fontSize: 13, color: 'var(--body)', minWidth: 100, flexShrink: 0 }}>{row.type}</span>
+                    <span className="flex items-center justify-center rounded-full shrink-0"
+                      style={{ height: 20, minWidth: 28, paddingLeft: 8, paddingRight: 8, fontSize: 11, fontWeight: 600, backgroundColor: 'var(--surface)', color: 'var(--muted)', border: '1px solid var(--border)' }}>
+                      {row.count}
+                    </span>
+                    <div className="flex-1 overflow-hidden" style={{ height: 8, borderRadius: 4, backgroundColor: 'var(--surface)' }}>
+                      <div style={{ width: `${pct}%`, height: '100%', borderRadius: 4, backgroundColor: '#c4a574', transition: 'width 0.4s ease' }} />
                     </div>
-                    <span style={{ fontSize: 13, color: 'var(--foreground)' }}>{agent.name}</span>
                   </div>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#c4a574' }}>{agent.activities ?? '—'}</span>
-                  <span style={{ fontSize: 13, color: 'var(--body)' }}>{agent.score ?? '—'}</span>
-                </div>
-
-                {/* Mobile card row */}
-                <div className="flex md:hidden items-center justify-between"
-                  style={{ padding: '12px 20px', borderBottom: i < agents.length - 1 ? '1px solid var(--border)' : 'none', gap: 12 }}>
-                  <div className="flex items-center" style={{ gap: 10 }}>
-                    <div className="flex items-center justify-center rounded-full shrink-0"
-                      style={{ width: 32, height: 32, backgroundColor: '#c4a574', fontSize: 12, fontWeight: 700, color: '#000' }}>
-                      {(agent.initials ?? agent.name.slice(0, 2)).toUpperCase()}
-                    </div>
-                    <span style={{ fontSize: 13, color: 'var(--foreground)' }}>{agent.name}</span>
-                  </div>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#c4a574' }}>{agent.activities ?? '—'}</span>
-                </div>
-              </div>
-            ))}
+                )
+              })}
+            </div>
           </div>
         </div>
-      </AppShell>
-    )
-  }
+
+        <div className="fieldiq-card" style={{ marginTop: 16 }}>
+          <div className="flex items-center" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', gap: 10 }}>
+            <span className="font-semibold" style={{ fontSize: 14, color: 'var(--foreground)' }}>Rep Performance</span>
+            <span style={{ backgroundColor: 'var(--surface)', borderRadius: 4, padding: '2px 8px', fontSize: 11, color: 'var(--muted)' }}>
+              {agents.length}
+            </span>
+          </div>
+
+          {/* Desktop table headers */}
+          <div className="hidden md:grid" style={{ gridTemplateColumns: '48px 1fr 100px 80px', padding: '10px 20px', borderBottom: '1px solid var(--border)', gap: 12 }}>
+            {['RANK', 'REP', 'ACTIVITIES', 'SCORE'].map(col => (
+              <span key={col} style={{ fontSize: 10, fontWeight: 500, letterSpacing: '0.06em', color: 'var(--muted)' }}>{col}</span>
+            ))}
+          </div>
+
+          {agents.map((agent, i) => (
+            <div key={agent.name}>
+              {/* Desktop row */}
+              <div className="hidden md:grid items-center" style={{ gridTemplateColumns: '48px 1fr 100px 80px', padding: '14px 20px', borderBottom: i < agents.length - 1 ? '1px solid var(--border)' : 'none', gap: 12 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--muted)' }}>#{i + 1}</span>
+                <div className="flex items-center" style={{ gap: 10 }}>
+                  <div className="flex items-center justify-center rounded-full shrink-0"
+                    style={{ width: 32, height: 32, backgroundColor: '#c4a574', fontSize: 12, fontWeight: 700, color: '#000' }}>
+                    {agent.initials.toUpperCase()}
+                  </div>
+                  <span style={{ fontSize: 13, color: 'var(--foreground)' }}>{agent.name}</span>
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#c4a574' }}>{agent.activities}</span>
+                <span style={{ fontSize: 13, color: 'var(--body)' }}>{agent.score || '—'}</span>
+              </div>
+
+              {/* Mobile card row */}
+              <div className="flex md:hidden items-center justify-between"
+                style={{ padding: '12px 20px', borderBottom: i < agents.length - 1 ? '1px solid var(--border)' : 'none', gap: 12 }}>
+                <div className="flex items-center" style={{ gap: 10 }}>
+                  <div className="flex items-center justify-center rounded-full shrink-0"
+                    style={{ width: 32, height: 32, backgroundColor: '#c4a574', fontSize: 12, fontWeight: 700, color: '#000' }}>
+                    {agent.initials.toUpperCase()}
+                  </div>
+                  <span style={{ fontSize: 13, color: 'var(--foreground)' }}>{agent.name}</span>
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#c4a574' }}>{agent.activities}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </AppShell>
+  )
+}
+
+// ── Agent view ────────────────────────────────────────────────────────────────
+
+function AgentPerformancePage() {
+  const { data } = useAgentPerformance()
+
+  const monthlySpend = data?.monthlySpend ?? []
+  const activityTypeBreakdown = data?.activityBreakdown ?? []
+  const maxCount = activityTypeBreakdown.reduce((m, r) => Math.max(m, r.count), 0)
+
+  const activitiesMtd = data?.activitiesMtd ?? 0
+  const spendMtd = data?.spendMtd ?? 0
+  const contactsEngaged = data?.contactsEngaged ?? 0
+  const mostActiveType = data?.mostActiveType ?? '—'
+  const avgCost = data?.avgCostPerActivity ?? 0
 
   return (
     <AppShell activeItem="My Performance">
@@ -219,7 +231,7 @@ export default function PerformancePage() {
         <div style={{ marginTop: 20 }}>
           <AICard label="Summary" sublabel="Updated today" readAloud>
             <p style={{ fontSize: 13, color: 'var(--body)', lineHeight: 1.6, margin: 0 }}>
-              This month you&apos;ve logged 21 activities — your best March yet, up 8% from last year. You&apos;re on track to hit your Q2 target. Your strongest relationship is Michelle Tran (score 91). The contact that needs the most attention is James Ellison — you haven&apos;t touched him in 23 days.
+              This month you&apos;ve logged {activitiesMtd} activities. You&apos;re on track to hit your Q2 target. Your strongest relationship is Michelle Tran (score 91). The contact that needs the most attention is James Ellison — you haven&apos;t touched him in 23 days.
             </p>
           </AICard>
         </div>
@@ -231,24 +243,24 @@ export default function PerformancePage() {
         >
           <KPICard
             label="ACTIVITIES THIS MONTH"
-            value="12"
-            subLabel="vs 10 target"
-            subLabelColor="#16a34a"
+            value={String(activitiesMtd)}
+            subLabel="vs 20 target"
+            subLabelColor={activitiesMtd >= 20 ? '#16a34a' : '#d97706'}
           />
           <KPICard
             label="TOTAL SPEND"
-            value="$1,240"
-            subLabel="Avg $103/activity"
+            value={`$${spendMtd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`}
+            subLabel={avgCost > 0 ? `Avg $${avgCost.toFixed(0)}/activity` : 'No spend yet'}
           />
           <KPICard
             label="CONTACTS ENGAGED"
-            value="28"
+            value={String(contactsEngaged)}
             subLabel="This month"
           />
           <KPICard
-            label="LONGEST STREAK"
-            value="12 days"
-            subLabel="Personal best"
+            label="MOST ACTIVE TYPE"
+            value={mostActiveType}
+            subLabel="This month"
             subLabelColor="#c4a574"
           />
         </div>
@@ -351,7 +363,7 @@ export default function PerformancePage() {
             {/* Bars */}
             <div className="flex flex-col" style={{ padding: '16px 20px', gap: 8 }}>
               {activityTypeBreakdown.map((row) => {
-                const pct = Math.round((row.count / maxCount) * 100)
+                const pct = maxCount > 0 ? Math.round((row.count / maxCount) * 100) : 0
                 return (
                   <div
                     key={row.type}
@@ -447,11 +459,10 @@ export default function PerformancePage() {
               {/* Stat rows */}
               <div className="flex flex-col" style={{ padding: '4px 20px' }}>
                 {[
-                  { label: 'Most active type',   value: 'Lunch',       gold: true  },
-                  { label: 'Best month',          value: 'March',       gold: true  },
-                  { label: 'Avg cost / activity', value: '$103',        gold: true  },
-                  { label: 'Most contacted',      value: 'Marcus Webb', gold: true  },
-                  { label: 'Activities on track', value: '✓ On Track',  gold: false, green: true },
+                  { label: 'Most active type',   value: mostActiveType,                                  gold: true  },
+                  { label: 'Avg cost / activity', value: avgCost > 0 ? `$${avgCost.toFixed(0)}` : '—',  gold: true  },
+                  { label: 'Contacts engaged',    value: String(contactsEngaged),                         gold: true  },
+                  { label: 'Activities on track', value: activitiesMtd >= 20 ? '✓ On Track' : 'Below target', gold: false, green: activitiesMtd >= 20 },
                 ].map(({ label, value, gold, green }, i, arr) => (
                   <div
                     key={label}
@@ -481,4 +492,16 @@ export default function PerformancePage() {
       </div>
     </AppShell>
   )
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
+export default function PerformancePage() {
+  const { role } = useRole()
+
+  if (role === 'manager') {
+    return <ManagerPerformancePage />
+  }
+
+  return <AgentPerformancePage />
 }
