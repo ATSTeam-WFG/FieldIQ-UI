@@ -7,7 +7,7 @@
  *   - Manager signup (single role) → registers agency → redirects to /manager, role=manager, also_rep=false
  *   - Manager signup (dual role) → registers agency → redirects to /manager, role=manager, also_rep=true
  */
-import { test, expect } from '@playwright/test'
+import { test, expect, type APIRequestContext } from '@playwright/test'
 
 // Run without any pre-existing auth state
 test.use({ storageState: { cookies: [], origins: [] } })
@@ -17,7 +17,7 @@ const TEST_NAME = 'Playwright Test'
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
 async function assertMe(
-  request: Parameters<Parameters<typeof test>[1]>[0]['request'],
+  request: APIRequestContext,
   token: string | null,
   expected: { email: string; role: string; also_rep?: boolean },
 ) {
