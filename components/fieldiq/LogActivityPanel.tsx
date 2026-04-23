@@ -5,9 +5,10 @@ import type { LucideIcon } from 'lucide-react'
 import { SlideOverPanel } from './SlideOverPanel'
 import {
   X, Utensils, Hand, GraduationCap, Coffee, Gift, Phone,
-  Plus, ChevronDown, Upload, Mic, Sparkles, Check,
+  Plus, ChevronDown, Upload, Mic, Sparkles, Check, Users,
 } from 'lucide-react'
 import { useActivityLog } from '@/lib/context/ActivityLogContext'
+import { useAddContact } from '@/lib/context/AddContactContext'
 import { useRole } from '@/lib/context/RoleContext'
 import { useSuccessToast } from '@/components/fieldiq/SuccessToast'
 import { useTheme } from '@/lib/context/ThemeContext'
@@ -688,6 +689,7 @@ export function LogActivityPanel() {
   const isEditMode = !isManager && editingActivity !== null
   const showToast = useSuccessToast()
   const { theme } = useTheme()
+  const { openAddContactWithCallback } = useAddContact()
   const { data: contactsResult } = useContacts({ page_size: 100 })
   const allContacts: Contact[] = (contactsResult?.items ?? []).map(c => ({
     id: c.id,
@@ -766,8 +768,8 @@ export function LogActivityPanel() {
   }, [isOpen])
 
   const selectedContactIds = new Set(selectedContacts.map(c => c.id))
-  const filteredContacts = allContacts.filter(c =>
-    c.type !== 'sponsor' &&
+  const nonVendorContacts = allContacts.filter(c => c.type !== 'sponsor')
+  const filteredContacts = nonVendorContacts.filter(c =>
     !selectedContactIds.has(c.id) &&
     (c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
      (c.company ?? '').toLowerCase().includes(contactSearch.toLowerCase()))
@@ -1085,53 +1087,110 @@ export function LogActivityPanel() {
                 </div>
               ))}
 
-              {/* Search input — always shown */}
-              <div className="relative">
-                <input
-                  ref={contactSearchRef}
-                  value={contactSearch}
-                  onChange={e => { setContactSearch(e.target.value); setShowContactDrop(true) }}
-                  onFocus={() => setShowContactDrop(true)}
-                  onBlur={() => setTimeout(() => setShowContactDrop(false), 150)}
-                  placeholder={selectedContacts.length > 0 ? 'Add another contact…' : 'Search by name or company'}
-                  className="w-full rounded-[8px] outline-none focus:ring-1 focus:ring-[#c4a574] transition-shadow"
-                  style={{
-                    height: 40, padding: '0 12px', fontSize: 14,
-                    backgroundColor: 'var(--surface)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--foreground)',
-                  }}
-                />
-                {showContactDrop && filteredContacts.length > 0 && (
-                  <div
-                    className="absolute left-0 right-0 top-[44px] z-10 rounded-[8px] overflow-hidden"
-                    style={{
-                      backgroundColor: 'var(--card)',
-                      border: '1px solid var(--border)',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    }}
+              {/* Zero-state: no contacts added to system at all */}
+              {nonVendorContacts.length === 0 && selectedContacts.length === 0 ? (
+                <div
+                  className="flex flex-col items-center justify-center rounded-[8px]"
+                  style={{ padding: '20px 16px', gap: 10, textAlign: 'center', border: '1px dashed var(--border)', backgroundColor: 'var(--surface)' }}
+                >
+                  <Users size={20} style={{ color: 'var(--muted)' }} />
+                  <div className="flex flex-col" style={{ gap: 4 }}>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--foreground)' }}>No contacts yet</span>
+                    <span style={{ fontSize: 12, color: 'var(--muted)' }}>Add your first contact to link it to this activity.</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => openAddContactWithCallback((newContact) => {
+                      setSelectedContacts(prev => [...prev, {
+                        id: newContact.id,
+                        name: newContact.name,
+                        initials: newContact.initials,
+                        company: newContact.company ?? '',
+                        type: newContact.type,
+                      }])
+                    })}
+                    className="flex items-center gap-2 rounded-[8px] transition-opacity hover:opacity-80"
+                    style={{ height: 36, padding: '0 16px', fontSize: 13, fontWeight: 600, backgroundColor: '#c4a574', color: '#000000', border: 'none', cursor: 'pointer' }}
                   >
-                    {filteredContacts.map(c => (
+                    <Plus size={13} />
+                    Add your first contact
+                  </button>
+                </div>
+              ) : (
+                /* Search input + dropdown */
+                <div className="relative">
+                  <input
+                    ref={contactSearchRef}
+                    value={contactSearch}
+                    onChange={e => { setContactSearch(e.target.value); setShowContactDrop(true) }}
+                    onFocus={() => setShowContactDrop(true)}
+                    onBlur={() => setTimeout(() => setShowContactDrop(false), 150)}
+                    placeholder={selectedContacts.length > 0 ? 'Add another contact…' : 'Search by name or company'}
+                    className="w-full rounded-[8px] outline-none focus:ring-1 focus:ring-[#c4a574] transition-shadow"
+                    style={{
+                      height: 40, padding: '0 12px', fontSize: 14,
+                      backgroundColor: 'var(--surface)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--foreground)',
+                    }}
+                  />
+                  {showContactDrop && (
+                    <div
+                      className="absolute left-0 right-0 top-[44px] z-10 rounded-[8px] overflow-hidden"
+                      style={{
+                        backgroundColor: 'var(--card)',
+                        border: '1px solid var(--border)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                      }}
+                    >
+                      {/* Add new contact row */}
                       <button
-                        key={c.id}
-                        onMouseDown={() => selectContact(c)}
+                        type="button"
+                        onMouseDown={() => {
+                          setShowContactDrop(false)
+                          openAddContactWithCallback((newContact) => {
+                            setSelectedContacts(prev => [...prev, {
+                              id: newContact.id,
+                              name: newContact.name,
+                              initials: newContact.initials,
+                              company: newContact.company ?? '',
+                              type: newContact.type,
+                            }])
+                          })
+                        }}
                         className="flex w-full items-center gap-3 px-3 py-2.5 transition-colors hover:bg-[var(--surface)]"
+                        style={{ borderBottom: '1px solid var(--border)' }}
                       >
                         <div
                           className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-                          style={{ backgroundColor: '#c4a574', fontSize: 10, fontWeight: 600, color: '#ffffff' }}
+                          style={{ backgroundColor: 'var(--surface)', border: '1px dashed var(--border)' }}
                         >
-                          {c.initials}
+                          <Plus size={12} style={{ color: 'var(--muted)' }} />
                         </div>
-                        <div className="flex flex-col items-start" style={{ gap: 1 }}>
-                          <span style={{ fontSize: 13, color: 'var(--foreground)' }}>{c.name}</span>
-                          <span style={{ fontSize: 11, color: 'var(--muted)' }}>{c.company}</span>
-                        </div>
+                        <span style={{ fontSize: 13, color: '#c4a574', fontWeight: 500 }}>+ Add new contact</span>
                       </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+                      {filteredContacts.map(c => (
+                        <button
+                          key={c.id}
+                          onMouseDown={() => selectContact(c)}
+                          className="flex w-full items-center gap-3 px-3 py-2.5 transition-colors hover:bg-[var(--surface)]"
+                        >
+                          <div
+                            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+                            style={{ backgroundColor: '#c4a574', fontSize: 10, fontWeight: 600, color: '#ffffff' }}
+                          >
+                            {c.initials}
+                          </div>
+                          <div className="flex flex-col items-start" style={{ gap: 1 }}>
+                            <span style={{ fontSize: 13, color: 'var(--foreground)' }}>{c.name}</span>
+                            <span style={{ fontSize: 11, color: 'var(--muted)' }}>{c.company}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

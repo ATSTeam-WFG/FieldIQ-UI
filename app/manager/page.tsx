@@ -124,7 +124,7 @@ export default function ManagerPage() {
                 onDismiss={() => setNarrativeDismissed(true)}
               >
                 <p style={{ fontSize: 13, color: 'var(--body)', lineHeight: 1.6, margin: 0 }}>
-                  Your team had a strong week. Total activities are up 12% from last month. Jane Carter continues to lead with 21 activities. Your main concern is Kevin Ross — 9 days without a log and his relationship scores are dropping. Amy Torres is showing early warning signs too. I&apos;d suggest a quick check-in with both this week.
+                  Your team had a strong week. Total activities are up 12% from last month. Jane Carter continues to lead with 21 activities. Your main concern is Kevin Ross. He hasn&apos;t logged in 9 days and his relationship scores are dropping. Amy Torres is showing early warning signs too. A quick check-in with both this week would help.
                 </p>
               </AICard>
             </motion.div>
@@ -288,7 +288,7 @@ export default function ManagerPage() {
                       className="truncate"
                       style={{ fontSize: 12, fontWeight: 600, color: 'var(--body)' }}
                     >
-                      {alerts[0].agentName} — {alerts[0].message}{' '}
+                      {alerts[0].agentName}: {alerts[0].message}{' '}
                       <span
                         className="cursor-pointer hover:underline"
                         style={{ color: '#c4a574' }}

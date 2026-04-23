@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { X, ChevronDown, Search, Plus, DollarSign } from 'lucide-react'
+import { X, ChevronDown, Search, Plus, DollarSign, Users } from 'lucide-react'
 import { SlideOverPanel } from './SlideOverPanel'
 import { useContract } from '@/lib/context/ContractContext'
 import { useRole } from '@/lib/context/RoleContext'
@@ -144,7 +144,7 @@ export function LogContractPanel() {
   const isManager = role === 'manager'
   const isViewMode = isManager && editingContract !== null
   const isEditMode = !isManager && editingContract !== null
-  const { openAddContact } = useAddContact()
+  const { openAddContactWithCallback } = useAddContact()
   const showToast = useSuccessToast()
   const { data: contactsData } = useContacts()
   const createContract = useCreateContract()
@@ -294,96 +294,137 @@ export function LogContractPanel() {
           {/* ── Contact ──────────────────────────────────────────────── */}
           <div>
             <label style={labelStyle}>Contact *</label>
-            <div ref={dropdownRef} style={{ position: 'relative' }}>
-              <button
-                type="button"
-                onClick={() => setContactDropdownOpen(prev => !prev)}
-                className="flex w-full items-center justify-between"
-                style={{ ...inputStyle, cursor: 'pointer', paddingLeft: 12, paddingRight: 10, textAlign: 'left', height: 44 }}
+            {repContacts.length === 0 ? (
+              <div
+                className="flex flex-col items-center justify-center rounded-[8px]"
+                style={{ padding: '20px 16px', gap: 10, textAlign: 'center', border: '1px dashed var(--border)', backgroundColor: 'var(--surface)' }}
               >
-                {selectedContact ? (
-                  <div className="flex items-center" style={{ gap: 8, minWidth: 0 }}>
-                    <div
-                      className="flex shrink-0 items-center justify-center rounded-full"
-                      style={{ width: 26, height: 26, backgroundColor: '#c4a574', fontSize: 10, fontWeight: 600, color: '#000' }}
-                    >
-                      {selectedContact.initials}
-                    </div>
-                    <div className="flex min-w-0 flex-col" style={{ gap: 1 }}>
-                      <span className="truncate" style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>
-                        {selectedContact.name}
-                      </span>
-                      <span className="truncate" style={{ fontSize: 11, color: 'var(--muted)' }}>
-                        {selectedContact.company}
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <span style={{ fontSize: 13, color: 'var(--muted)' }}>Select a contact…</span>
-                )}
-                <ChevronDown size={14} style={{ color: 'var(--muted)', flexShrink: 0 }} />
-              </button>
-
-              {contactDropdownOpen && (
-                <div
-                  className="absolute left-0 right-0 z-10 overflow-hidden rounded-[8px]"
-                  style={{ top: 48, backgroundColor: 'var(--card)', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', maxHeight: 260, display: 'flex', flexDirection: 'column' }}
+                <Users size={20} style={{ color: 'var(--muted)' }} />
+                <div className="flex flex-col" style={{ gap: 4 }}>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--foreground)' }}>No contacts yet</span>
+                  <span style={{ fontSize: 12, color: 'var(--muted)' }}>Add your first contact to link it to this contract.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => openAddContactWithCallback((newContact) => {
+                    setSelectedContact({
+                      id: newContact.id,
+                      name: newContact.name,
+                      initials: newContact.initials,
+                      company: newContact.company,
+                      type: newContact.type,
+                    })
+                  })}
+                  className="flex items-center gap-2 rounded-[8px] transition-opacity hover:opacity-80"
+                  style={{ height: 36, padding: '0 16px', fontSize: 13, fontWeight: 600, backgroundColor: '#c4a574', color: '#000000', border: 'none', cursor: 'pointer' }}
                 >
-                  <div className="flex items-center" style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', gap: 8 }}>
-                    <Search size={13} style={{ color: 'var(--muted)', flexShrink: 0 }} />
-                    <input
-                      autoFocus
-                      value={contactSearch}
-                      onChange={e => setContactSearch(e.target.value)}
-                      placeholder="Search contacts…"
-                      style={{ flex: 1, border: 'none', outline: 'none', backgroundColor: 'transparent', fontSize: 13, color: 'var(--foreground)' }}
-                    />
-                  </div>
-                  <div className="overflow-y-auto" style={{ maxHeight: 200 }}>
-                    <button
-                      type="button"
-                      className="flex w-full items-center transition-colors hover:bg-[var(--surface)]"
-                      style={{ height: 40, padding: '0 12px', gap: 8 }}
-                      onClick={() => { setContactDropdownOpen(false); openAddContact() }}
-                    >
+                  <Plus size={13} />
+                  Add your first contact
+                </button>
+              </div>
+            ) : (
+              <div ref={dropdownRef} style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  onClick={() => setContactDropdownOpen(prev => !prev)}
+                  className="flex w-full items-center justify-between"
+                  style={{ ...inputStyle, cursor: 'pointer', paddingLeft: 12, paddingRight: 10, textAlign: 'left', height: 44 }}
+                >
+                  {selectedContact ? (
+                    <div className="flex items-center" style={{ gap: 8, minWidth: 0 }}>
                       <div
                         className="flex shrink-0 items-center justify-center rounded-full"
-                        style={{ width: 24, height: 24, backgroundColor: 'var(--surface)', border: '1px dashed var(--border)' }}
+                        style={{ width: 26, height: 26, backgroundColor: '#c4a574', fontSize: 10, fontWeight: 600, color: '#000' }}
                       >
-                        <Plus size={12} style={{ color: 'var(--muted)' }} />
+                        {selectedContact.initials}
                       </div>
-                      <span style={{ fontSize: 13, color: '#c4a574', fontWeight: 500 }}>Add new contact</span>
-                    </button>
-                    {filteredContacts.length === 0 ? (
-                      <div className="flex items-center justify-center" style={{ height: 48, fontSize: 13, color: 'var(--muted)' }}>
-                        No contacts found
+                      <div className="flex min-w-0 flex-col" style={{ gap: 1 }}>
+                        <span className="truncate" style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>
+                          {selectedContact.name}
+                        </span>
+                        <span className="truncate" style={{ fontSize: 11, color: 'var(--muted)' }}>
+                          {selectedContact.company}
+                        </span>
                       </div>
-                    ) : (
-                      filteredContacts.map(contact => (
-                        <button
-                          key={contact.id}
-                          type="button"
-                          className="flex w-full items-center transition-colors hover:bg-[var(--surface)]"
-                          style={{ height: 44, padding: '0 12px', gap: 10 }}
-                          onClick={() => { setSelectedContact(contact); setContactDropdownOpen(false); setContactSearch('') }}
+                    </div>
+                  ) : (
+                    <span style={{ fontSize: 13, color: 'var(--muted)' }}>Select a contact…</span>
+                  )}
+                  <ChevronDown size={14} style={{ color: 'var(--muted)', flexShrink: 0 }} />
+                </button>
+
+                {contactDropdownOpen && (
+                  <div
+                    className="absolute left-0 right-0 z-10 overflow-hidden rounded-[8px]"
+                    style={{ top: 48, backgroundColor: 'var(--card)', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', maxHeight: 260, display: 'flex', flexDirection: 'column' }}
+                  >
+                    <div className="flex items-center" style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', gap: 8 }}>
+                      <Search size={13} style={{ color: 'var(--muted)', flexShrink: 0 }} />
+                      <input
+                        autoFocus
+                        value={contactSearch}
+                        onChange={e => setContactSearch(e.target.value)}
+                        placeholder="Search contacts…"
+                        style={{ flex: 1, border: 'none', outline: 'none', backgroundColor: 'transparent', fontSize: 13, color: 'var(--foreground)' }}
+                      />
+                    </div>
+                    <div className="overflow-y-auto" style={{ maxHeight: 200 }}>
+                      <button
+                        type="button"
+                        className="flex w-full items-center transition-colors hover:bg-[var(--surface)]"
+                        style={{ height: 40, padding: '0 12px', gap: 8 }}
+                        onClick={() => {
+                          setContactDropdownOpen(false)
+                          openAddContactWithCallback((newContact) => {
+                            setSelectedContact({
+                              id: newContact.id,
+                              name: newContact.name,
+                              initials: newContact.initials,
+                              company: newContact.company,
+                              type: newContact.type,
+                            })
+                          })
+                        }}
+                      >
+                        <div
+                          className="flex shrink-0 items-center justify-center rounded-full"
+                          style={{ width: 24, height: 24, backgroundColor: 'var(--surface)', border: '1px dashed var(--border)' }}
                         >
-                          <div
-                            className="flex shrink-0 items-center justify-center rounded-full"
-                            style={{ width: 28, height: 28, backgroundColor: '#c4a574', fontSize: 10, fontWeight: 600, color: '#000' }}
+                          <Plus size={12} style={{ color: 'var(--muted)' }} />
+                        </div>
+                        <span style={{ fontSize: 13, color: '#c4a574', fontWeight: 500 }}>Add new contact</span>
+                      </button>
+                      {filteredContacts.length === 0 ? (
+                        <div className="flex items-center justify-center" style={{ height: 48, fontSize: 13, color: 'var(--muted)' }}>
+                          No contacts found
+                        </div>
+                      ) : (
+                        filteredContacts.map(contact => (
+                          <button
+                            key={contact.id}
+                            type="button"
+                            className="flex w-full items-center transition-colors hover:bg-[var(--surface)]"
+                            style={{ height: 44, padding: '0 12px', gap: 10 }}
+                            onClick={() => { setSelectedContact(contact); setContactDropdownOpen(false); setContactSearch('') }}
                           >
-                            {contact.initials}
-                          </div>
-                          <div className="flex min-w-0 flex-col" style={{ gap: 2 }}>
-                            <span className="truncate" style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>{contact.name}</span>
-                            <span className="truncate" style={{ fontSize: 11, color: 'var(--muted)' }}>{contact.company}</span>
-                          </div>
-                        </button>
-                      ))
-                    )}
+                            <div
+                              className="flex shrink-0 items-center justify-center rounded-full"
+                              style={{ width: 28, height: 28, backgroundColor: '#c4a574', fontSize: 10, fontWeight: 600, color: '#000' }}
+                            >
+                              {contact.initials}
+                            </div>
+                            <div className="flex min-w-0 flex-col" style={{ gap: 2 }}>
+                              <span className="truncate" style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>{contact.name}</span>
+                              <span className="truncate" style={{ fontSize: 11, color: 'var(--muted)' }}>{contact.company}</span>
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* ── File Number ───────────────────────────────────────────── */}

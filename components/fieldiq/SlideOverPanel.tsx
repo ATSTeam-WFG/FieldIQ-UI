@@ -7,9 +7,10 @@ interface SlideOverPanelProps {
   onClose: () => void
   children: React.ReactNode
   width?: number
+  hideBackdrop?: boolean
 }
 
-export function SlideOverPanel({ onClose, children, width = 480 }: SlideOverPanelProps) {
+export function SlideOverPanel({ onClose, children, width = 480, hideBackdrop = false }: SlideOverPanelProps) {
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
   )
@@ -31,14 +32,16 @@ export function SlideOverPanel({ onClose, children, width = 480 }: SlideOverPane
   return (
     <>
       {/* Backdrop */}
-      <motion.div
-        onClick={onClose}
-        className="fixed inset-0 z-40"
-        style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-      />
+      {!hideBackdrop && (
+        <motion.div
+          onClick={onClose}
+          className="fixed inset-0 z-40"
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        />
+      )}
 
       {/* Panel */}
       <motion.div

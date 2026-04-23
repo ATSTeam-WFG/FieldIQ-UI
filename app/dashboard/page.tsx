@@ -135,7 +135,7 @@ export default function DashboardPage() {
             >
               <AICard label="Daily Nudge" onDismiss={() => setNudgeDismissed(true)}>
                 <p style={{ fontSize: 13, color: 'var(--body)', lineHeight: 1.6, maxWidth: 560, margin: 0 }}>
-                  David Okafor hasn&apos;t been contacted in 18 days — his score is dropping. A pop-by today would help.{' '}
+                  David Okafor hasn&apos;t been contacted in 18 days. His score is dropping. A pop-by today would help.{' '}
                   <button
                     onClick={() => openLogWithContact('david-okafor')}
                     className="hover:underline"
@@ -178,7 +178,7 @@ export default function DashboardPage() {
         <div style={{ marginTop: 16 }}>
           <AICard label="Summary" sublabel="Updated today" readAloud>
             <p style={{ fontSize: 13, color: 'var(--body)', lineHeight: 1.6, margin: 0 }}>
-              This month you&apos;ve logged 21 activities — your best March yet, up 8% from last year. You&apos;re on track to hit your Q2 target. Your strongest relationship is Michelle Tran (score 91). The contact that needs the most attention is James Ellison — you haven&apos;t touched him in 23 days.
+              This month you&apos;ve logged 21 activities, your best March yet, up 8% from last year. You&apos;re on track to hit your Q2 target. Your strongest relationship is Michelle Tran (score 91). The contact that needs the most attention is James Ellison. You haven&apos;t touched him in 23 days.
             </p>
           </AICard>
         </div>

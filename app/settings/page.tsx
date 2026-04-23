@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect } from 'react'
 import { AppShell } from '@/components/fieldiq/AppShell'
 import { useRole } from '@/lib/context/RoleContext'
 import { useTheme } from '@/lib/context/ThemeContext'
+import { useSettings } from '@/lib/hooks/useSettings'
 import { Sparkles } from 'lucide-react'
 
 // ── Toggle Switch ─────────────────────────────────────────────────────────────
@@ -89,17 +90,26 @@ function ToggleRow({
 
 export default function SettingsPage() {
   const { persona, role } = useRole()
-  const { theme, toggleTheme } = useTheme()
+  const { theme, toggleTheme, setTheme } = useTheme()
+  const { settings, isLoading, update } = useSettings()
 
-  const [emailDigest, setEmailDigest] = useState(true)
-  const [pushNotifications, setPushNotifications] = useState(true)
-  const [followUpReminders, setFollowUpReminders] = useState(true)
-  const [teamAlerts, setTeamAlerts] = useState(true)
-  const [defaultPeriod, setDefaultPeriod] = useState<'MTD' | 'QTD' | 'YTD'>('MTD')
-  const [activityTarget, setActivityTarget] = useState(10)
-  const [belowTargetAlert, setBelowTargetAlert] = useState(true)
-  const [inactivityAlert, setInactivityAlert] = useState(true)
-  const [weeklyDigest, setWeeklyDigest] = useState(true)
+  // Hydrate theme from persisted settings on load
+  useEffect(() => {
+    if (settings?.theme && settings.theme !== theme) {
+      setTheme(settings.theme as 'light' | 'dark')
+    }
+  }, [settings?.theme])
+
+  // Derived values with fallbacks while loading
+  const emailDigest = settings?.email_digest ?? true
+  const pushNotifications = settings?.push_notifications ?? true
+  const followUpReminders = settings?.follow_up_reminders ?? true
+  const teamAlerts = settings?.team_alerts ?? true
+  const defaultPeriod = (settings?.default_period ?? 'MTD') as 'MTD' | 'QTD' | 'YTD'
+  const activityTarget = settings?.activity_target ?? 10
+  const belowTargetAlert = settings?.below_target_alert ?? true
+  const inactivityAlert = settings?.inactivity_alert ?? true
+  const weeklyDigest = settings?.weekly_digest ?? true
 
   const roleLabel = role.charAt(0).toUpperCase() + role.slice(1)
 
@@ -108,16 +118,21 @@ export default function SettingsPage() {
       <div className="flex flex-col" style={{ gap: 0 }}>
 
         {/* Page header */}
-        <div className="flex flex-col" style={{ gap: 4 }}>
-          <h1
-            className="font-semibold leading-tight"
-            style={{ fontSize: 22, color: 'var(--foreground)' }}
-          >
-            Settings
-          </h1>
-          <p style={{ fontSize: 14, color: 'var(--muted)' }}>
-            Manage your account preferences
-          </p>
+        <div className="flex items-center justify-between" style={{ gap: 4 }}>
+          <div className="flex flex-col" style={{ gap: 4 }}>
+            <h1
+              className="font-semibold leading-tight"
+              style={{ fontSize: 22, color: 'var(--foreground)' }}
+            >
+              Settings
+            </h1>
+            <p style={{ fontSize: 14, color: 'var(--muted)' }}>
+              Manage your account preferences
+            </p>
+          </div>
+          {isLoading && (
+            <span style={{ fontSize: 12, color: 'var(--muted)' }}>Loading…</span>
+          )}
         </div>
 
         {/* Settings stack */}
@@ -203,19 +218,19 @@ export default function SettingsPage() {
                 label="Email digest"
                 description="Daily summary of team activity and follow-ups"
                 value={emailDigest}
-                onChange={setEmailDigest}
+                onChange={(v) => update({ email_digest: v })}
               />
               <ToggleRow
                 label="Push notifications"
                 description="Real-time alerts on your device"
                 value={pushNotifications}
-                onChange={setPushNotifications}
+                onChange={(v) => update({ push_notifications: v })}
               />
               <ToggleRow
                 label="Follow-up reminders"
                 description="Reminders when follow-ups are approaching or overdue"
                 value={followUpReminders}
-                onChange={setFollowUpReminders}
+                onChange={(v) => update({ follow_up_reminders: v })}
               />
               <div
                 className="flex items-center justify-between"
@@ -225,7 +240,7 @@ export default function SettingsPage() {
                   <span style={{ fontSize: 14, color: 'var(--foreground)' }}>Team alerts</span>
                   <span style={{ fontSize: 12, color: 'var(--muted)' }}>Notifications when team members log activities</span>
                 </div>
-                <Toggle value={teamAlerts} onChange={setTeamAlerts} />
+                <Toggle value={teamAlerts} onChange={(v) => update({ team_alerts: v })} />
               </div>
             </Section>
 
@@ -243,7 +258,7 @@ export default function SettingsPage() {
                   {(['MTD', 'QTD', 'YTD'] as const).map(p => (
                     <button
                       key={p}
-                      onClick={() => setDefaultPeriod(p)}
+                      onClick={() => update({ default_period: p })}
                       style={{
                         height: 30,
                         paddingLeft: 12,
@@ -273,7 +288,14 @@ export default function SettingsPage() {
                     Currently {theme === 'dark' ? 'Dark mode' : 'Light mode'}
                   </span>
                 </div>
-                <Toggle value={theme === 'dark'} onChange={() => toggleTheme()} />
+                <Toggle
+                  value={theme === 'dark'}
+                  onChange={() => {
+                    const next = theme === 'dark' ? 'light' : 'dark'
+                    toggleTheme()
+                    update({ theme: next })
+                  }}
+                />
               </div>
 
               {/* Language */}
@@ -319,7 +341,7 @@ export default function SettingsPage() {
                     {[8, 10, 12, 15].map((n, i, arr) => (
                       <button
                         key={n}
-                        onClick={() => setActivityTarget(n)}
+                        onClick={() => update({ activity_target: n })}
                         style={{
                           height: 30,
                           paddingLeft: 12,
@@ -347,7 +369,7 @@ export default function SettingsPage() {
                   </span>
                   <button
                     type="button"
-                    onClick={() => setActivityTarget(12)}
+                    onClick={() => update({ activity_target: 12 })}
                     className="transition-opacity hover:opacity-70"
                     style={{
                       fontSize: 11,
@@ -392,19 +414,19 @@ export default function SettingsPage() {
                   label="Below-target alert"
                   description="Notify when an agent misses weekly activity target"
                   value={belowTargetAlert}
-                  onChange={setBelowTargetAlert}
+                  onChange={(v) => update({ below_target_alert: v })}
                 />
                 <ToggleRow
                   label="Inactivity alert"
                   description="Alert when an agent has no activity for 7+ days"
                   value={inactivityAlert}
-                  onChange={setInactivityAlert}
+                  onChange={(v) => update({ inactivity_alert: v })}
                 />
                 <ToggleRow
                   label="Weekly digest"
                   description="Receive a weekly performance summary every Monday"
                   value={weeklyDigest}
-                  onChange={setWeeklyDigest}
+                  onChange={(v) => update({ weekly_digest: v })}
                 />
               </Section>
             </div>

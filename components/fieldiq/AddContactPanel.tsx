@@ -78,7 +78,7 @@ const inputStyle: React.CSSProperties = {
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export function AddContactPanel() {
-  const { isOpen, closeAddContact, editingContact } = useAddContact()
+  const { isOpen, closeAddContact, editingContact, fireContactCreated, isStacked } = useAddContact()
   const isEditMode = editingContact !== null
   const showToast = useSuccessToast()
   const { theme } = useTheme()
@@ -148,7 +148,7 @@ export function AddContactPanel() {
 
   async function handleSave() {
     try {
-      await createContact.mutateAsync({
+      const newContact = await createContact.mutateAsync({
         name,
         company: company || null,
         job_title: role || null,
@@ -158,6 +158,7 @@ export function AddContactPanel() {
         tags: selectedTags,
       })
       showToast(isEditMode ? 'Contact updated successfully' : 'Contact added successfully')
+      if (!isEditMode) fireContactCreated(newContact)
       closeAddContact()
       resetForm()
     } catch {}
@@ -171,7 +172,7 @@ export function AddContactPanel() {
   const activeTileBg = theme === 'dark' ? '#1f1a12' : '#fdf8f0'
 
   return (
-    <SlideOverPanel onClose={closeAddContact} width={560}>
+    <SlideOverPanel onClose={closeAddContact} width={560} hideBackdrop={isStacked}>
         {/* Header */}
         <div
           className="flex shrink-0 items-center justify-between"
