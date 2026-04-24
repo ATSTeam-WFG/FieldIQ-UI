@@ -18,6 +18,7 @@ export interface AuthUser {
 export interface LoginResponse {
   access_token: string
   token_type: string
+  refresh_token?: string
   user: {
     id: string
     email: string
@@ -29,7 +30,7 @@ export interface LoginResponse {
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
   const res = await api.post<LoginResponse>('/auth/login', { email, password })
-  setToken(res.access_token)
+  setToken(res.access_token, res.refresh_token)
   return res
 }
 
@@ -41,7 +42,7 @@ export async function signup(payload: {
   also_rep?: boolean
 }): Promise<LoginResponse> {
   const res = await api.post<LoginResponse>('/auth/signup', payload)
-  setToken(res.access_token)
+  setToken(res.access_token, res.refresh_token)
   return res
 }
 

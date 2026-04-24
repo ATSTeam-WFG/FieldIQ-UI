@@ -7,22 +7,55 @@ export class ApiError extends Error {
   }
 }
 
+const PRESENCE_COOKIE = 'fieldiq_has_token'
+
 function getToken(): string | null {
   if (typeof window === 'undefined') return null
   return localStorage.getItem('fieldiq_token')
 }
 
-export function setToken(token: string): void {
+export function setToken(token: string, refreshToken?: string): void {
   localStorage.setItem('fieldiq_token', token)
+  document.cookie = `${PRESENCE_COOKIE}=1; path=/; SameSite=Lax`
+  if (refreshToken) {
+    localStorage.setItem('fieldiq_refresh_token', refreshToken)
+  }
 }
 
 export function clearToken(): void {
   localStorage.removeItem('fieldiq_token')
+  localStorage.removeItem('fieldiq_refresh_token')
+  document.cookie = `${PRESENCE_COOKIE}=; path=/; max-age=0`
+}
+
+// Deduplication — one refresh flight at a time across concurrent 401s
+let _refreshPromise: Promise<string> | null = null
+
+async function attemptRefresh(): Promise<string> {
+  if (_refreshPromise) return _refreshPromise
+  _refreshPromise = (async () => {
+    const rt = localStorage.getItem('fieldiq_refresh_token')
+    if (!rt) throw new Error('No refresh token')
+    // Use raw fetch to avoid re-entering the request() 401 handler
+    const res = await fetch(`${BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: rt }),
+    })
+    if (!res.ok) throw new Error('Refresh failed')
+    const data = await res.json()
+    setToken(data.access_token, data.refresh_token ?? undefined)
+    return data.access_token
+  })().finally(() => {
+    _refreshPromise = null
+  })
+  return _refreshPromise
 }
 
 async function request<T>(
   path: string,
   options: RequestInit = {},
+  _isRetry = false,
 ): Promise<T> {
   const token = getToken()
   const headers: Record<string, string> = {
@@ -36,6 +69,19 @@ async function request<T>(
   const res = await fetch(`${BASE_URL}${path}`, { ...options, headers })
 
   if (res.status === 401) {
+    if (!_isRetry) {
+      try {
+        await attemptRefresh()
+        return request<T>(path, options, true)
+      } catch {
+        clearToken()
+        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+          window.location.href = '/login'
+        }
+        throw new ApiError(401, 'Unauthorized')
+      }
+    }
+    // Retry also 401 — refresh token itself is expired
     clearToken()
     if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
       window.location.href = '/login'
