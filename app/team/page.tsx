@@ -2,11 +2,14 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Download, UserPlus, ChevronRight, Radio, FileBarChart2, Search, SlidersHorizontal } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Download, UserPlus, ChevronRight, Radio, FileBarChart2, Search, SlidersHorizontal, Copy, Check } from 'lucide-react'
 import { AppShell } from '@/components/fieldiq/AppShell'
+import { SkeletonRows } from '@/components/fieldiq/SkeletonRows'
 import { useInviteAgent } from '@/lib/context/InviteAgentContext'
 import { useTeamBroadcast } from '@/lib/context/TeamBroadcastContext'
 import { useMyTeam } from '@/lib/hooks/useMyTeam'
+import { useMyAgency } from '@/lib/hooks/useMyAgency'
 import type { TeamAgentEntry } from '@/lib/api/teams'
 
 type EmploymentStatus = 'active' | 'on-leave' | 'inactive'
@@ -39,13 +42,24 @@ const cardStyle = {
 } as const
 
 export default function TeamRosterPage() {
+  const router = useRouter()
   const { openInviteAgent } = useInviteAgent()
   const { openBroadcast } = useTeamBroadcast()
   const [showAll, setShowAll] = useState(false)
   const [search, setSearch] = useState('')
+  const [codeCopied, setCodeCopied] = useState(false)
 
-  const { data } = useMyTeam()
+  const { data, isLoading } = useMyTeam()
+  const { data: agency } = useMyAgency()
+
+  function handleCopyCode() {
+    if (!agency?.join_code) return
+    navigator.clipboard.writeText(agency.join_code)
+    setCodeCopied(true)
+    setTimeout(() => setCodeCopied(false), 2000)
+  }
   const agents: TeamAgentEntry[] = data?.agents ?? []
+  const isTeamEmpty = data !== undefined && agents.length === 0
 
   // Derived KPIs
   const totalAgents = data?.totalAgents ?? 0
@@ -125,6 +139,44 @@ export default function TeamRosterPage() {
             Invite Rep
           </button>
         </div>
+
+        {/* ── Agency join code banner ── */}
+        {agency?.join_code && (
+          <div
+            className="flex items-center justify-between rounded-[8px]"
+            style={{
+              padding: '10px 14px',
+              backgroundColor: 'var(--surface)',
+              border: '1px solid var(--border)',
+            }}
+          >
+            <div className="flex flex-col" style={{ gap: 2 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: 'var(--muted)', textTransform: 'uppercase' }}>
+                Agency Code
+              </span>
+              <span style={{ fontSize: 18, fontWeight: 700, fontFamily: 'monospace', letterSpacing: '0.12em', color: 'var(--foreground)' }}>
+                {agency.join_code}
+              </span>
+              <span style={{ fontSize: 12, color: 'var(--muted)' }}>
+                Share with reps so they can join your agency
+              </span>
+            </div>
+            <button
+              onClick={handleCopyCode}
+              className="flex items-center rounded-[8px] transition-all hover:opacity-80"
+              style={{
+                height: 34, padding: '0 12px', gap: 6, fontSize: 13, fontWeight: 500,
+                backgroundColor: codeCopied ? 'var(--surface)' : '#c4a574',
+                color: codeCopied ? 'var(--muted)' : '#000000',
+                border: codeCopied ? '1px solid var(--border)' : 'none',
+                cursor: 'pointer', flexShrink: 0,
+              }}
+            >
+              {codeCopied ? <Check size={13} /> : <Copy size={13} />}
+              {codeCopied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
+        )}
 
         {/* ── Mobile search bar ── */}
         <div
@@ -232,6 +284,49 @@ export default function TeamRosterPage() {
               </tr>
             </thead>
             <tbody>
+              {isLoading && (
+                <tr>
+                  <td colSpan={7} style={{ padding: 0 }}>
+                    <SkeletonRows cols={5} rows={5} />
+                  </td>
+                </tr>
+              )}
+              {!isLoading && isTeamEmpty && (
+                <tr>
+                  <td colSpan={7}>
+                    <div className="flex flex-col items-center justify-center" style={{ padding: '40px 20px', gap: 12 }}>
+                      <UserPlus size={28} style={{ color: 'var(--border)' }} />
+                      <div className="flex flex-col items-center text-center" style={{ gap: 4 }}>
+                        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)' }}>No reps yet</span>
+                        <span style={{ fontSize: 12, color: 'var(--muted)' }}>Invite your first rep or share your agency code to get started.</span>
+                      </div>
+                      <div className="flex items-center" style={{ gap: 8 }}>
+                        <button
+                          onClick={openInviteAgent}
+                          style={{
+                            height: 34, paddingLeft: 16, paddingRight: 16, fontSize: 13, fontWeight: 600,
+                            backgroundColor: '#c4a574', color: '#000000', border: 'none', borderRadius: 8, cursor: 'pointer',
+                          }}
+                        >
+                          Invite Rep
+                        </button>
+                        {agency?.join_code && (
+                          <button
+                            onClick={handleCopyCode}
+                            style={{
+                              height: 34, paddingLeft: 16, paddingRight: 16, fontSize: 13, fontWeight: 500,
+                              backgroundColor: 'transparent', color: 'var(--foreground)',
+                              border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer',
+                            }}
+                          >
+                            {codeCopied ? 'Copied!' : `Copy Code: ${agency.join_code}`}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              )}
               {filteredAgents.map((agent, i) => {
                 const empStatus = toEmploymentStatus(agent.status)
                 const statusCfg = statusConfig[empStatus]
@@ -239,9 +334,10 @@ export default function TeamRosterPage() {
                 return (
                   <tr
                     key={agent.id}
-                    style={{ height: 44, borderBottom: isLast ? 'none' : '1px solid var(--border)' }}
+                    style={{ height: 44, borderBottom: isLast ? 'none' : '1px solid var(--border)', cursor: 'pointer' }}
                     onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--surface)')}
                     onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+                    onClick={() => router.push(`/agent/${agent.id}`)}
                   >
                     <td style={{ padding: '0 16px' }}>
                       <div className="flex items-center" style={{ gap: 10 }}>
@@ -304,6 +400,26 @@ export default function TeamRosterPage() {
               </span>
             ))}
           </div>
+
+          {/* Empty state */}
+          {isTeamEmpty && (
+            <div className="flex flex-col items-center justify-center" style={{ padding: '36px 20px', gap: 12 }}>
+              <UserPlus size={26} style={{ color: 'var(--border)' }} />
+              <div className="flex flex-col items-center text-center" style={{ gap: 4 }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)' }}>No reps yet</span>
+                <span style={{ fontSize: 12, color: 'var(--muted)' }}>Invite your first rep to get started.</span>
+              </div>
+              <button
+                onClick={openInviteAgent}
+                style={{
+                  height: 34, paddingLeft: 16, paddingRight: 16, fontSize: 13, fontWeight: 600,
+                  backgroundColor: '#c4a574', color: '#000000', border: 'none', borderRadius: 8, cursor: 'pointer',
+                }}
+              >
+                Invite Rep
+              </button>
+            </div>
+          )}
 
           {/* Rows */}
           {mobileAgents.map((agent, i) => {

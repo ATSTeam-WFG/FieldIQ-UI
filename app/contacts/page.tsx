@@ -6,6 +6,7 @@ import { Search, ChevronUp, ChevronDown, UserPlus, ChevronRight } from 'lucide-r
 import { AppShell } from '@/components/fieldiq/AppShell'
 import { FilterSearchBar, FilterPills } from '@/components/fieldiq/FilterBar'
 import type { FilterOption } from '@/components/fieldiq/FilterBar'
+import { SkeletonRows } from '@/components/fieldiq/SkeletonRows'
 import { useAddContact } from '@/lib/context/AddContactContext'
 import { useContacts } from '@/lib/hooks/useContacts'
 import type { Contact } from '@/lib/api/contacts'
@@ -378,9 +379,7 @@ export default function ContactsPage() {
         {/* ── Mobile list (hidden on md+) ── */}
         <div className="md:hidden">
           {isLoading ? (
-            <div className="flex items-center justify-center" style={{ padding: '48px 20px' }}>
-              <span style={{ fontSize: 14, color: 'var(--muted)' }}>Loading…</span>
-            </div>
+            <SkeletonRows cols={2} rows={8} />
           ) : visibleContacts.length === 0 ? (
             <EmptyState />
           ) : (
@@ -442,9 +441,7 @@ export default function ContactsPage() {
 
           {/* Rows */}
           {isLoading ? (
-            <div className="flex items-center justify-center" style={{ padding: '48px 20px' }}>
-              <span style={{ fontSize: 14, color: 'var(--muted)' }}>Loading…</span>
-            </div>
+            <SkeletonRows cols={6} rows={8} />
           ) : visibleContacts.length === 0 ? (
             <EmptyState />
           ) : (

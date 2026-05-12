@@ -3,13 +3,17 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
-import { TriangleAlert, ChevronRight } from 'lucide-react'
+import { TriangleAlert, ChevronRight, Users, BarChart2, UserPlus } from 'lucide-react'
 import { AICard } from '@/components/fieldiq/AICard'
 import { AppShell } from '@/components/fieldiq/AppShell'
 import { StatusBadge } from '@/components/fieldiq/StatusBadge'
+import { WelcomeBanner } from '@/components/fieldiq/WelcomeBanner'
+import { SkeletonRows } from '@/components/fieldiq/SkeletonRows'
+import { Skeleton } from '@/components/ui/skeleton'
 import type { ActivityStatus } from '@/components/fieldiq/StatusBadge'
 import { useTheme } from '@/lib/context/ThemeContext'
 import { useManagerDashboard } from '@/lib/hooks/useManagerDashboard'
+import { useInviteAgent } from '@/lib/context/InviteAgentContext'
 import type { Period } from '@/lib/api/analytics'
 
 const PERIOD_LABELS: Record<Period, string> = { mtd: 'MTD', qtd: 'QTD', ytd: 'YTD' }
@@ -37,8 +41,9 @@ export default function ManagerPage() {
   const router = useRouter()
   const { theme } = useTheme()
   const isDark = theme === 'dark'
+  const { openInviteAgent } = useInviteAgent()
 
-  const { data } = useManagerDashboard(period)
+  const { data, isLoading } = useManagerDashboard(period)
 
   const kpis = data?.kpis ?? {
     totalActivities: 0,
@@ -54,6 +59,8 @@ export default function ManagerPage() {
   const leaderboard = data?.leaderboard ?? []
   const alerts = data?.alerts ?? []
   const agentActivity = data?.agentActivity ?? []
+
+  const isManagerFirstTime = data !== undefined && kpis.totalAgents === 0
 
   const maxCount = breakdown.reduce((m, i) => Math.max(m, i.count), 0)
   const totalActivities = breakdown.reduce((s, i) => s + i.count, 0)
@@ -108,9 +115,33 @@ export default function ManagerPage() {
           </div>
         </div>
 
+        {/* ── Welcome banner — first-time manager ─────────── */}
+        {isManagerFirstTime && (
+          <WelcomeBanner
+            headline="Welcome! Let's build your team."
+            subtext="Your dashboard will populate as reps log activities. Start by inviting your first rep."
+            tiles={[
+              {
+                icon: UserPlus,
+                title: 'Invite your first rep',
+                description: 'Send an email invite to bring a rep onto your team.',
+                buttonLabel: 'Invite Rep',
+                onClick: openInviteAgent,
+              },
+              {
+                icon: Users,
+                title: 'Share your agency code',
+                description: 'Reps can join your agency using the code on your Team page.',
+                buttonLabel: 'View Team',
+                href: '/team',
+              },
+            ]}
+          />
+        )}
+
         {/* ── AI Team Narrative ───────────────────────────── */}
         <AnimatePresence>
-          {!narrativeDismissed && (
+          {!narrativeDismissed && !isManagerFirstTime && (
             <motion.div
               key="narrative"
               initial={{ opacity: 0, y: -8 }}
@@ -132,7 +163,14 @@ export default function ManagerPage() {
         </AnimatePresence>
 
         {/* ── KPI cards ───────────────────────────────────── */}
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {isLoading && (
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full rounded-lg" />
+            ))}
+          </div>
+        )}
+        {!isLoading && <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {/* Total Team Activities */}
           <div
             className="flex flex-col rounded-[8px]"
@@ -246,10 +284,21 @@ export default function ManagerPage() {
               Target: {kpis.target} · {kpis.avgActivitiesPerAgent >= kpis.target ? 'On track' : 'Below target'}
             </span>
           </div>
-        </div>
+        </div>}
 
         {/* ── Two-column row ──────────────────────────────── */}
-        <div className="flex flex-col gap-4 lg:flex-row">
+        {isLoading && (
+          <div className="flex flex-col gap-4 lg:flex-row">
+            <div className="fieldiq-card min-w-0 flex-1">
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+                <Skeleton className="h-5 w-32" />
+              </div>
+              <SkeletonRows cols={5} rows={5} />
+            </div>
+            <Skeleton className="w-full lg:w-[340px] h-64 rounded-lg" />
+          </div>
+        )}
+        {!isLoading && <div className="flex flex-col gap-4 lg:flex-row">
 
           {/* ─ Team Leaderboard ─────────────────────────── */}
           <div
@@ -351,6 +400,26 @@ export default function ManagerPage() {
                 </span>
               ))}
             </div>
+
+            {/* Empty state */}
+            {leaderboard.length === 0 && (
+              <div className="flex flex-col items-center justify-center" style={{ padding: '40px 20px', gap: 10 }}>
+                <Users size={28} style={{ color: 'var(--border)' }} />
+                <div className="flex flex-col items-center text-center" style={{ gap: 4 }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)' }}>No reps yet</span>
+                  <span style={{ fontSize: 12, color: 'var(--muted)' }}>Invite your first rep to see team performance here.</span>
+                </div>
+                <button
+                  onClick={openInviteAgent}
+                  style={{
+                    height: 32, paddingLeft: 16, paddingRight: 16, fontSize: 12, fontWeight: 600,
+                    backgroundColor: '#c4a574', color: '#000000', border: 'none', borderRadius: 6, cursor: 'pointer',
+                  }}
+                >
+                  Invite Rep
+                </button>
+              </div>
+            )}
 
             {/* Rows */}
             {leaderboard.map((agent, idx) => {
@@ -484,7 +553,7 @@ export default function ManagerPage() {
               style={{ height: 36, paddingRight: 16, borderTop: '1px solid var(--border)' }}
             >
               <button
-                onClick={() => router.push('/coming-soon')}
+                onClick={() => router.push('/team')}
                 style={{ fontSize: 12, color: '#c4a574' }}
                 className="hover:underline"
               >
@@ -520,6 +589,14 @@ export default function ManagerPage() {
 
             {/* Bar rows */}
             <div className="flex flex-col gap-[10px]" style={{ padding: '10px 16px 12px' }}>
+              {breakdown.length === 0 && (
+                <div className="flex flex-col items-center justify-center" style={{ padding: '24px 0', gap: 8 }}>
+                  <BarChart2 size={24} style={{ color: 'var(--border)' }} />
+                  <span style={{ fontSize: 12, color: 'var(--muted)', textAlign: 'center' }}>
+                    Activity data will appear once reps start logging.
+                  </span>
+                </div>
+              )}
               {breakdown.map((item, i) => {
                 const barPct = maxCount > 0 ? (item.count / maxCount) * 100 : 0
                 const pct = totalActivities > 0 ? Math.round((item.count / totalActivities) * 100) : 0
@@ -555,10 +632,11 @@ export default function ManagerPage() {
               </div>
             </div>
           </div>
-        </div>
+        </div>}
 
         {/* ── Agent Activity heatmap card ─────────────────── */}
-        <div
+        {isLoading && <Skeleton className="h-48 w-full rounded-lg" />}
+        {!isLoading && <div
           className="overflow-hidden rounded-[8px]"
           style={{
             borderTop: '2px solid #c4a574',
@@ -584,14 +662,24 @@ export default function ManagerPage() {
 
           {/* Grid — 2 rows × 4 cols */}
           <div className="flex flex-col gap-3" style={{ padding: '12px 16px 14px' }}>
+            {agentActivity.length === 0 ? (
+              <div className="flex flex-col items-center justify-center" style={{ padding: '28px 0', gap: 8 }}>
+                <Users size={24} style={{ color: 'var(--border)' }} />
+                <span style={{ fontSize: 12, color: 'var(--muted)', textAlign: 'center' }}>
+                  Rep activity heatmap will appear once your team is active.
+                </span>
+              </div>
+            ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {agentActivity.map(agent => (
                 <div
                   key={agent.name}
-                  className="flex flex-col gap-[10px] rounded-[8px] p-[10px]"
+                  onClick={() => router.push(`/agent/${agent.name.toLowerCase().replace(/\s+/g, '-')}`)}
+                  className="flex flex-col gap-[10px] rounded-[8px] p-[10px] hover:opacity-90 transition-opacity"
                   style={{
                     border: '1px solid var(--border)',
                     backgroundColor: 'var(--surface)',
+                    cursor: 'pointer',
                   }}
                 >
                   {/* Row 1: avatar + name + status badge */}
@@ -653,7 +741,10 @@ export default function ManagerPage() {
               ))}
             </div>
 
+            )}
+
             {/* Legend */}
+            {agentActivity.length > 0 && (
             <div className="flex items-center justify-end gap-1.5">
               <span style={{ fontSize: 10, color: 'var(--muted)' }}>Less</span>
               {(['none', 'low', 'medium', 'high'] as const).map(level => (
@@ -665,8 +756,9 @@ export default function ManagerPage() {
               ))}
               <span style={{ fontSize: 10, color: 'var(--muted)' }}>More</span>
             </div>
+            )}
           </div>
-        </div>
+        </div>}
 
       </div>
     </AppShell>

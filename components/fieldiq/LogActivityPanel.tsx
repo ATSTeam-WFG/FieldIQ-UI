@@ -704,13 +704,13 @@ export function LogActivityPanel() {
   const [selectedContacts, setSelectedContacts] = useState<Contact[]>([])
   const [contactSearch, setContactSearch] = useState('')
   const [showContactDrop, setShowContactDrop] = useState(false)
-  const [date, setDate] = useState('2026-03-16')
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [time, setTime] = useState('12:30')
   const [duration, setDuration] = useState('1h 30m')
   const [cost, setCost] = useState('')
   const [notes, setNotes] = useState('')
   const [requiresFollowUp, setRequiresFollowUp] = useState(true)
-  const [followUpDate, setFollowUpDate] = useState('2026-03-23')
+  const [followUpDate, setFollowUpDate] = useState(() => { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().slice(0, 10) })
   const [mounted, setMounted] = useState(false)
 
   // Activity-specific state

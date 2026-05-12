@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
 interface KPICardProps {
@@ -8,6 +9,8 @@ interface KPICardProps {
   progressBar?: boolean
   progressValue?: number // 0–100
   className?: string
+  href?: string
+  onClick?: () => void
 }
 
 export function KPICard({
@@ -18,9 +21,16 @@ export function KPICard({
   progressBar,
   progressValue = 0,
   className,
+  href,
+  onClick,
 }: KPICardProps) {
-  return (
-    <div className={cn('fieldiq-card p-3 md:p-5', className)}>
+  const isClickable = !!(href || onClick)
+  const inner = (
+    <div
+      className={cn('fieldiq-card p-3 md:p-5', isClickable && 'hover:opacity-90 transition-opacity', className)}
+      style={isClickable ? { cursor: 'pointer' } : undefined}
+      onClick={onClick}
+    >
       {/* Label */}
       <p
         className="mb-1 md:mb-2 text-[10px] md:text-xs font-semibold uppercase leading-tight tracking-[0.05em]"
@@ -64,4 +74,8 @@ export function KPICard({
       )}
     </div>
   )
+  if (href) {
+    return <Link href={href} style={{ display: 'block', textDecoration: 'none' }}>{inner}</Link>
+  }
+  return inner
 }

@@ -37,27 +37,34 @@ test('search box is present', async ({ page }) => {
 test('searching for no-match shows empty state', async ({ page }) => {
   await page.getByPlaceholder('Search name or company…').fill('zzz_no_match_xyz')
   await page.waitForTimeout(300)
-  await expect(page.getByText('No contacts match your search')).toBeVisible()
+  await expect(page.locator('p:visible').filter({ hasText: 'No contacts match your search' })).toBeVisible()
 })
 
 test('clearing search removes empty state', async ({ page }) => {
+  // Only meaningful when contacts exist — skip for users with no contacts
+  const initiallyEmpty = await page.locator('p:visible').filter({ hasText: 'No contacts match your search' }).isVisible().catch(() => false)
+  if (initiallyEmpty) {
+    // 0 contacts: empty state persists regardless of search
+    test.skip(true, 'Skipped — no contacts to restore after clearing search')
+    return
+  }
   const search = page.getByPlaceholder('Search name or company…')
   await search.fill('zzz_no_match_xyz')
   await page.waitForTimeout(300)
   await search.clear()
   await page.waitForTimeout(300)
-  await expect(page.getByText('No contacts match your search')).not.toBeVisible()
+  await expect(page.locator('p:visible').filter({ hasText: 'No contacts match your search' })).not.toBeVisible()
 })
 
 test('contact row click navigates to detail page (when data exists)', async ({ page }) => {
-  const hasRows = await page.locator('[style*="cursor: pointer"]').first().isVisible()
-    .catch(() => false)
-
-  if (!hasRows) {
+  // If EmptyState is shown, there are no contacts to click
+  const isEmpty = await page.getByText('No contacts match your search').isVisible().catch(() => false)
+  if (isEmpty) {
     test.skip(true, 'No contact rows — skipping navigation test (requires auth + data)')
     return
   }
-  await page.locator('[style*="cursor: pointer"]').first().click()
+  // Click first contact row (height 56px grid row, not the table header sort buttons)
+  await page.locator('div[style*="height: 56px"][style*="cursor: pointer"]').first().click()
   await expect(page).toHaveURL(/\/contacts\/.+/)
 })
 

@@ -3,15 +3,14 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft, User, Users, UserCog, TrendingUp, Mail, Moon, Sun, CheckCircle2 } from 'lucide-react'
+import { ChevronLeft, User, UserCog, TrendingUp, Mail, Moon, Sun, CheckCircle2, ArrowRight, Copy, Check } from 'lucide-react'
 import { useTheme } from '@/lib/context/ThemeContext'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type Step = 1 | 2 | 3 | 4
-type UserType = 'individual' | 'agency' | null
-type AgencyRole = 'rep' | 'manager' | null
-type RepChoice = 'individual' | 'team' | null
+type Step = 1 | 2
+type Role = 'rep' | 'manager' | null
+type RepPath = 'individual' | 'join' | null
 
 // ── Selection Tile ─────────────────────────────────────────────────────────────
 
@@ -125,43 +124,62 @@ export default function OnboardingPage() {
   const { theme, toggleTheme } = useTheme()
 
   const [step, setStep] = useState<Step>(1)
-  const [userType, setUserType] = useState<UserType>(null)
-  const [agencyRole, setAgencyRole] = useState<AgencyRole>(null)
-  const [repChoice, setRepChoice] = useState<RepChoice>(null)
+  const [role, setRole] = useState<Role>(null)
+  const [repPath, setRepPath] = useState<RepPath>(null)
+  const [showJoinInfo, setShowJoinInfo] = useState(false)
+  const [joinCode, setJoinCode] = useState('')
+  const [joinCodeError, setJoinCodeError] = useState<string | null>(null)
+  const [promptCopied, setPromptCopied] = useState(false)
+
+  const MANAGER_PROMPT = 'Sign up on FieldIQ as a Manager, create your agency, and share your agency code with me.'
+
+  function handleCopyPrompt() {
+    navigator.clipboard.writeText(MANAGER_PROMPT)
+    setPromptCopied(true)
+    setTimeout(() => setPromptCopied(false), 2000)
+  }
 
   const canContinue =
-    (step === 1 && userType !== null) ||
-    (step === 2 && agencyRole !== null) ||
-    (step === 3 && repChoice !== null)
-
-  const dotCount = step === 4 ? 4 : step
+    (step === 1 && role !== null) ||
+    (step === 2 && repPath !== null)
 
   function handleContinue() {
     if (step === 1) {
-      if (userType === 'individual') {
-        router.push('/signup?type=individual')
+      if (role === 'manager') {
+        router.push('/signup?role=manager')
       } else {
         setStep(2)
       }
     } else if (step === 2) {
-      if (agencyRole === 'manager') {
-        router.push('/signup?role=manager&type=agency')
+      if (repPath === 'individual') {
+        router.push('/signup')
       } else {
-        setStep(3)
-      }
-    } else if (step === 3) {
-      if (repChoice === 'individual') {
-        router.push('/signup?type=individual')
-      } else {
-        setStep(4)
+        setShowJoinInfo(true)
+        setJoinCode('')
+        setJoinCodeError(null)
       }
     }
   }
 
   function handleBack() {
-    if (step === 2) { setAgencyRole(null); setStep(1) }
-    else if (step === 3) { setRepChoice(null); setStep(2) }
-    else if (step === 4) { setRepChoice(null); setStep(3) }
+    if (showJoinInfo) {
+      setShowJoinInfo(false)
+      setRepPath(null)
+      setJoinCode('')
+      setJoinCodeError(null)
+    } else if (step === 2) {
+      setRepPath(null)
+      setStep(1)
+    }
+  }
+
+  function handleJoinContinue() {
+    const code = joinCode.trim().toUpperCase()
+    if (code.length < 6) {
+      setJoinCodeError('Please enter a valid agency code.')
+      return
+    }
+    router.push(`/join/${code}`)
   }
 
   const goldBtn: React.CSSProperties = {
@@ -212,7 +230,7 @@ export default function OnboardingPage() {
 
         {/* Progress row */}
         <div className="flex items-center justify-between">
-          {step > 1 ? (
+          {step > 1 || showJoinInfo ? (
             <button
               onClick={handleBack}
               className="flex items-center"
@@ -225,24 +243,27 @@ export default function OnboardingPage() {
             <div />
           )}
           <div className="flex items-center" style={{ gap: 6 }}>
-            {Array.from({ length: dotCount }).map((_, i) => (
-              <div
-                key={i}
-                style={{
-                  width: i + 1 === dotCount ? 20 : 6,
-                  height: 6,
-                  borderRadius: 9999,
-                  backgroundColor: '#c4a574',
-                  transition: 'width 0.2s',
-                }}
-              />
-            ))}
+            {[1, 2].map((dot) => {
+              const active = showJoinInfo ? dot === 2 : dot === step
+              return (
+                <div
+                  key={dot}
+                  style={{
+                    width: active ? 20 : 6,
+                    height: 6,
+                    borderRadius: 9999,
+                    backgroundColor: '#c4a574',
+                    transition: 'width 0.2s',
+                  }}
+                />
+              )
+            })}
           </div>
         </div>
 
         <div style={{ height: 24 }} />
 
-        {/* ── Step 1: Who are you? ── */}
+        {/* ── Step 1: Rep or Manager? ── */}
         {step === 1 && (
           <>
             <div className="flex flex-col" style={{ gap: 4, marginBottom: 24 }}>
@@ -257,60 +278,18 @@ export default function OnboardingPage() {
             <div className="flex flex-col" style={{ gap: 10, marginBottom: 24 }}>
               <SelectionTile
                 icon={User}
-                title="Individual Title Sales Rep"
-                description="Track your own field activities, contacts, and performance on your own."
-                selected={userType === 'individual'}
-                onClick={() => setUserType('individual')}
-                theme={theme}
-              />
-              <SelectionTile
-                icon={Users}
-                title="Small or Mid-Size Agency Team"
-                description="Manage your agency's sales team or join your agency's account."
-                selected={userType === 'agency'}
-                onClick={() => setUserType('agency')}
-                theme={theme}
-              />
-            </div>
-
-            <button
-              onClick={handleContinue}
-              disabled={!canContinue}
-              style={canContinue ? goldBtn : disabledBtn}
-              className="hover:opacity-90 active:opacity-80"
-            >
-              Continue
-            </button>
-          </>
-        )}
-
-        {/* ── Step 2: Agency role ── */}
-        {step === 2 && (
-          <>
-            <div className="flex flex-col" style={{ gap: 4, marginBottom: 24 }}>
-              <h1 className="font-semibold" style={{ fontSize: 20, color: 'var(--foreground)', margin: 0 }}>
-                What&apos;s your role at your agency?
-              </h1>
-              <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0 }}>
-                We&apos;ll tailor your account to fit your responsibilities.
-              </p>
-            </div>
-
-            <div className="flex flex-col" style={{ gap: 10, marginBottom: 24 }}>
-              <SelectionTile
-                icon={User}
-                title="Sales Rep"
-                description="I work in the field, managing contacts and closing deals."
-                selected={agencyRole === 'rep'}
-                onClick={() => setAgencyRole('rep')}
+                title="I'm a Sales Rep"
+                description="Track field activities, contacts, and your personal performance."
+                selected={role === 'rep'}
+                onClick={() => setRole('rep')}
                 theme={theme}
               />
               <SelectionTile
                 icon={UserCog}
-                title="Manager"
-                description="I oversee a team of sales reps and track team performance."
-                selected={agencyRole === 'manager'}
-                onClick={() => setAgencyRole('manager')}
+                title="I'm a Manager"
+                description="Set up your agency, manage your team, and track team performance."
+                selected={role === 'manager'}
+                onClick={() => setRole('manager')}
                 theme={theme}
               />
             </div>
@@ -323,36 +302,45 @@ export default function OnboardingPage() {
             >
               Continue
             </button>
+
+            <div style={{ height: 20 }} />
+
+            <p className="text-center" style={{ fontSize: 12, color: 'var(--muted)' }}>
+              Already have an account?{' '}
+              <Link href="/login" style={{ color: 'var(--gold)' }} className="hover:underline">
+                Sign in
+              </Link>
+            </p>
           </>
         )}
 
-        {/* ── Step 3: Rep options ── */}
-        {step === 3 && (
+        {/* ── Step 2: Individual or joining agency? ── */}
+        {step === 2 && !showJoinInfo && (
           <>
             <div className="flex flex-col" style={{ gap: 4, marginBottom: 24 }}>
               <h1 className="font-semibold" style={{ fontSize: 20, color: 'var(--foreground)', margin: 0 }}>
-                How would you like to get started?
+                How are you joining?
               </h1>
               <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0 }}>
-                You can always switch to a team account later.
+                You can always connect to a team later.
               </p>
             </div>
 
             <div className="flex flex-col" style={{ gap: 10, marginBottom: 24 }}>
               <SelectionTile
                 icon={TrendingUp}
-                title="Use FieldIQ Individually"
-                description="Track your own performance and field activity. Great for personal growth and staying organized."
-                selected={repChoice === 'individual'}
-                onClick={() => setRepChoice('individual')}
+                title="I'm working independently"
+                description="Track your own activities and contacts. No team required."
+                selected={repPath === 'individual'}
+                onClick={() => setRepPath('individual')}
                 theme={theme}
               />
               <SelectionTile
                 icon={Mail}
-                title="Request Access to My Agency's Account"
-                description="Ask your manager to set up an organization account and send you an invite."
-                selected={repChoice === 'team'}
-                onClick={() => setRepChoice('team')}
+                title="I'm joining an agency"
+                description="Your manager will send you an invite link via email."
+                selected={repPath === 'join'}
+                onClick={() => setRepPath('join')}
                 theme={theme}
               />
             </div>
@@ -368,69 +356,115 @@ export default function OnboardingPage() {
           </>
         )}
 
-        {/* ── Step 4: Request access info ── */}
-        {step === 4 && (
+        {/* ── Step 2b: Agency code entry ── */}
+        {step === 2 && showJoinInfo && (
           <>
             <div className="flex flex-col" style={{ gap: 4, marginBottom: 24 }}>
               <h1 className="font-semibold" style={{ fontSize: 20, color: 'var(--foreground)', margin: 0 }}>
-                You&apos;re one step away
+                Enter your agency code
               </h1>
               <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0 }}>
-                Ask your manager to get you set up.
+                Ask your manager for the code — they&apos;ll find it in their Team page.
               </p>
             </div>
 
-            <div
-              className="rounded-[10px]"
-              style={{
-                padding: 20,
-                backgroundColor: 'var(--surface)',
-                border: '1px solid var(--border)',
-                marginBottom: 24,
-              }}
-            >
-              <div className="flex items-start" style={{ gap: 12, marginBottom: 16 }}>
-                <CheckCircle2 size={18} style={{ color: '#c4a574', flexShrink: 0, marginTop: 1 }} />
-                <div>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', margin: 0, marginBottom: 4 }}>
-                    Share this with your manager
-                  </p>
-                  <p style={{ fontSize: 13, color: 'var(--muted)', margin: 0, lineHeight: 1.5 }}>
-                    Ask them to create an organization account on FieldIQ and invite you as a sales rep. You&apos;ll receive an email with a link to join the team.
-                  </p>
-                </div>
-              </div>
-
-              <div
-                className="rounded-[8px]"
-                style={{
-                  padding: '12px 14px',
-                  backgroundColor: theme === 'dark' ? '#1f1a12' : '#fdf8f0',
-                  border: '1px solid #c4a574',
+            {/* Code input */}
+            <div className="flex flex-col" style={{ gap: 8, marginBottom: 20 }}>
+              <input
+                type="text"
+                value={joinCode}
+                onChange={(e) => {
+                  setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8))
+                  setJoinCodeError(null)
                 }}
-              >
-                <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0, marginBottom: 2, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                  Tell your manager
-                </p>
-                <p style={{ fontSize: 13, color: 'var(--foreground)', margin: 0, lineHeight: 1.5 }}>
-                  &ldquo;Sign up at fieldiq.ai, choose Agency Team → Manager, and invite me as a rep on your team.&rdquo;
-                </p>
-              </div>
+                placeholder="XXXXXXXX"
+                className="focus:ring-1 focus:ring-[#c4a574]"
+                style={{
+                  height: 48,
+                  backgroundColor: theme === 'dark' ? 'var(--surface)' : 'var(--card)',
+                  border: joinCodeError ? '1px solid #d97706' : '1px solid var(--border)',
+                  padding: '0 16px',
+                  fontSize: 20,
+                  fontWeight: 600,
+                  letterSpacing: '0.15em',
+                  color: 'var(--foreground)',
+                  borderRadius: 8,
+                  outline: 'none',
+                  width: '100%',
+                  textTransform: 'uppercase',
+                  fontFamily: 'monospace',
+                }}
+              />
+              {joinCodeError && (
+                <span style={{ fontSize: 12, color: '#d97706' }}>{joinCodeError}</span>
+              )}
             </div>
 
-            <Link
-              href="/login"
-              className="flex items-center justify-center w-full rounded-[8px] font-semibold transition-opacity hover:opacity-90"
+            <button
+              onClick={handleJoinContinue}
+              disabled={joinCode.trim().length < 6}
+              className="hover:opacity-90 active:opacity-80"
+              style={
+                joinCode.trim().length >= 6
+                  ? { ...goldBtn, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }
+                  : { ...disabledBtn, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }
+              }
+            >
+              Find Agency
+              <ArrowRight size={14} />
+            </button>
+
+            {/* Divider */}
+            <div style={{ height: 20 }} />
+            <div className="flex items-center" style={{ gap: 12 }}>
+              <div className="flex-1" style={{ height: 1, backgroundColor: 'var(--border)' }} />
+              <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', color: 'var(--muted)' }}>OR</span>
+              <div className="flex-1" style={{ height: 1, backgroundColor: 'var(--border)' }} />
+            </div>
+            <div style={{ height: 20 }} />
+
+            {/* Tell your manager fallback */}
+            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', margin: 0, marginBottom: 10 }}>
+              Don&apos;t have a code? Tell your manager
+            </p>
+            <div
+              className="rounded-[8px]"
               style={{
-                height: 42,
-                fontSize: 14,
-                backgroundColor: theme === 'dark' ? '#c4a574' : '#000000',
-                color: theme === 'dark' ? '#000000' : '#fafaf9',
-                textDecoration: 'none',
+                padding: '12px 14px',
+                backgroundColor: theme === 'dark' ? '#1f1a12' : '#fdf8f0',
+                border: '1px solid #c4a574',
+                marginBottom: 16,
+                position: 'relative',
               }}
             >
-              Already invited? Sign in
-            </Link>
+              <button
+                onClick={handleCopyPrompt}
+                title="Copy prompt"
+                className="flex items-center rounded-[6px] transition-opacity hover:opacity-70"
+                style={{
+                  position: 'absolute', top: 10, right: 10,
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: promptCopied ? '#16a34a' : '#c4a574',
+                  padding: 2,
+                }}
+              >
+                {promptCopied ? <Check size={13} /> : <Copy size={13} />}
+              </button>
+              <p style={{ fontSize: 13, color: 'var(--foreground)', margin: 0, lineHeight: 1.6, paddingRight: 20 }}>
+                &ldquo;Sign up on FieldIQ as a Manager, create your agency, and share your agency code with me.&rdquo;
+              </p>
+            </div>
+
+            <p className="text-center" style={{ fontSize: 12, color: 'var(--muted)' }}>
+              Already have an account?{' '}
+              <button
+                onClick={() => router.push('/login')}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--gold)', fontSize: 12, padding: 0 }}
+                className="hover:underline"
+              >
+                Sign in
+              </button>
+            </p>
           </>
         )}
       </div>

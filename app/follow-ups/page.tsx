@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Plus, Circle, CalendarPlus } from 'lucide-react'
 import { AppShell } from '@/components/fieldiq/AppShell'
+import { SkeletonRows } from '@/components/fieldiq/SkeletonRows'
 import { useActivityLog } from '@/lib/context/ActivityLogContext'
 import { useFollowUps, useUpdateFollowUp } from '@/lib/hooks/useFollowUps'
 import type { FollowUp } from '@/lib/api/follow-ups'
@@ -528,7 +529,7 @@ export default function FollowUpsPage() {
             }}
           >
             <span style={{ fontSize: 11, color: 'var(--muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-              Overdue
+              OVERDUE
             </span>
             <span
               className="font-bold"
@@ -552,7 +553,7 @@ export default function FollowUpsPage() {
             }}
           >
             <span style={{ fontSize: 11, color: 'var(--muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-              This Week
+              THIS WEEK
             </span>
             <span
               className="font-bold"
@@ -576,7 +577,7 @@ export default function FollowUpsPage() {
             }}
           >
             <span style={{ fontSize: 11, color: 'var(--muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-              Upcoming
+              UPCOMING
             </span>
             <span
               className="font-bold"
@@ -588,9 +589,17 @@ export default function FollowUpsPage() {
         </div>
 
         {/* ── Grouped sections ────────────────────────────── */}
-        <GroupSection label="Overdue" items={overdue} isOverdue />
-        <GroupSection label="This Week" items={thisWeek} />
-        <GroupSection label="Upcoming" items={upcoming} />
+        {isLoading ? (
+          <div className="fieldiq-card" style={{ marginTop: 8 }}>
+            <SkeletonRows cols={4} rows={8} />
+          </div>
+        ) : (
+          <>
+            <GroupSection label="Overdue" items={overdue} isOverdue />
+            <GroupSection label="This Week" items={thisWeek} />
+            <GroupSection label="Upcoming" items={upcoming} />
+          </>
+        )}
 
       </div>
     </AppShell>

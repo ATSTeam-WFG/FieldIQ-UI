@@ -35,7 +35,7 @@ test('search bar and filter pills are visible', async ({ page }) => {
 
 test('table column headers are visible', async ({ page }) => {
   for (const col of ['FILE NUMBER', 'ADDRESS', 'CONTACT', 'AMOUNT', 'STATUS']) {
-    await expect(page.getByText(col)).toBeVisible()
+    await expect(page.getByText(col).first()).toBeVisible()
   }
 })
 

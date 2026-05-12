@@ -8,7 +8,9 @@ export function middleware(request: NextRequest) {
   if (
     PUBLIC_PATHS.has(pathname) ||
     pathname.startsWith('/onboarding/') ||
-    pathname.startsWith('/coming-soon/')
+    pathname.startsWith('/coming-soon/') ||
+    pathname.startsWith('/invite/') ||
+    pathname.startsWith('/join/')
   ) {
     return NextResponse.next()
   }

@@ -16,11 +16,7 @@ test.beforeEach(async ({ page }) => {
 })
 
 async function openLogActivityPanel(page: import('@playwright/test').Page) {
-  await page.evaluate(() => {
-    const btn = Array.from(document.querySelectorAll('button'))
-      .find(b => b.textContent?.includes('Log Activity'))
-    btn?.click()
-  })
+  await page.getByRole('button', { name: /Log Activity/i }).first().click()
   await page.waitForTimeout(500)
 }
 
@@ -28,7 +24,7 @@ test('full log-activity flow: select Lunch, enter cost, save shows toast', async
   await openLogActivityPanel(page)
 
   // Select Lunch tile
-  await page.getByText('Lunch').click()
+  await page.getByRole('button', { name: 'Lunch' }).click()
   await page.waitForTimeout(200)
 
   // Fill in cost if field is present
@@ -42,7 +38,7 @@ test('full log-activity flow: select Lunch, enter cost, save shows toast', async
 
   // Toast or success indicator
   await expect(
-    page.getByText(/activity logged|saved|success/i)
+    page.getByText(/activity logged|saved|success/i).first()
   ).toBeVisible({ timeout: 8_000 })
 })
 
@@ -56,18 +52,15 @@ test('Save Activity button exists in the panel', async ({ page }) => {
 test('follow-up toggle creates a follow-up note field', async ({ page }) => {
   await openLogActivityPanel(page)
 
-  // Look for a "Follow-up" or "Add Follow-up" toggle/checkbox
-  const followUpToggle = page
-    .getByText(/add follow.?up|follow.?up/i)
-    .or(page.getByLabel(/follow.?up/i))
-    .first()
+  // Look for the "Toggle follow-up" button inside the panel
+  const followUpToggle = page.getByRole('button', { name: 'Toggle follow-up' })
 
-  if (await followUpToggle.isVisible()) {
+  if (await followUpToggle.isVisible().catch(() => false)) {
     await followUpToggle.click()
     await page.waitForTimeout(300)
     // A note or date field should appear
     const noteField = page.getByPlaceholder(/note|follow.?up/i)
-    if (await noteField.isVisible()) {
+    if (await noteField.isVisible().catch(() => false)) {
       await noteField.fill('Send thank-you card')
       await expect(noteField).toHaveValue('Send thank-you card')
     }

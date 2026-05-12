@@ -5,6 +5,7 @@ import { Plus, FileText } from 'lucide-react'
 import { AppShell } from '@/components/fieldiq/AppShell'
 import { FilterSearchBar, FilterPills } from '@/components/fieldiq/FilterBar'
 import type { FilterOption } from '@/components/fieldiq/FilterBar'
+import { SkeletonRows } from '@/components/fieldiq/SkeletonRows'
 import { useContract } from '@/lib/context/ContractContext'
 import { useRole } from '@/lib/context/RoleContext'
 import { useContracts } from '@/lib/hooks/useContracts'
@@ -194,9 +195,7 @@ export default function ContractsPage() {
 
           {/* Loading / empty state */}
           {isLoading ? (
-            <div className="flex items-center justify-center" style={{ padding: '48px 20px' }}>
-              <span style={{ fontSize: 14, color: 'var(--muted)' }}>Loading…</span>
-            </div>
+            <SkeletonRows cols={5} rows={8} />
           ) : filtered.length === 0 ? (
             <div
               className="flex flex-col items-center justify-center"

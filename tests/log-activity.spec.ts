@@ -18,36 +18,25 @@ test.beforeEach(async ({ page }) => {
 })
 
 test('Log Activity button opens the panel', async ({ page }) => {
-  await page.evaluate(() => {
-    const btn = Array.from(document.querySelectorAll('button'))
-      .find(b => b.textContent?.includes('Log Activity'))
-    btn?.click()
-  })
+  await page.getByRole('button', { name: /Log Activity/i }).first().click()
   await page.waitForTimeout(400)
-  await expect(page.getByText('Log Activity').nth(1)).toBeVisible({ timeout: 5_000 })
+  // Panel is open when the subtitle or Save Activity button becomes visible
+  await expect(page.getByText('Fill in the details for your field activity')).toBeVisible({ timeout: 5_000 })
 })
 
 test('panel shows activity type tiles', async ({ page }) => {
-  await page.evaluate(() => {
-    const btn = Array.from(document.querySelectorAll('button'))
-      .find(b => b.textContent?.includes('Log Activity'))
-    btn?.click()
-  })
+  await page.getByRole('button', { name: /Log Activity/i }).first().click()
   await page.waitForTimeout(400)
 
-  await expect(page.getByText('Lunch')).toBeVisible({ timeout: 5_000 })
-  await expect(page.getByText('Pop-by')).toBeVisible()
-  await expect(page.getByText('Coffee')).toBeVisible()
-  await expect(page.getByText('Call')).toBeVisible()
-  await expect(page.getByText('CE Class')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Lunch' })).toBeVisible({ timeout: 5_000 })
+  await expect(page.getByRole('button', { name: 'Pop-by' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Coffee' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Call' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'CE Class' })).toBeVisible()
 })
 
 test('panel has a Save Activity submit button', async ({ page }) => {
-  await page.evaluate(() => {
-    const btn = Array.from(document.querySelectorAll('button'))
-      .find(b => b.textContent?.includes('Log Activity'))
-    btn?.click()
-  })
+  await page.getByRole('button', { name: /Log Activity/i }).first().click()
   await page.waitForTimeout(400)
   await expect(page.getByRole('button', { name: 'Save Activity' })).toBeVisible({ timeout: 5_000 })
 })
@@ -59,23 +48,19 @@ test('submitting the form shows a success toast (requires auth)', async ({ page 
     return
   }
 
-  await page.evaluate(() => {
-    const btn = Array.from(document.querySelectorAll('button'))
-      .find(b => b.textContent?.includes('Log Activity'))
-    btn?.click()
-  })
+  await page.getByRole('button', { name: /Log Activity/i }).first().click()
   await page.waitForTimeout(500)
 
   // Lunch is selected by default — just submit
   await page.getByRole('button', { name: 'Save Activity' }).click()
-  await expect(page.getByText(/activity logged|saved|success/i)).toBeVisible({ timeout: 8_000 })
+  await expect(page.getByText(/activity logged|saved|success/i).first()).toBeVisible({ timeout: 8_000 })
 })
 
 test('AI nudge "Log activity now" opens panel with contact pre-filled', async ({ page }) => {
-  const nudgeLink = page.getByText('Log activity now →')
-  if (await nudgeLink.isVisible()) {
+  const nudgeLink = page.getByRole('button', { name: 'Log activity now →' })
+  if (await nudgeLink.isVisible().catch(() => false)) {
     await nudgeLink.click()
     await page.waitForTimeout(400)
-    await expect(page.getByText('Lunch')).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByRole('button', { name: 'Lunch' })).toBeVisible({ timeout: 5_000 })
   }
 })

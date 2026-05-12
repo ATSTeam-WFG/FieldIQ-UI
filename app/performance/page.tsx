@@ -4,6 +4,7 @@ import { TrendingUp } from 'lucide-react'
 import { AICard } from '@/components/fieldiq/AICard'
 import { AppShell } from '@/components/fieldiq/AppShell'
 import { KPICard } from '@/components/fieldiq/KPICard'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useRole } from '@/lib/context/RoleContext'
 import { useAgentPerformance } from '@/lib/hooks/useAgentPerformance'
 import { useManagerPerformance } from '@/lib/hooks/useManagerPerformance'
@@ -56,7 +57,7 @@ function CustomTooltip({ active, payload, label }: any) {
 // ── Manager view ──────────────────────────────────────────────────────────────
 
 function ManagerPerformancePage() {
-  const { data } = useManagerPerformance()
+  const { data, isLoading } = useManagerPerformance()
 
   const teamWeeklyData = data?.teamWeekly ?? []
   const activityTypeBreakdown = data?.activityBreakdown ?? []
@@ -75,12 +76,20 @@ function ManagerPerformancePage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: 16, marginTop: 24 }}>
-          <KPICard label="TOTAL ACTIVITIES" value={String(data?.totalActivitiesMtd ?? 0)} subLabel="MTD" />
-          <KPICard label="TOTAL SPEND" value={data ? `$${data.totalSpendMtd.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '$0'} subLabel="MTD" />
-          <KPICard label="AVG SCORE" value={String(data?.avgScore ?? 0)} subLabel="Across team" />
-          <KPICard label="MOST ACTIVE" value={data?.mostActiveAgent ?? '—'} subLabel="This month" />
-        </div>
+        {isLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: 16, marginTop: 24 }}>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full rounded-lg" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: 16, marginTop: 24 }}>
+            <KPICard label="TOTAL ACTIVITIES" value={String(data?.totalActivitiesMtd ?? 0)} subLabel="MTD" />
+            <KPICard label="TOTAL SPEND" value={data ? `$${data.totalSpendMtd.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '$0'} subLabel="MTD" />
+            <KPICard label="AVG SCORE" value={String(data?.avgScore ?? 0)} subLabel="Across team" />
+            <KPICard label="MOST ACTIVE" value={data?.mostActiveAgent ?? '—'} subLabel="This month" />
+          </div>
+        )}
 
         <div className="flex flex-col md:flex-row" style={{ gap: 16, marginTop: 16 }}>
           <div className="fieldiq-card flex-1 min-w-0">
@@ -185,7 +194,7 @@ function ManagerPerformancePage() {
 // ── Agent view ────────────────────────────────────────────────────────────────
 
 function AgentPerformancePage() {
-  const { data } = useAgentPerformance()
+  const { data, isLoading } = useAgentPerformance()
 
   const monthlySpend = data?.monthlySpend ?? []
   const activityTypeBreakdown = data?.activityBreakdown ?? []
@@ -237,33 +246,45 @@ function AgentPerformancePage() {
         </div>
 
         {/* ── KPI row ───────────────────────────────────── */}
-        <div
-          className="grid grid-cols-2 md:grid-cols-4"
-          style={{ gap: 16, marginTop: 24 }}
-        >
-          <KPICard
-            label="ACTIVITIES THIS MONTH"
-            value={String(activitiesMtd)}
-            subLabel="vs 20 target"
-            subLabelColor={activitiesMtd >= 20 ? '#16a34a' : '#d97706'}
-          />
-          <KPICard
-            label="TOTAL SPEND"
-            value={`$${spendMtd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`}
-            subLabel={avgCost > 0 ? `Avg $${avgCost.toFixed(0)}/activity` : 'No spend yet'}
-          />
-          <KPICard
-            label="CONTACTS ENGAGED"
-            value={String(contactsEngaged)}
-            subLabel="This month"
-          />
-          <KPICard
-            label="MOST ACTIVE TYPE"
-            value={mostActiveType}
-            subLabel="This month"
-            subLabelColor="#c4a574"
-          />
-        </div>
+        {isLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: 16, marginTop: 24 }}>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full rounded-lg" />
+            ))}
+          </div>
+        ) : (
+          <div
+            className="grid grid-cols-2 md:grid-cols-4"
+            style={{ gap: 16, marginTop: 24 }}
+          >
+            <KPICard
+              label="ACTIVITIES THIS MONTH"
+              value={String(activitiesMtd)}
+              subLabel="vs 20 target"
+              subLabelColor={activitiesMtd >= 20 ? '#16a34a' : '#d97706'}
+              href="/activities"
+            />
+            <KPICard
+              label="TOTAL SPEND"
+              value={`$${spendMtd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`}
+              subLabel={avgCost > 0 ? `Avg $${avgCost.toFixed(0)}/activity` : 'No spend yet'}
+              href="/activities"
+            />
+            <KPICard
+              label="CONTACTS ENGAGED"
+              value={String(contactsEngaged)}
+              subLabel="This month"
+              href="/contacts"
+            />
+            <KPICard
+              label="MOST ACTIVE TYPE"
+              value={mostActiveType}
+              subLabel="This month"
+              subLabelColor="#c4a574"
+              href="/activities"
+            />
+          </div>
+        )}
 
         {/* ── Spend & Activity Trend ────────────────────── */}
         <div

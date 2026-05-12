@@ -22,9 +22,9 @@ test('page heading is "Follow-ups"', async ({ page }) => {
 })
 
 test('summary KPI chips are visible', async ({ page }) => {
-  await expect(page.getByText('OVERDUE')).toBeVisible()
-  await expect(page.getByText('THIS WEEK')).toBeVisible()
-  await expect(page.getByText('UPCOMING')).toBeVisible()
+  await expect(page.getByText('OVERDUE', { exact: true })).toBeVisible()
+  await expect(page.getByText('THIS WEEK', { exact: true })).toBeVisible()
+  await expect(page.getByText('UPCOMING', { exact: true })).toBeVisible()
 })
 
 test('all 3 group section headings are visible', async ({ page }) => {
@@ -41,7 +41,7 @@ test('empty state messages render correctly with no data', async ({ page }) => {
   if (!hasData) {
     // Empty state: "Nothing here" or "No upcoming follow-ups"
     await expect(
-      page.getByText('Nothing here').or(page.getByText('No upcoming follow-ups'))
+      page.getByText('Nothing here').or(page.getByText('No upcoming follow-ups')).first()
     ).toBeVisible()
   }
 })

@@ -19,6 +19,7 @@ import { StatusBadge } from '@/components/fieldiq/StatusBadge'
 import type { ActivityStatus } from '@/components/fieldiq/StatusBadge'
 import { FilterSearchBar, FilterPills, FilterDropdown } from '@/components/fieldiq/FilterBar'
 import type { FilterOption } from '@/components/fieldiq/FilterBar'
+import { SkeletonRows } from '@/components/fieldiq/SkeletonRows'
 import { useActivityLog } from '@/lib/context/ActivityLogContext'
 import { useRole } from '@/lib/context/RoleContext'
 import { useActivities } from '@/lib/hooks/useActivities'
@@ -266,7 +267,9 @@ export default function ActivitiesPage() {
           </div>
 
           {/* Table rows */}
-          {filteredActivities.length > 0 ? (
+          {isLoading ? (
+            <SkeletonRows cols={5} rows={8} />
+          ) : filteredActivities.length > 0 ? (
             filteredActivities.map((act, idx) => {
               const Icon   = activityIconMap[act.type] ?? Circle
               const isLast = idx === filteredActivities.length - 1

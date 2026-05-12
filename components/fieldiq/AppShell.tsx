@@ -24,6 +24,7 @@ import { TeamBroadcastPanel } from './TeamBroadcastPanel'
 import { useInviteAgent } from '@/lib/context/InviteAgentContext'
 import { useTeamBroadcast } from '@/lib/context/TeamBroadcastContext'
 import { useRole } from '@/lib/context/RoleContext'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface AppShellProps {
   activeItem?: string
@@ -71,7 +72,46 @@ export function AppShell({ activeItem, children }: AppShellProps) {
     }
   }, [loaded, isAuthenticated, router])
 
-  if (!loaded || !isAuthenticated) {
+  if (!loaded) {
+    return (
+      <div
+        className="flex h-screen flex-col overflow-hidden"
+        style={{ backgroundColor: 'var(--background)' }}
+      >
+        <div
+          className="flex shrink-0 items-center gap-3 px-5"
+          style={{ height: 56, borderBottom: '1px solid var(--border)' }}
+        >
+          <Skeleton className="h-5 w-20" />
+          <div className="flex-1" />
+          <Skeleton className="h-8 w-8 rounded-full" />
+          <Skeleton className="h-8 w-8 rounded-full" />
+        </div>
+        <div className="flex flex-1 overflow-hidden">
+          <div
+            className="hidden md:flex flex-col gap-2 p-4"
+            style={{ width: 220, borderRight: '1px solid var(--border)' }}
+          >
+            <Skeleton className="mb-2 h-4 w-24" />
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-9 w-full rounded-lg" />
+            ))}
+          </div>
+          <div className="flex flex-1 flex-col gap-4 p-6">
+            <Skeleton className="h-7 w-40" />
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-24 w-full rounded-lg" />
+              ))}
+            </div>
+            <Skeleton className="h-56 w-full rounded-lg" />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
     return (
       <div
         className="flex h-screen items-center justify-center"

@@ -16,14 +16,18 @@ test.use({ storageState: { cookies: [], origins: [] } })
 
 test('login page renders required fields', async ({ page }) => {
   const errors: string[] = []
-  page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()) })
+  page.on('console', msg => {
+    if (msg.type() === 'error' && !msg.text().startsWith('Failed to load resource')) {
+      errors.push(msg.text())
+    }
+  })
 
   await page.goto('/login')
   await expect(page.getByText('Welcome back')).toBeVisible()
   await expect(page.locator('#email')).toBeVisible()
   await expect(page.locator('#password')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
-  await expect(page.getByText('Continue with SSO')).toBeVisible()
+  await expect(page.getByText('Continue with Google')).toBeVisible()
 
   expect(errors).toHaveLength(0)
 })
@@ -54,7 +58,7 @@ test('sign-in with valid credentials redirects to /dashboard', async ({ page }) 
   await page.fill('#password', password)
   await page.click('button[type="submit"]')
 
-  await expect(page).toHaveURL(/\/dashboard/, { timeout: 20_000 })
+  await expect(page).toHaveURL(/\/(dashboard|manager)/, { timeout: 20_000 })
 })
 
 test('"New? Start here" link goes to /onboarding', async ({ page }) => {

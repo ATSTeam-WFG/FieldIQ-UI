@@ -13,12 +13,18 @@ import {
   Phone,
   Star,
   Circle,
+  ClipboardList,
+  Users,
+  FileText,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { AppShell } from '@/components/fieldiq/AppShell'
 import { KPICard } from '@/components/fieldiq/KPICard'
 import { AICard } from '@/components/fieldiq/AICard'
 import { StatusBadge } from '@/components/fieldiq/StatusBadge'
+import { WelcomeBanner } from '@/components/fieldiq/WelcomeBanner'
+import { SkeletonRows } from '@/components/fieldiq/SkeletonRows'
+import { Skeleton } from '@/components/ui/skeleton'
 import type { ActivityStatus } from '@/components/fieldiq/StatusBadge'
 import { useRole } from '@/lib/context/RoleContext'
 import { useActivityLog } from '@/lib/context/ActivityLogContext'
@@ -46,16 +52,18 @@ const activityIconMap: Record<string, LucideIcon> = {
 
 export default function DashboardPage() {
   const { persona } = useRole()
-  const { openLog, openLogWithContact } = useActivityLog()
+  const { openLog, openLogWithContact, openActivity } = useActivityLog()
   const { openLog: openContract } = useContract()
   const firstName = persona.name.split(' ')[0]
   const [nudgeDismissed, setNudgeDismissed] = useState(false)
 
-  const { data: kpis } = useAgentKpis()
-  const { data: activitiesData } = useActivities({ page_size: 5 })
-  const { data: contractsData } = useContracts()
+  const { data: kpis, isLoading: kpisLoading } = useAgentKpis()
+  const { data: activitiesData, isLoading: activitiesLoading } = useActivities({ page_size: 5 })
+  const { data: contractsData, isLoading: contractsLoading } = useContracts()
 
+  const isLoading = kpisLoading || activitiesLoading || contractsLoading
   const recentActivities = activitiesData?.items ?? []
+  const isRepFirstTime = activitiesData !== undefined && recentActivities.length === 0
 
   const now = new Date()
   const closedThisMonth = (contractsData?.items ?? []).filter(c => {
@@ -123,9 +131,42 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* ── Welcome banner — first-time rep ──────────── */}
+        {isRepFirstTime && (
+          <div style={{ marginTop: 16 }}>
+            <WelcomeBanner
+              headline={`Welcome, ${firstName}! Let's get you started.`}
+              subtext="Your dashboard will come alive as you log activities and track deals. Start with any of these steps."
+              tiles={[
+                {
+                  icon: ClipboardList,
+                  title: 'Log your first activity',
+                  description: 'Record a client visit, lunch, pop-by, or call.',
+                  buttonLabel: 'Log Activity',
+                  onClick: openLog,
+                },
+                {
+                  icon: Users,
+                  title: 'Add a contact',
+                  description: 'Build your book by adding agents, brokers, or lenders.',
+                  buttonLabel: 'Go to Contacts',
+                  href: '/contacts',
+                },
+                {
+                  icon: FileText,
+                  title: 'Open a contract',
+                  description: 'Track a deal from initiated to closed.',
+                  buttonLabel: 'Add Contract',
+                  onClick: openContract,
+                },
+              ]}
+            />
+          </div>
+        )}
+
         {/* ── AI Priority Nudge ─────────────────────────── */}
         <AnimatePresence>
-          {!nudgeDismissed && (
+          {!nudgeDismissed && !isRepFirstTime && (
             <motion.div
               key="nudge"
               initial={{ opacity: 0, y: -8 }}
@@ -150,40 +191,56 @@ export default function DashboardPage() {
         </AnimatePresence>
 
         {/* ── KPI cards ─────────────────────────────────── */}
-        <motion.div
-          className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4"
-          style={{ marginTop: 20 }}
-          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}
-          initial="hidden"
-          animate="show"
-        >
-          {[
-            { label: 'ACTIVITIES THIS WEEK', value: kpis?.activitiesThisWeek ?? '—', subLabel: kpis?.activitiesWeekDelta ?? '', subLabelColor: kpis?.activitiesWeekDeltaPositive ? '#16a34a' : '#d97706' },
-            { label: 'TOTAL SPEND MTD',      value: kpis?.totalSpendMTD ?? '—',       subLabel: kpis?.spendSubLabel ?? '' },
-            { label: 'CONTACTS ENGAGED',     value: kpis?.contactsEngaged ?? '—',     subLabel: kpis?.contactsSubLabel ?? '' },
-            { label: 'FOLLOW-UPS PENDING',   value: kpis?.followUpsPending ?? '—',    subLabel: `${kpis?.followUpsOverdue ?? 0} overdue`, subLabelColor: '#d97706' },
-            { label: 'CLOSED THIS MONTH',    value: closedThisMonth,                  subLabel: 'Contracts closed MTD', subLabelColor: '#16a34a' },
-            { label: 'PIPELINE VALUE',       value: formatPipelineValue(pipelineValue), subLabel: 'Non-closed contracts' },
-          ].map(card => (
-            <motion.div
-              key={card.label}
-              variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.2 } } }}
-            >
-              <KPICard {...card} />
-            </motion.div>
-          ))}
-        </motion.div>
+        {isLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4" style={{ marginTop: 20 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full rounded-lg" />
+            ))}
+          </div>
+        ) : (
+          <motion.div
+            className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4"
+            style={{ marginTop: 20 }}
+            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}
+            initial="hidden"
+            animate="show"
+          >
+            {[
+              { label: 'ACTIVITIES THIS WEEK', value: kpis?.activitiesThisWeek ?? '—', subLabel: kpis?.activitiesWeekDelta ?? '', subLabelColor: kpis?.activitiesWeekDeltaPositive ? '#16a34a' : '#d97706', href: '/activities' },
+              { label: 'TOTAL SPEND MTD',      value: kpis?.totalSpendMTD ?? '—',       subLabel: kpis?.spendSubLabel ?? '',                                                                                   href: '/performance' },
+              { label: 'CONTACTS ENGAGED',     value: kpis?.contactsEngaged ?? '—',     subLabel: kpis?.contactsSubLabel ?? '',                                                                                href: '/contacts' },
+              { label: 'FOLLOW-UPS PENDING',   value: kpis?.followUpsPending ?? '—',    subLabel: `${kpis?.followUpsOverdue ?? 0} overdue`, subLabelColor: '#d97706',                                         href: '/follow-ups' },
+              { label: 'CLOSED THIS MONTH',    value: closedThisMonth,                  subLabel: 'Contracts closed MTD', subLabelColor: '#16a34a',                                                           href: '/contracts' },
+              { label: 'PIPELINE VALUE',       value: formatPipelineValue(pipelineValue), subLabel: 'Non-closed contracts',                                                                                    href: '/contracts' },
+            ].map(card => (
+              <motion.div
+                key={card.label}
+                variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.2 } } }}
+              >
+                <KPICard {...card} />
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
 
         {/* ── AI Performance Summary ────────────────────── */}
-        <div style={{ marginTop: 16 }}>
-          <AICard label="Summary" sublabel="Updated today" readAloud>
-            <p style={{ fontSize: 13, color: 'var(--body)', lineHeight: 1.6, margin: 0 }}>
-              This month you&apos;ve logged 21 activities, your best March yet, up 8% from last year. You&apos;re on track to hit your Q2 target. Your strongest relationship is Michelle Tran (score 91). The contact that needs the most attention is James Ellison. You haven&apos;t touched him in 23 days.
-            </p>
-          </AICard>
-        </div>
+        {!isRepFirstTime && (
+          <div style={{ marginTop: 16 }}>
+            <AICard label="Summary" sublabel="Updated today" readAloud>
+              <p style={{ fontSize: 13, color: 'var(--body)', lineHeight: 1.6, margin: 0 }}>
+                This month you&apos;ve logged 21 activities, your best March yet, up 8% from last year. You&apos;re on track to hit your Q2 target. Your strongest relationship is Michelle Tran (score 91). The contact that needs the most attention is James Ellison. You haven&apos;t touched him in 23 days.
+              </p>
+            </AICard>
+          </div>
+        )}
 
         {/* ── Two-column row ────────────────────────────── */}
+        {isLoading ? (
+          <div className="flex flex-col md:flex-row" style={{ gap: 16, marginTop: 24 }}>
+            <Skeleton className="fieldiq-card min-w-0 flex-1 h-64 rounded-lg" />
+            <Skeleton className="w-full md:w-[310px] h-64 rounded-lg" />
+          </div>
+        ) : (
         <div
           className="flex flex-col md:flex-row"
           style={{ gap: 16, marginTop: 24 }}
@@ -237,6 +294,29 @@ export default function DashboardPage() {
               ))}
             </div>
 
+            {/* Rows area — min-height matches 5 rows so the card stays balanced against the streak card */}
+            <div style={{ minHeight: 260 }}>
+
+            {/* Empty state */}
+            {recentActivities.length === 0 && (
+              <div className="flex flex-col items-center justify-center" style={{ padding: '36px 20px', gap: 10 }}>
+                <ClipboardList size={28} style={{ color: 'var(--border)' }} />
+                <div className="flex flex-col items-center text-center" style={{ gap: 4 }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)' }}>No activities yet</span>
+                  <span style={{ fontSize: 12, color: 'var(--muted)' }}>Log your first activity to see it here.</span>
+                </div>
+                <button
+                  onClick={openLog}
+                  style={{
+                    height: 32, paddingLeft: 16, paddingRight: 16, fontSize: 12, fontWeight: 600,
+                    backgroundColor: '#c4a574', color: '#000000', border: 'none', borderRadius: 6, cursor: 'pointer',
+                  }}
+                >
+                  Log Activity
+                </button>
+              </div>
+            )}
+
             {/* Table rows */}
             {recentActivities.map((act, idx) => {
               const Icon = activityIconMap[act.type] ?? Circle
@@ -245,10 +325,12 @@ export default function DashboardPage() {
               return (
                 <div
                   key={act.id}
-                  className="flex items-center px-4 md:px-5"
+                  onClick={() => openActivity(act as any)}
+                  className="flex items-center px-4 md:px-5 hover:bg-[var(--surface)]"
                   style={{
                     height: 52,
                     borderBottom: isLast ? 'none' : '1px solid var(--border)',
+                    cursor: 'pointer',
                   }}
                 >
                   {/* TYPE — fixed width on mobile, flex on desktop */}
@@ -311,6 +393,8 @@ export default function DashboardPage() {
                 </div>
               )
             })}
+
+            </div>{/* end rows area */}
           </div>
 
           {/* ─ Activity Streak card ───────────────────── */}
@@ -366,6 +450,11 @@ export default function DashboardPage() {
 
             {/* Stats */}
             <div className="flex flex-col" style={{ padding: '12px 20px' }}>
+              {isRepFirstTime && (
+                <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0, marginBottom: 8, lineHeight: 1.5 }}>
+                  Log activities to build your weekly streak and track consistency.
+                </p>
+              )}
               {[
                 { label: 'Avg cost per activity', value: kpis?.streakStats.avgCostPerActivity ?? '—', gold: false },
                 { label: 'Most active type',      value: kpis?.streakStats.mostActiveType ?? '—',     gold: false },
@@ -395,6 +484,7 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+        )}
 
       </div>
     </AppShell>
@@ -403,7 +493,7 @@ export default function DashboardPage() {
 
 function formatRelativeDate(dateStr: string): string {
   const date = new Date(dateStr)
-  const now = new Date(2026, 2, 16) // March 16, 2026
+  const now = new Date()
   const diffMs = now.getTime() - date.getTime()
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
   if (diffDays === 0) return 'Today'

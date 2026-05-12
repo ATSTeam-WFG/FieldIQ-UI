@@ -14,6 +14,7 @@ import type { ActivityStatus } from '@/components/fieldiq/StatusBadge'
 import { AICard } from '@/components/fieldiq/AICard'
 import { useActivityLog } from '@/lib/context/ActivityLogContext'
 import { useAddContact } from '@/lib/context/AddContactContext'
+import { useContract } from '@/lib/context/ContractContext'
 import { useQuery } from '@tanstack/react-query'
 import { getContact } from '@/lib/api/contacts'
 import type { Contact } from '@/lib/api/contacts'
@@ -80,8 +81,9 @@ function ContactContractBadge({ status }: { status: string }) {
 }
 
 export default function ContactPage({ params }: ContactPageProps) {
-  const { openLogWithContact } = useActivityLog()
+  const { openLogWithContact, openActivity } = useActivityLog()
   const { openEditContact } = useAddContact()
+  const { openContract } = useContract()
   const [showAllActivities, setShowAllActivities] = useState(false)
 
   const { data: contact, isLoading: contactLoading } = useQuery({
@@ -426,6 +428,8 @@ export default function ContactPage({ params }: ContactPageProps) {
             return (
               <div
                 key={c.id}
+                onClick={() => openContract(c as any)}
+                className="hover:bg-[var(--surface)]"
                 style={{
                   display: 'grid',
                   gridTemplateColumns: '110px 1fr 80px 72px 64px',
@@ -434,6 +438,7 @@ export default function ContactPage({ params }: ContactPageProps) {
                   alignItems: 'center',
                   borderBottom: isLast ? 'none' : '1px solid var(--border)',
                   padding: '8px 0',
+                  cursor: 'pointer',
                 }}
               >
                 <span
@@ -509,12 +514,15 @@ export default function ContactPage({ params }: ContactPageProps) {
             return (
               <div
                 key={activity.id}
+                onClick={() => openActivity(activity as any)}
+                className="hover:bg-[var(--surface)]"
                 style={{
                   padding: '10px 0',
                   borderBottom: '1px solid var(--border)',
                   display: 'flex',
                   alignItems: 'flex-start',
                   gap: 12,
+                  cursor: 'pointer',
                 }}
               >
                 {/* Icon */}

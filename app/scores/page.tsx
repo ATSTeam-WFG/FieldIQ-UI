@@ -1,6 +1,8 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { AppShell } from '@/components/fieldiq/AppShell'
+import { SkeletonRows } from '@/components/fieldiq/SkeletonRows'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { useContacts } from '@/lib/hooks/useContacts'
 import type { Contact } from '@/lib/api/contacts'
@@ -168,6 +170,7 @@ function LegendDot({ color }: { color: string }) {
 // ── Page ───────────────────────────────────────────────────────────────────
 
 export default function ScoresPage() {
+  const router = useRouter()
   const { data, isLoading } = useContacts()
 
   const agents = (data?.items ?? [])
@@ -215,7 +218,7 @@ export default function ScoresPage() {
           {/* Avg Score */}
           <div className="flex flex-row items-baseline" style={{ gap: 6 }}>
             <span style={{ fontSize: 12, color: 'var(--muted)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-              Avg Score
+              AVG SCORE
             </span>
             <span style={{ fontSize: 20, fontWeight: 700, color: '#c4a574', lineHeight: 1 }}>
               {avgScore}
@@ -225,7 +228,7 @@ export default function ScoresPage() {
           {/* Top Score */}
           <div className="flex flex-row items-baseline" style={{ gap: 6 }}>
             <span style={{ fontSize: 12, color: 'var(--muted)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-              Top Score
+              TOP SCORE
             </span>
             <span style={{ fontSize: 20, fontWeight: 700, color: '#c4a574', lineHeight: 1 }}>
               {topContact ? `${topContact.score} — ${topContact.name}` : '—'}
@@ -235,7 +238,7 @@ export default function ScoresPage() {
           {/* Contacts Tracked */}
           <div className="flex flex-row items-baseline" style={{ gap: 6 }}>
             <span style={{ fontSize: 12, color: 'var(--muted)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-              Contacts Tracked
+              CONTACTS TRACKED
             </span>
             <span style={{ fontSize: 20, fontWeight: 700, color: '#c4a574', lineHeight: 1 }}>
               {totalCount}
@@ -332,11 +335,7 @@ export default function ScoresPage() {
           </div>
 
           {/* Loading / empty state */}
-          {isLoading && (
-            <div className="flex items-center justify-center" style={{ padding: '48px 20px' }}>
-              <span style={{ fontSize: 14, color: 'var(--muted)' }}>Loading…</span>
-            </div>
-          )}
+          {isLoading && <SkeletonRows cols={4} rows={8} />}
           {!isLoading && agents.length === 0 && (
             <div className="flex items-center justify-center" style={{ padding: '48px 20px' }}>
               <span style={{ fontSize: 14, color: 'var(--muted)' }}>No contacts tracked yet.</span>
@@ -351,11 +350,13 @@ export default function ScoresPage() {
             return (
               <div
                 key={contact.id}
-                className="flex items-center"
+                onClick={() => router.push('/contacts/' + contact.id)}
+                className="flex items-center hover:bg-[var(--surface)]"
                 style={{
                   minHeight: 64,
                   padding: '0 20px',
                   borderBottom: isLast ? 'none' : '1px solid var(--border)',
+                  cursor: 'pointer',
                 }}
               >
                 {/* RANK — desktop only */}

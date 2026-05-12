@@ -41,7 +41,8 @@ export default async function globalSetup() {
   await page.click('button[type="submit"]')
 
   // Login uses window.location.href so we wait for a full navigation
-  await page.waitForURL('**/dashboard', { timeout: 20_000 })
+  // Manager users redirect to /manager; agent users redirect to /dashboard
+  await page.waitForURL(/\/(dashboard|manager)/, { timeout: 20_000 })
 
   await context.storageState({ path: STORAGE_STATE })
   await browser.close()

@@ -32,7 +32,7 @@ test('search box is visible', async ({ page }) => {
 })
 
 test('TYPE filter dropdown is visible', async ({ page }) => {
-  await expect(page.getByText('TYPE')).toBeVisible()
+  await expect(page.getByText('TYPE').first()).toBeVisible()
 })
 
 test('status filter pills are visible', async ({ page }) => {
@@ -44,7 +44,7 @@ test('status filter pills are visible', async ({ page }) => {
 
 test('aggregate stats row is visible', async ({ page }) => {
   // Row shows: "N activities | $N total spend | N follow-ups pending"
-  await expect(page.getByText(/activities/)).toBeVisible()
+  await expect(page.getByText(/activities/).first()).toBeVisible()
   await expect(page.getByText(/total spend/)).toBeVisible()
   await expect(page.getByText(/follow-ups pending/)).toBeVisible()
 })
@@ -52,7 +52,7 @@ test('aggregate stats row is visible', async ({ page }) => {
 test('Activity Log table header is visible', async ({ page }) => {
   await expect(page.getByText('Activity Log')).toBeVisible()
   for (const col of ['TYPE', 'CONTACT', 'DATE', 'COST', 'STATUS']) {
-    await expect(page.getByText(col, { exact: true })).toBeVisible()
+    await expect(page.getByText(col, { exact: true }).first()).toBeVisible()
   }
 })
 

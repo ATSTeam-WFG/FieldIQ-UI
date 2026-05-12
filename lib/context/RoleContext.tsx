@@ -40,6 +40,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<Role>('rep')
   const [persona, setPersona] = useState<Persona>(emptyPersona)
   const [loaded, setLoaded] = useState(false)
+  const [alsoRep, setAlsoRep] = useState(false)
 
   useEffect(() => {
     const token = typeof window !== 'undefined' && localStorage.getItem('fieldiq_token')
@@ -52,6 +53,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
         const r: Role = user.role === 'manager' ? 'manager' : 'rep'
         setRole(r)
         setUserType(r as UserType)
+        setAlsoRep(user.also_rep ?? false)
         setPersona({
           name: user.name,
           initials: user.initials,
@@ -67,8 +69,8 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
       })
   }, [])
 
-  // Managers who also act as reps can switch views
-  const canSwitch = userType === 'manager'
+  // Only managers who also act as reps can switch views
+  const canSwitch = userType === 'manager' && alsoRep
   const isAuthenticated = loaded && persona.name !== ''
 
   return (

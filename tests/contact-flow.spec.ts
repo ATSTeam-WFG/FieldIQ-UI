@@ -37,7 +37,7 @@ test('full add-contact flow: name filled → save → contact appears', async ({
 
   // Toast or contact appearing in list
   await expect(
-    page.getByText(/contact added|saved|success|E2E Test Contact/i)
+    page.getByText(/contact added|saved|success|E2E Test Contact/i).first()
   ).toBeVisible({ timeout: 8_000 })
 })
 

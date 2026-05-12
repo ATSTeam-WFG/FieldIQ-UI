@@ -27,6 +27,6 @@ test('marking a follow-up complete changes its status', async ({ page }) => {
 
   // The follow-up should show a completed state — either a toast or status change
   await expect(
-    page.getByText(/completed|done|marked/i).or(completeBtn)
+    page.getByText(/completed|done|marked/i).or(completeBtn).first()
   ).toBeVisible({ timeout: 6_000 })
 })

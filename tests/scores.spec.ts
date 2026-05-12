@@ -24,9 +24,9 @@ test('page heading is "Relationship Scores"', async ({ page }) => {
 })
 
 test('summary KPI chips are visible', async ({ page }) => {
-  await expect(page.getByText('AVG SCORE')).toBeVisible()
-  await expect(page.getByText('TOP SCORE')).toBeVisible()
-  await expect(page.getByText('CONTACTS TRACKED')).toBeVisible()
+  await expect(page.getByText('AVG SCORE', { exact: true })).toBeVisible()
+  await expect(page.getByText('TOP SCORE', { exact: true })).toBeVisible()
+  await expect(page.getByText('CONTACTS TRACKED', { exact: true })).toBeVisible()
 })
 
 test('score level legend is visible', async ({ page }) => {
@@ -37,7 +37,7 @@ test('score level legend is visible', async ({ page }) => {
 
 test('table column headers are visible', async ({ page }) => {
   for (const col of ['RANK', 'CONTACT', 'SCORE', 'BREAKDOWN', 'LAST CONTACT', 'TREND']) {
-    await expect(page.getByText(col)).toBeVisible()
+    await expect(page.getByText(col, { exact: true }).first()).toBeVisible()
   }
 })
 
