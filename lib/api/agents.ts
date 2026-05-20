@@ -1,4 +1,5 @@
 import { api } from './client'
+import type { AgentPerformance } from './analytics'
 
 // Backend snake_case shape
 interface KPIBackend {
@@ -89,4 +90,85 @@ export interface AgentProfile {
 
 export async function getMyProfile(): Promise<AgentProfile> {
   return api.get<AgentProfile>('/agents/me/profile')
+}
+
+// ── Agent Detail (manager view) ───────────────────────────────────────────────
+
+export interface AgentDetail {
+  id: string
+  name: string
+  initials: string
+  title: string | null
+  territory: string | null
+  repTier: string | null
+  monthlyBudget: number
+  status: string
+  kpis: AgentKPIs
+  performance: AgentPerformance
+}
+
+interface AgentDetailBackend {
+  id: string
+  name: string
+  initials: string
+  title: string | null
+  territory: string | null
+  rep_tier: string | null
+  monthly_budget: number
+  status: string
+  kpis: KPIBackend
+  performance: {
+    monthly_spend: Array<{ month: string; spend: number; activities: number }>
+    activity_breakdown: Array<{ type: string; count: number; spend: number }>
+    activities_mtd: number
+    spend_mtd: number
+    contacts_engaged: number
+    most_active_type: string
+    avg_cost_per_activity: number
+  }
+}
+
+export async function getAgentDetail(agentId: string): Promise<AgentDetail> {
+  const d = await api.get<AgentDetailBackend>(`/agents/${agentId}/detail`)
+  return {
+    id: d.id,
+    name: d.name,
+    initials: d.initials,
+    title: d.title,
+    territory: d.territory,
+    repTier: d.rep_tier,
+    monthlyBudget: d.monthly_budget,
+    status: d.status,
+    kpis: {
+      activitiesThisWeek: d.kpis.activities_this_week,
+      activitiesWeekDelta: d.kpis.activities_week_delta,
+      activitiesWeekDeltaPositive: d.kpis.activities_week_delta_positive,
+      totalSpendMTD: d.kpis.total_spend_mtd,
+      spendSubLabel: d.kpis.spend_sub_label,
+      contactsEngaged: d.kpis.contacts_engaged,
+      contactsSubLabel: d.kpis.contacts_sub_label,
+      followUpsPending: d.kpis.follow_ups_pending,
+      followUpsOverdue: d.kpis.follow_ups_overdue,
+      weekStreak: {
+        days: d.kpis.week_streak.days,
+        active: d.kpis.week_streak.active,
+        isToday: d.kpis.week_streak.is_today,
+        label: d.kpis.week_streak.label,
+      },
+      streakStats: {
+        avgCostPerActivity: d.kpis.streak_stats.avg_cost_per_activity,
+        mostActiveType: d.kpis.streak_stats.most_active_type,
+        longestStreak: d.kpis.streak_stats.longest_streak,
+      },
+    },
+    performance: {
+      monthlySpend: d.performance.monthly_spend,
+      activityBreakdown: d.performance.activity_breakdown,
+      activitiesMtd: d.performance.activities_mtd,
+      spendMtd: d.performance.spend_mtd,
+      contactsEngaged: d.performance.contacts_engaged,
+      mostActiveType: d.performance.most_active_type,
+      avgCostPerActivity: d.performance.avg_cost_per_activity,
+    },
+  }
 }

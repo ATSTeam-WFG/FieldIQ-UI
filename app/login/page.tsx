@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, EyeOff, Moon, Sun } from 'lucide-react'
 import { useTheme } from '@/lib/context/ThemeContext'
@@ -29,14 +29,16 @@ function MicrosoftIcon() {
   )
 }
 
-export default function LoginPage() {
+function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { theme, toggleTheme } = useTheme()
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const sessionExpired = searchParams.get('expired') === '1'
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault()
@@ -150,6 +152,21 @@ export default function LoginPage() {
         </div>
 
         <div style={{ height: 24 }} />
+
+        {sessionExpired && (
+          <div
+            className="rounded-[8px] mb-4"
+            style={{
+              padding: '10px 14px',
+              backgroundColor: 'rgba(217, 119, 6, 0.1)',
+              border: '1px solid rgba(217, 119, 6, 0.3)',
+              fontSize: 13,
+              color: '#d97706',
+            }}
+          >
+            Your session has expired. Please sign in again.
+          </div>
+        )}
 
         <form onSubmit={handleSignIn} className="flex flex-col">
 
@@ -308,5 +325,13 @@ export default function LoginPage() {
         </span>
       </div>
     </div>
+  )
+}
+
+export default function LoginPageWrapper() {
+  return (
+    <Suspense>
+      <LoginPage />
+    </Suspense>
   )
 }

@@ -435,7 +435,7 @@ export default function ManagerPage() {
                     paddingRight: 16,
                     borderBottom: isLast ? 'none' : '1px solid var(--border)',
                   }}
-                  onClick={() => router.push(`/agent/${agent.rank}`)}
+                  onClick={() => router.push(`/agent/${agent.id}`)}
                 >
                   {/* RANK */}
                   <div className="flex shrink-0 items-center gap-1.5" style={{ width: 40 }}>
@@ -674,7 +674,7 @@ export default function ManagerPage() {
               {agentActivity.map(agent => (
                 <div
                   key={agent.name}
-                  onClick={() => router.push(`/agent/${agent.name.toLowerCase().replace(/\s+/g, '-')}`)}
+                  onClick={() => router.push(`/agent/${agent.id}`)}
                   className="flex flex-col gap-[10px] rounded-[8px] p-[10px] hover:opacity-90 transition-opacity"
                   style={{
                     border: '1px solid var(--border)',

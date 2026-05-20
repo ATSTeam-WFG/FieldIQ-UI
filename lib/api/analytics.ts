@@ -24,6 +24,7 @@ export interface ManagerKPIs {
 }
 
 export interface LeaderboardEntry {
+  id: string
   rank: number
   name: string
   initials: string
@@ -34,6 +35,7 @@ export interface LeaderboardEntry {
 }
 
 export interface AgentHeatmapEntry {
+  id: string
   name: string
   initials: string
   activities: number
@@ -67,6 +69,7 @@ interface ManagerDashboardBackend {
     target: number
   }
   leaderboard: Array<{
+    id: string
     rank: number
     name: string
     initials: string
@@ -77,6 +80,7 @@ interface ManagerDashboardBackend {
   }>
   breakdown: Array<{ type: string; count: number; spend: number }>
   agent_activity: Array<{
+    id: string
     name: string
     initials: string
     activities: number
@@ -101,6 +105,7 @@ export async function getManagerDashboard(period: Period = 'mtd'): Promise<Manag
       target: d.kpis.target,
     },
     leaderboard: d.leaderboard.map(e => ({
+      id: e.id,
       rank: e.rank,
       name: e.name,
       initials: e.initials,
@@ -111,6 +116,7 @@ export async function getManagerDashboard(period: Period = 'mtd'): Promise<Manag
     })),
     breakdown: d.breakdown,
     agentActivity: d.agent_activity.map(e => ({
+      id: e.id,
       name: e.name,
       initials: e.initials,
       activities: e.activities,

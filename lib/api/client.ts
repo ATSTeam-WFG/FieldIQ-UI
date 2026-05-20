@@ -16,7 +16,8 @@ function getToken(): string | null {
 
 export function setToken(token: string, refreshToken?: string): void {
   localStorage.setItem('fieldiq_token', token)
-  document.cookie = `${PRESENCE_COOKIE}=1; path=/; SameSite=Lax`
+  // max-age matches Supabase's default refresh token lifetime (60 days)
+  document.cookie = `${PRESENCE_COOKIE}=1; path=/; SameSite=Lax; max-age=5184000`
   if (refreshToken) {
     localStorage.setItem('fieldiq_refresh_token', refreshToken)
   }
@@ -76,7 +77,7 @@ async function request<T>(
       } catch {
         clearToken()
         if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-          window.location.href = '/login'
+          window.location.href = '/login?expired=1'
         }
         throw new ApiError(401, 'Unauthorized')
       }
@@ -84,7 +85,7 @@ async function request<T>(
     // Retry also 401 — refresh token itself is expired
     clearToken()
     if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-      window.location.href = '/login'
+      window.location.href = '/login?expired=1'
     }
     throw new ApiError(401, 'Unauthorized')
   }
