@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import Image from 'next/image'
 import { Bell, Moon, Search, Sun } from 'lucide-react'
 import { useTheme } from '@/lib/context/ThemeContext'
 import { useRole } from '@/lib/context/RoleContext'
@@ -42,12 +43,17 @@ export function TopNav() {
     >
       {/* Left: wordmark + role badge */}
       <div className="flex items-center gap-3 shrink-0">
-        <span
-          className="text-lg font-bold tracking-tight"
-          style={{ color: 'var(--foreground)', fontFamily: 'var(--font-inter), Inter, sans-serif' }}
-        >
-          FieldIQ
-        </span>
+        <Image
+          src={theme === 'dark'
+            ? '/images/logo/lockup_dark.svg'
+            : '/images/logo/lockup_light.svg'}
+          alt="FieldIQ"
+          width={133}
+          height={48}
+          priority
+          unoptimized
+          style={{ width: 133, height: 'auto' }}
+        />
         <div
           className="h-4 w-px"
           style={{ backgroundColor: 'var(--border)' }}

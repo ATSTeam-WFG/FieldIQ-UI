@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Eye, EyeOff, Moon, Sun, AlertCircle } from 'lucide-react'
 import { useTheme } from '@/lib/context/ThemeContext'
 import { getAgencyByCode, joinByCode } from '@/lib/api/agencies'
@@ -119,9 +120,17 @@ export default function JoinByCodePage() {
 
         {/* Logo */}
         <div className="flex flex-col" style={{ gap: 6, marginBottom: 28 }}>
-          <span className="font-semibold leading-none" style={{ fontSize: 22, color: 'var(--foreground)' }}>
-            FieldIQ
-          </span>
+          <Image
+            src={theme === 'dark'
+              ? '/images/logo/lockup_dark.svg'
+              : '/images/logo/lockup_light.svg'}
+            alt="FieldIQ"
+            width={178}
+            height={64}
+            priority
+            unoptimized
+            style={{ width: 178, height: 'auto' }}
+          />
           <span style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.4 }}>
             Field Sales Intelligence for Title Professionals
           </span>

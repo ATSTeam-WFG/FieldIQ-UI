@@ -1,5 +1,7 @@
 'use client'
 import { useEffect, useRef } from 'react'
+import Image from 'next/image'
+import { LogoAnimation } from '@/components/fieldiq/LogoAnimation'
 import './splash.css'
 
 export default function SplashPage() {
@@ -54,7 +56,7 @@ export default function SplashPage() {
       <nav className="nav" id="nav" ref={navRef}>
         <div className="nav-inner">
           <a href="#" className="nav-logo">
-            FieldIQ
+            <Image src="/images/logo/lockup_dark.svg" alt="FieldIQ" width={160} height={58} priority unoptimized style={{ width: 160, height: 'auto' }} />
             <span className="badge">Preview</span>
           </a>
           <div className="nav-links">
@@ -73,7 +75,16 @@ export default function SplashPage() {
       
         <div className="container hero-content">
           <div className="hero-eyebrow reveal delay-1">For the people behind every closing table</div>
-          <h1 className="reveal delay-2">Because growth starts in the <span className="accent">field.</span></h1>
+
+          {/* Animated brand lockup — logo + wordmark */}
+          <div className="hero-brand reveal delay-2" aria-label="FieldIQ">
+            <div className="hero-brand-logo">
+              <LogoAnimation size={140} />
+            </div>
+            <span className="hero-brand-wordmark">
+              FIELD<span className="hero-brand-iq">IQ</span>
+            </span>
+          </div>
           <p className="lead reveal delay-3">The title industry has never really been about transactions. It has always been about people, and the relationships that built your business. FieldIQ was built to protect them.</p>
           <div className="hero-cta-group reveal delay-4">
             <a href="#request" className="btn btn-primary">Request early access →</a>
@@ -544,7 +555,9 @@ export default function SplashPage() {
         <div className="container">
           <div className="footer-grid">
             <div className="footer-brand">
-              <a href="#" className="nav-logo">FieldIQ</a>
+              <a href="#" className="nav-logo">
+                <Image src="/images/logo/lockup_dark.svg" alt="FieldIQ" width={160} height={58} unoptimized style={{ width: 160, height: 'auto' }} />
+              </a>
               <p>Because growth starts in the field. Built for the title industry. With the title industry.</p>
             </div>
             <div className="footer-col">

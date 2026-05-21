@@ -6,6 +6,17 @@ import { Toaster } from '@/components/ui/toaster'
 export const metadata: Metadata = {
   title: 'FieldIQ — Field Sales Intelligence',
   description: 'AI-powered field sales intelligence for the title insurance industry.',
+  manifest: '/manifest.webmanifest',
+  icons: {
+    icon: [
+      { url: '/images/logo/app_favicon_dark.svg', type: 'image/svg+xml' },
+      { url: '/images/logo/app_favicon_dark.png', sizes: '420x420', type: 'image/png' },
+    ],
+    shortcut: '/images/logo/app_favicon_dark.png',
+    apple: [
+      { url: '/images/logo/app_favicon_dark.png', sizes: '420x420', type: 'image/png' },
+    ],
+  },
 }
 
 export default function RootLayout({

@@ -210,6 +210,46 @@ html { scroll-behavior: smooth; }
     font-style: italic;
     font-weight: 600;
   }
+  /* ── Hero animated brand block ──────────────── */
+  .hero-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 40px;
+  }
+  .hero-brand-logo {
+    flex-shrink: 0;
+    width: 140px;
+    height: 182px;
+  }
+  .hero-brand-logo svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .hero-brand-wordmark {
+    font-size: 72px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #ffffff;
+    line-height: 1;
+  }
+  .hero-brand-iq {
+    font-weight: 700;
+    color: #c4a574;
+  }
+  @media (max-width: 768px) {
+    .hero-brand { gap: 28px; }
+    .hero-brand-logo { width: 100px; height: 130px; }
+    .hero-brand-wordmark { font-size: 52px; }
+  }
+  @media (max-width: 480px) {
+    .hero-brand { flex-direction: column; gap: 20px; }
+    .hero-brand-logo { width: 84px; height: 109px; }
+    .hero-brand-wordmark { font-size: 40px; }
+  }
   .hero p.lead {
     font-size: clamp(16px, 1.5vw, 19px);
     color: var(--body);

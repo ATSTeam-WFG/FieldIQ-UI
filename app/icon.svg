@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs><clipPath id="cc"><circle cx="100" cy="100" r="88"></circle></clipPath></defs>
+  <rect width="200" height="200" rx="40" fill="#171717"></rect>
+  <g clip-path="url(#cc)">
+    <polygon points="100,16 -16,300 28,300" fill="#c4a574" opacity="0.3"></polygon>
+    <polygon points="100,16 42,300 78,300" fill="#c4a574" opacity="0.65"></polygon>
+    <polygon points="100,16 80,300 120,300" fill="#c4a574" opacity="1"></polygon>
+    <polygon points="100,16 122,300 158,300" fill="#c4a574" opacity="0.65"></polygon>
+    <polygon points="100,16 172,300 216,300" fill="#c4a574" opacity="0.3"></polygon>
+    <line x1="100" y1="16" x2="100" y2="300" stroke="#c4a574" stroke-width="1.5" opacity="0.3"></line>
+    <line x1="-20" y1="60" x2="220" y2="60" stroke="#c4a574" stroke-width="0.8" opacity="0.25"></line>
+    <line x1="-20" y1="90" x2="220" y2="90" stroke="#c4a574" stroke-width="1" opacity="0.3"></line>
+    <line x1="-20" y1="125" x2="220" y2="125" stroke="#c4a574" stroke-width="1" opacity="0.35"></line>
+    <line x1="-20" y1="165" x2="220" y2="165" stroke="#c4a574" stroke-width="1.2" opacity="0.3"></line>
+    <circle cx="100" cy="16" r="3" fill="#c4a574"></circle>
+  </g>
+  <rect width="200" height="200" rx="40" fill="none" stroke="#c4a574" stroke-width="3"></rect>
+</svg>

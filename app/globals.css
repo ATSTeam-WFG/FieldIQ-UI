@@ -122,6 +122,33 @@
   }
 }
 
+/* ── LogoAnimation — shared SVG animations ──────────────────── */
+.fiq-grid-line {
+  animation: fiqMoveDown 1.8s linear infinite;
+  opacity: 0;
+}
+@keyframes fiqMoveDown {
+  0%   { transform: translateY(0px);   opacity: 0;    }
+  8%   {                               opacity: 0.15; }
+  40%  {                               opacity: 0.45; }
+  75%  {                               opacity: 0.3;  }
+  100% { transform: translateY(120px); opacity: 0;    }
+}
+.fiq-pin-outline {
+  animation: fiqGlowPulse 2.4s ease-in-out infinite;
+}
+@keyframes fiqGlowPulse {
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(196, 165, 116, 0.2)); }
+  50%      { filter: drop-shadow(0 0 8px rgba(196, 165, 116, 0.5)); }
+}
+.fiq-vp-dot {
+  animation: fiqVpPulse 2.4s ease-in-out infinite;
+}
+@keyframes fiqVpPulse {
+  0%, 100% { r: 3;   opacity: 0.8; }
+  50%      { r: 4.5; opacity: 1;   }
+}
+
 @layer components {
   .fieldiq-card {
     border-top: 2px solid #c4a574;

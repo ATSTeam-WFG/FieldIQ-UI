@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="18 5 250 90">
+  <g transform="translate(32,10)">
+    <svg viewBox="0 0 200 260" width="62" height="80">
+      <defs><clipPath id="ld"><path d="M100,248 C72,198 28,150 28,88 A72,72,0,1,1,172,88 C172,150 128,198 100,248Z"></path></clipPath></defs>
+      <path d="M100,248 C72,198 28,150 28,88 A72,72,0,1,1,172,88 C172,150 128,198 100,248Z" fill="#171717"></path>
+      <g clip-path="url(#ld)">
+        <polygon points="100,22 -10,280 22,280" fill="#c4a574" opacity="0.3"></polygon>
+        <polygon points="100,22 48,280 72,280" fill="#c4a574" opacity="0.65"></polygon>
+        <polygon points="100,22 86,280 114,280" fill="#c4a574" opacity="1"></polygon>
+        <polygon points="100,22 128,280 152,280" fill="#c4a574" opacity="0.65"></polygon>
+        <polygon points="100,22 178,280 210,280" fill="#c4a574" opacity="0.3"></polygon>
+        <line x1="100" y1="22" x2="100" y2="280" stroke="#c4a574" stroke-width="1.5" opacity="0.3"></line>
+        <line x1="-20" y1="76" x2="220" y2="76" stroke="#c4a574" stroke-width="1" opacity="0.3"></line>
+        <line x1="-20" y1="108" x2="220" y2="108" stroke="#c4a574" stroke-width="1" opacity="0.35"></line>
+        <circle cx="100" cy="22" r="3" fill="#c4a574"></circle>
+      </g>
+      <path d="M100,248 C72,198 28,150 28,88 A72,72,0,1,1,172,88 C172,150 128,198 100,248Z" fill="none" stroke="#c4a574" stroke-width="3.5" stroke-linejoin="round"></path>
+    </svg>
+  </g>
+  <text x="112" y="59" font-family="Inter, system-ui, sans-serif" font-size="28" font-weight="600" letter-spacing="3" fill="#ffffff">FIELD<tspan font-weight="700" fill="#c4a574">IQ</tspan></text>
+</svg>
