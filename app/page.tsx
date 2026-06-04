@@ -1,11 +1,13 @@
 'use client'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { LogoAnimation } from '@/components/fieldiq/LogoAnimation'
+import { EarlyAccessModal } from '@/components/fieldiq/EarlyAccessModal'
 import './splash.css'
 
 export default function SplashPage() {
   const navRef = useRef<HTMLElement>(null)
+  const [modalOpen, setModalOpen] = useState(false)
 
   useEffect(() => {
     const nav = navRef.current
@@ -62,7 +64,7 @@ export default function SplashPage() {
           <div className="nav-links">
             <a href="#story">Story</a>
             <a href="#product">Product</a>
-            <a href="#request" className="nav-cta">Request early access</a>
+            <a href="#request" className="nav-cta" onClick={(e) => { e.preventDefault(); setModalOpen(true) }}>Request early access</a>
           </div>
         </div>
       </nav>
@@ -81,16 +83,39 @@ export default function SplashPage() {
             <div className="hero-brand-logo">
               <LogoAnimation size={140} />
             </div>
-            <span className="hero-brand-wordmark">
-              FIELD<span className="hero-brand-iq">IQ</span>
+            <span className="hero-brand-wordmark-wrap">
+              <span className="hero-brand-wordmark">
+                FIELD<span className="hero-brand-iq">IQ</span>
+              </span>
+              <span className="hero-brand-wfg" aria-label="Built by WFG — Williston Financial Group">
+                <span className="hero-brand-wfg-label">Built by</span>
+                <Image
+                  className="wfg-logo for-dark"
+                  src="/images/logo/wfg_dark.png"
+                  alt="WFG — Williston Financial Group"
+                  width={654}
+                  height={529}
+                  unoptimized
+                  style={{ height: 26, width: 'auto' }}
+                />
+                <Image
+                  className="wfg-logo for-light"
+                  src="/images/logo/wfg_light.png"
+                  alt="WFG — Williston Financial Group"
+                  width={654}
+                  height={529}
+                  unoptimized
+                  style={{ height: 26, width: 'auto' }}
+                />
+              </span>
             </span>
           </div>
           <p className="lead reveal delay-3">The title industry has never really been about transactions. It has always been about people, and the relationships that built your business. FieldIQ was built to protect them.</p>
           <div className="hero-cta-group reveal delay-4">
-            <a href="#request" className="btn btn-primary">Request early access →</a>
+            <a href="#request" className="btn btn-primary" onClick={(e) => { e.preventDefault(); setModalOpen(true) }}>Request early access →</a>
             <a href="#product" className="btn btn-secondary">See how it works</a>
           </div>
-          <div className="hero-trust reveal delay-5">Built with <strong>WFG</strong> · Designed for title</div>
+          <div className="hero-trust reveal delay-5">Designed for the title industry</div>
           <div className="hero-chips reveal delay-5">
             <span className="hero-chip">Built for the field, not the file</span>
             <span className="hero-chip">Relationships, scored</span>
@@ -532,6 +557,26 @@ export default function SplashPage() {
         <div className="container">
           <div className="wfg-banner scroll-reveal">
             <div className="wfg-label">In partnership with</div>
+            <div className="wfg-banner-logo">
+              <Image
+                className="wfg-logo for-dark"
+                src="/images/logo/wfg_full_dark.png"
+                alt="WFG National Title Insurance Company — a Williston Financial Group company"
+                width={1856}
+                height={441}
+                unoptimized
+                style={{ width: '100%', height: 'auto' }}
+              />
+              <Image
+                className="wfg-logo for-light"
+                src="/images/logo/wfg_full_light.png"
+                alt="WFG National Title Insurance Company — a Williston Financial Group company"
+                width={1199}
+                height={287}
+                unoptimized
+                style={{ width: '100%', height: 'auto' }}
+              />
+            </div>
             <h3>Distributed through Williston Financial Group.</h3>
             <p>Launching first across WFG&apos;s network of affiliated agencies. If your agency is part of the network, you&apos;re already on the list.</p>
           </div>
@@ -544,8 +589,8 @@ export default function SplashPage() {
           <h2 className="scroll-reveal">Built for the people behind every <span className="accent">closing table.</span></h2>
           <p className="closing-sub scroll-reveal">Be among the first agencies to bring FieldIQ to your team.</p>
           <div className="closing-cta-group scroll-reveal">
-            <a href="#" className="btn btn-primary">Request early access →</a>
-            <a href="#" className="btn btn-secondary">Talk to the team</a>
+            <a href="#request" className="btn btn-primary" onClick={(e) => { e.preventDefault(); setModalOpen(true) }}>Request early access →</a>
+            <a href="#request" className="btn btn-secondary" onClick={(e) => { e.preventDefault(); setModalOpen(true) }}>Talk to the team</a>
           </div>
         </div>
       </section>
@@ -565,7 +610,7 @@ export default function SplashPage() {
               <ul>
                 <li><a href="#product">What it is</a></li>
                 <li><a href="#status">Where we are</a></li>
-                <li><a href="#">Request access</a></li>
+                <li><a href="#request" onClick={(e) => { e.preventDefault(); setModalOpen(true) }}>Request access</a></li>
               </ul>
             </div>
             <div className="footer-col">
@@ -587,12 +632,32 @@ export default function SplashPage() {
           </div>
           <div className="footer-bottom">
             <div>© 2026 FieldIQ · Privacy · Terms</div>
-            <div><em>Built for the title industry. With the title industry.</em></div>
+            <div className="footer-wfg">
+              <span className="footer-wfg-label">An official</span>
+              <Image
+                className="wfg-logo for-dark"
+                src="/images/logo/wfg_full_dark.png"
+                alt="WFG National Title Insurance Company — a Williston Financial Group company"
+                width={1856}
+                height={441}
+                unoptimized
+                style={{ height: 40, width: 'auto' }}
+              />
+              <Image
+                className="wfg-logo for-light"
+                src="/images/logo/wfg_full_light.png"
+                alt="WFG National Title Insurance Company — a Williston Financial Group company"
+                width={1199}
+                height={287}
+                unoptimized
+                style={{ height: 40, width: 'auto' }}
+              />
+            </div>
           </div>
         </div>
       </footer>
-      
-      
+
+      <EarlyAccessModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
   )
 }
