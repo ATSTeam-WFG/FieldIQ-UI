@@ -69,6 +69,15 @@ export async function createContact(payload: {
   return api.post<Contact>('/contacts/', payload)
 }
 
+export interface ScoreTrend {
+  contact_id: string
+  delta: number | null
+}
+
+export async function getScoreTrends(): Promise<ScoreTrend[]> {
+  return api.get<ScoreTrend[]>('/contacts/score-trends')
+}
+
 export async function updateContact(id: string, payload: Partial<{
   name: string
   company: string | null

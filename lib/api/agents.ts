@@ -23,6 +23,8 @@ interface KPIBackend {
     most_active_type: string
     longest_streak: string
   }
+  top_relationship_score: number
+  top_contact_name: string | null
 }
 
 // Frontend camelCase shape matching agent-kpis.json
@@ -47,6 +49,8 @@ export interface AgentKPIs {
     mostActiveType: string
     longestStreak: string
   }
+  topRelationshipScore: number
+  topContactName: string | null
 }
 
 export async function getMyKpis(): Promise<AgentKPIs> {
@@ -72,6 +76,8 @@ export async function getMyKpis(): Promise<AgentKPIs> {
       mostActiveType: d.streak_stats.most_active_type,
       longestStreak: d.streak_stats.longest_streak,
     },
+    topRelationshipScore: d.top_relationship_score ?? 0,
+    topContactName: d.top_contact_name ?? null,
   }
 }
 
@@ -160,6 +166,8 @@ export async function getAgentDetail(agentId: string): Promise<AgentDetail> {
         mostActiveType: d.kpis.streak_stats.most_active_type,
         longestStreak: d.kpis.streak_stats.longest_streak,
       },
+      topRelationshipScore: d.kpis.top_relationship_score ?? 0,
+      topContactName: d.kpis.top_contact_name ?? null,
     },
     performance: {
       monthlySpend: d.performance.monthly_spend,

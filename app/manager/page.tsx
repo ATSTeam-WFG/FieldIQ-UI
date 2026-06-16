@@ -381,6 +381,7 @@ export default function ManagerPage() {
                 { label: 'REP',        w: undefined,  flex: 1         },
                 { label: 'ACTIVITIES', w: 80,         flex: undefined },
                 { label: 'SPEND',      w: 80,         flex: undefined },
+                { label: 'SCORE',      w: 70,         flex: undefined },
                 { label: 'LAST LOG',   w: 90,         flex: undefined },
                 { label: 'STATUS',     w: 110,        flex: undefined },
               ] as { label: string; w?: number; flex?: number }[]).map(col => (
@@ -514,6 +515,14 @@ export default function ManagerPage() {
                     style={{ width: 80, fontSize: 12, color: 'var(--muted)' }}
                   >
                     {formatCurrency(agent.spend)}
+                  </span>
+
+                  {/* SCORE */}
+                  <span
+                    className="hidden shrink-0 lg:block"
+                    style={{ width: 70, fontSize: 12, fontWeight: 600, color: '#c4a574' }}
+                  >
+                    {agent.score ? Math.round(agent.score) : '—'}
                   </span>
 
                   {/* LAST LOG */}

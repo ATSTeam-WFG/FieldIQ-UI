@@ -220,6 +220,17 @@ export default function DashboardPage() {
                 <KPICard {...card} />
               </motion.div>
             ))}
+            <motion.div
+              className="col-span-2 md:col-span-3"
+              variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.2 } } }}
+            >
+              <KPICard
+                label="TOP RELATIONSHIP SCORE"
+                value={kpis?.topRelationshipScore ?? '—'}
+                subLabel={kpis?.topContactName ?? ''}
+                href="/scores"
+              />
+            </motion.div>
           </motion.div>
         )}
 

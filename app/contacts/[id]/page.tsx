@@ -12,6 +12,8 @@ import { AppShell } from '@/components/fieldiq/AppShell'
 import { StatusBadge } from '@/components/fieldiq/StatusBadge'
 import type { ActivityStatus } from '@/components/fieldiq/StatusBadge'
 import { AICard } from '@/components/fieldiq/AICard'
+import { ScoreRing } from '@/components/fieldiq/ScoreRing'
+import ScoreBreakdown from '@/components/fieldiq/ScoreBreakdown'
 import { useActivityLog } from '@/lib/context/ActivityLogContext'
 import { useAddContact } from '@/lib/context/AddContactContext'
 import { useContract } from '@/lib/context/ContractContext'
@@ -39,11 +41,16 @@ const ACTIVITY_ICONS: Record<string, LucideIcon> = {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function relativeDays(dateStr: string | null): string {
-  if (!dateStr) return 'Never'
+  if (!dateStr) return 'Not logged'
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000)
   if (diff === 0) return 'Today'
   if (diff === 1) return 'Yesterday'
   return `${diff} days ago`
+}
+
+function formatActivityDate(dateStr: string): string {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 // ── Card token styles ─────────────────────────────────────────────────────────
@@ -330,7 +337,7 @@ export default function ContactPage({ params }: ContactPageProps) {
           style={{
             background: 'none',
             border: 'none',
-            color: '#c4a574',
+            color: 'var(--muted)',
             fontSize: 13,
             cursor: 'pointer',
             padding: '4px 0',
@@ -339,6 +346,21 @@ export default function ContactPage({ params }: ContactPageProps) {
           Edit Contact
         </button>
       </div>
+    </div>
+  )
+
+  // ── Relationship Score Card ────────────────────────────────────────────────
+  const ScoreCard = (
+    <div style={cardStyle}>
+      <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)', margin: '0 0 16px' }}>
+        Relationship Score
+      </p>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+        <ScoreRing score={contact.score} size={100} />
+      </div>
+      {contact.score_breakdown && (
+        <ScoreBreakdown breakdown={contact.score_breakdown} />
+      )}
     </div>
   )
 
@@ -371,7 +393,7 @@ export default function ContactPage({ params }: ContactPageProps) {
           >
             {label}
           </span>
-          <span style={{ fontSize: 20, fontWeight: 700, color: '#c4a574' }}>{value}</span>
+          <span style={{ fontSize: value === '—' ? 14 : 20, fontWeight: 700, color: value === '—' ? 'var(--muted)' : '#c4a574' }}>{value}</span>
         </div>
       ))}
     </div>
@@ -401,10 +423,10 @@ export default function ContactPage({ params }: ContactPageProps) {
         </p>
       ) : (
         <>
-          {/* Table header */}
+          {/* Table header — desktop only */}
           <div
+            className="hidden md:grid"
             style={{
-              display: 'grid',
               gridTemplateColumns: '110px 1fr 80px 72px 64px',
               gap: 8,
               padding: '0 0 8px',
@@ -431,45 +453,72 @@ export default function ContactPage({ params }: ContactPageProps) {
                 onClick={() => openContract(c as any)}
                 className="hover:bg-[var(--surface)]"
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: '110px 1fr 80px 72px 64px',
-                  gap: 8,
-                  minHeight: 48,
-                  alignItems: 'center',
                   borderBottom: isLast ? 'none' : '1px solid var(--border)',
                   padding: '8px 0',
                   cursor: 'pointer',
                 }}
               >
-                <span
+                {/* Desktop table row */}
+                <div
+                  className="hidden md:grid"
                   style={{
-                    fontSize: 12,
-                    fontFamily: 'monospace',
-                    letterSpacing: '0.04em',
-                    color: 'var(--muted)',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
+                    gridTemplateColumns: '110px 1fr 80px 72px 64px',
+                    gap: 8,
+                    minHeight: 48,
+                    alignItems: 'center',
                   }}
                 >
-                  {c.file_number ?? '—'}
-                </span>
-                <span
-                  style={{
-                    fontSize: 13,
-                    color: 'var(--foreground)',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {c.property_address ?? '—'}
-                </span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#c4a574' }}>
-                  ${(c.amount ?? 0).toLocaleString()}
-                </span>
-                <ContactContractBadge status={c.status} />
-                <span style={{ fontSize: 12, color: 'var(--muted)' }}>{dateLabel}</span>
+                  <span
+                    style={{
+                      fontSize: 12,
+                      fontFamily: 'monospace',
+                      letterSpacing: '0.04em',
+                      color: 'var(--muted)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {c.file_number ?? '—'}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 13,
+                      color: 'var(--foreground)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {c.property_address ?? '—'}
+                  </span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#c4a574' }}>
+                    ${(c.amount ?? 0).toLocaleString()}
+                  </span>
+                  <ContactContractBadge status={c.status} />
+                  <span style={{ fontSize: 12, color: 'var(--muted)' }}>{dateLabel}</span>
+                </div>
+
+                {/* Mobile card row */}
+                <div className="flex flex-col md:hidden" style={{ gap: 6, padding: '4px 0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <span style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.4 }}>
+                      {c.property_address?.split(',')[0] ?? '—'}
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: '#c4a574' }}>
+                        ${(c.amount ?? 0).toLocaleString()}
+                      </span>
+                      <ContactContractBadge status={c.status} />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 11, fontFamily: 'monospace', letterSpacing: '0.04em', color: 'var(--muted)' }}>
+                      {c.file_number ?? '—'}
+                    </span>
+                    <span style={{ fontSize: 12, color: 'var(--muted)' }}>{dateLabel}</span>
+                  </div>
+                </div>
               </div>
             )
           })}
@@ -504,13 +553,6 @@ export default function ContactPage({ params }: ContactPageProps) {
         <>
           {visibleActivities.map(activity => {
             const Icon = ACTIVITY_ICONS[activity.type] ?? Plus
-            const label = activity.label
-            const otherContacts = (activity.contacts ?? []).filter((c: { name: string }) => c.name !== contact.name)
-            const othersLabel = otherContacts.length === 1
-              ? `with ${otherContacts[0].name}`
-              : otherContacts.length > 1
-                ? `with ${otherContacts[0].name} + ${otherContacts.length - 1}`
-                : null
             return (
               <div
                 key={activity.id}
@@ -544,30 +586,22 @@ export default function ContactPage({ params }: ContactPageProps) {
 
                 {/* Content */}
                 <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                     <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>
                       {activity.type}
                     </span>
-                    {label && (
-                      <span style={{ fontSize: 12, color: 'var(--muted)' }}>· {label}</span>
-                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                      {activity.spend > 0 && (
+                        <span style={{ fontSize: 12, color: '#c4a574', fontWeight: 600 }}>
+                          ${activity.spend}
+                        </span>
+                      )}
+                      <StatusBadge status={activity.status as ActivityStatus} />
+                    </div>
                   </div>
                   <span style={{ fontSize: 11, color: 'var(--muted)' }}>
-                    {activity.date} · {activity.time}
+                    {formatActivityDate(activity.date)}
                   </span>
-                  {othersLabel && (
-                    <span style={{ fontSize: 11, color: 'var(--muted)' }}>{othersLabel}</span>
-                  )}
-                </div>
-
-                {/* Right: spend + status */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, paddingTop: 2 }}>
-                  {activity.spend > 0 && (
-                    <span style={{ fontSize: 12, color: '#c4a574', fontWeight: 600 }}>
-                      ${activity.spend}
-                    </span>
-                  )}
-                  <StatusBadge status={activity.status as ActivityStatus} />
                 </div>
               </div>
             )
@@ -651,7 +685,7 @@ export default function ContactPage({ params }: ContactPageProps) {
   const AIInsightCard = (
     <AICard label="Insight">
       <p style={{ fontSize: 13, color: 'var(--body)', lineHeight: 1.6, margin: 0 }}>
-        {contact.name} has been one of your most engaged contacts this quarter. They respond best to lunches and CE classes. Based on closing activity, they likely have 2–3 referrals available in the next 30 days. Your relationship score has increased {Math.round(contact.score * 0.13)} points since January.
+        {contact.name} likely has 2–3 referrals available in the next 30 days — they respond best to lunches and CE classes. Relationship score up {Math.round(contact.score * 0.13)} pts since January.
       </p>
     </AICard>
   )
@@ -675,17 +709,18 @@ export default function ContactPage({ params }: ContactPageProps) {
 
       {/* Desktop layout */}
       <div className="hidden md:flex" style={{ gap: 24, alignItems: 'flex-start' }}>
-        {/* Left column */}
-        <div style={{ width: 380, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* Left column — 30% */}
+        <div style={{ flex: '0 0 30%', display: 'flex', flexDirection: 'column', gap: 16 }}>
           {ProfileHeaderCard}
-          {SpendBreakdownCard}
+          {ScoreCard}
+          {StatsGrid}
         </div>
 
-        {/* Right column */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {StatsGrid}
+        {/* Right column — 70% */}
+        <div style={{ flex: '0 0 calc(70% - 24px)', display: 'flex', flexDirection: 'column', gap: 16 }}>
           {AIInsightCard}
           {ActivityHistoryCard}
+          {SpendBreakdownCard}
           {ContractsCard}
         </div>
       </div>
@@ -693,6 +728,7 @@ export default function ContactPage({ params }: ContactPageProps) {
       {/* Mobile layout */}
       <div className="flex flex-col md:hidden" style={{ gap: 16 }}>
         {ProfileHeaderCard}
+        {ScoreCard}
         {StatsGrid}
         {AIInsightCard}
         {ActivityHistoryCard}

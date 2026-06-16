@@ -32,6 +32,7 @@ export interface LeaderboardEntry {
   spend: number
   lastLog: string | null
   status: string
+  score: number
 }
 
 export interface AgentHeatmapEntry {
@@ -77,6 +78,7 @@ interface ManagerDashboardBackend {
     spend: number
     last_log: string | null
     status: string
+    score: number
   }>
   breakdown: Array<{ type: string; count: number; spend: number }>
   agent_activity: Array<{
@@ -113,6 +115,7 @@ export async function getManagerDashboard(period: Period = 'mtd'): Promise<Manag
       spend: e.spend,
       lastLog: e.last_log,
       status: e.status,
+      score: e.score ?? 0,
     })),
     breakdown: d.breakdown,
     agentActivity: d.agent_activity.map(e => ({

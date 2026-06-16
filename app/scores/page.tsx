@@ -5,6 +5,7 @@ import { AppShell } from '@/components/fieldiq/AppShell'
 import { SkeletonRows } from '@/components/fieldiq/SkeletonRows'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { useContacts } from '@/lib/hooks/useContacts'
+import { useScoreTrends } from '@/lib/hooks/useScoreTrends'
 import type { Contact } from '@/lib/api/contacts'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -140,14 +141,11 @@ function BreakdownBars({ breakdown }: { breakdown: ScoreBreakdown }) {
 
 // ── Trend icon ─────────────────────────────────────────────────────────────
 
-function TrendIcon({ score }: { score: number }) {
-  if (score >= 80) {
-    return <TrendingUp size={16} style={{ color: '#16a34a' }} />
-  }
-  if (score >= 60) {
-    return <Minus size={16} style={{ color: '#d97706' }} />
-  }
-  return <TrendingDown size={16} style={{ color: 'var(--muted)' }} />
+function TrendIcon({ delta }: { delta: number | null }) {
+  if (delta === null) return <Minus size={16} style={{ color: 'var(--muted)' }} />
+  if (delta > 0)  return <TrendingUp size={16} style={{ color: '#16a34a' }} />
+  if (delta < 0)  return <TrendingDown size={16} style={{ color: 'var(--muted)' }} />
+  return <Minus size={16} style={{ color: '#d97706' }} />
 }
 
 // ── Score level dot for legend ─────────────────────────────────────────────
@@ -172,6 +170,10 @@ function LegendDot({ color }: { color: string }) {
 export default function ScoresPage() {
   const router = useRouter()
   const { data, isLoading } = useContacts()
+  const { data: trendsData } = useScoreTrends()
+  const trendsMap = Object.fromEntries(
+    (trendsData ?? []).map(t => [t.contact_id, t.delta])
+  )
 
   const agents = (data?.items ?? [])
     .filter(c => c.type === 'agent')
@@ -457,7 +459,7 @@ export default function ScoresPage() {
                   className="hidden md:flex shrink-0 items-center"
                   style={{ width: 60 }}
                 >
-                  <TrendIcon score={contact.score} />
+                  <TrendIcon delta={trendsMap[contact.id] ?? null} />
                 </div>
               </div>
             )
