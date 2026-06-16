@@ -10,6 +10,7 @@ import {
   Users,
   CalendarCheck,
   TrendingUp,
+  HeartHandshake,
   Settings,
   Info,
   BarChart2,
@@ -31,7 +32,8 @@ const repMainNav: NavItemDef[] = [
 ]
 
 const repInsightNav: NavItemDef[] = [
-  { label: 'My Performance', icon: TrendingUp, href: '/performance' },
+  { label: 'My Relations',   icon: HeartHandshake, href: '/scores'      },
+  { label: 'My Performance', icon: TrendingUp,     href: '/performance' },
 ]
 
 const managerMainNav: NavItemDef[] = [

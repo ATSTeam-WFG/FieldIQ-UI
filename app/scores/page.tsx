@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppShell } from '@/components/fieldiq/AppShell'
 import { SkeletonRows } from '@/components/fieldiq/SkeletonRows'
@@ -12,125 +13,76 @@ import type { Contact } from '@/lib/api/contacts'
 
 function formatRelativeDate(dateStr: string | null): string {
   if (!dateStr) return '—'
-  const date = new Date(dateStr)
-  const diffMs = new Date().getTime() - date.getTime()
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  const diffDays = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000)
   if (diffDays === 0) return 'Today'
   if (diffDays === 1) return 'Yesterday'
-  if (diffDays < 7) return `${diffDays} days ago`
-  const diffWeeks = Math.floor(diffDays / 7)
-  return `${diffWeeks} week${diffWeeks > 1 ? 's' : ''} ago`
+  if (diffDays < 7) return `${diffDays}d ago`
+  return `${Math.floor(diffDays / 7)}w ago`
 }
 
-function levelColor(level: string): string {
-  if (level === 'high') return '#16a34a'
-  if (level === 'medium') return '#d97706'
-  return 'var(--muted)'
+function scoreZone(score: number): 'healthy' | 'watch' | 'risk' {
+  if (score >= 80) return 'healthy'
+  if (score >= 60) return 'watch'
+  return 'risk'
 }
 
-function levelWidth(level: string): string {
-  if (level === 'high') return '100%'
-  if (level === 'medium') return '60%'
-  return '30%'
-}
+const ZONE_COLOR = { healthy: '#16a34a', watch: '#d97706', risk: 'var(--muted)' }
+const ZONE_BG    = { healthy: 'rgba(22,163,74,0.1)', watch: 'rgba(217,119,6,0.1)', risk: 'var(--surface)' }
 
-// ── Small inline SVG score ring ────────────────────────────────────────────
+// ── Score ring (compact, for list rows) ───────────────────────────────────
 
 function ScoreRingSmall({ score }: { score: number }) {
   const r = 18
-  const circumference = 2 * Math.PI * r
-  const arc = (score / 100) * circumference
-
+  const circ = 2 * Math.PI * r
+  const arc = (score / 100) * circ
   return (
-    <svg
-      width={48}
-      height={48}
-      viewBox="0 0 48 48"
-      aria-label={`Score ${score}`}
-    >
-      {/* Background track */}
-      <circle
-        cx={24}
-        cy={24}
-        r={r}
-        fill="none"
-        stroke="#27272a"
-        strokeWidth={4}
-      />
-      {/* Progress arc */}
-      <circle
-        cx={24}
-        cy={24}
-        r={r}
-        fill="none"
-        stroke="#c4a574"
-        strokeWidth={4}
-        strokeDasharray={`${arc} ${circumference}`}
-        strokeLinecap="round"
-        transform="rotate(-90 24 24)"
-      />
-      {/* Score label */}
-      <text
-        x={24}
-        y={24}
-        fontSize={11}
-        fontWeight={700}
-        fill="#c4a574"
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fontFamily="Inter, sans-serif"
-      >
+    <svg width={48} height={48} viewBox="0 0 48 48" aria-label={`Score ${score}`}>
+      <circle cx={24} cy={24} r={r} fill="none" stroke="#27272a" strokeWidth={4} />
+      <circle cx={24} cy={24} r={r} fill="none" stroke="#c4a574" strokeWidth={4}
+        strokeDasharray={`${arc} ${circ}`} strokeLinecap="round"
+        transform="rotate(-90 24 24)" />
+      <text x={24} y={24} fontSize={11} fontWeight={700} fill="#c4a574"
+        textAnchor="middle" dominantBaseline="middle" fontFamily="Inter, sans-serif">
         {score}
       </text>
     </svg>
   )
 }
 
-// ── Score breakdown mini bars ──────────────────────────────────────────────
+// ── Breakdown bars ─────────────────────────────────────────────────────────
 
-const BREAKDOWN_LABELS: Array<{ key: string; label: string }> = [
-  { key: 'recency',    label: 'Recency' },
-  { key: 'frequency',  label: 'Frequency' },
-  { key: 'diversity',  label: 'Diversity' },
+const DIMS = [
+  { key: 'recency',    label: 'Recency'    },
+  { key: 'frequency',  label: 'Frequency'  },
+  { key: 'diversity',  label: 'Diversity'  },
   { key: 'engagement', label: 'Engagement' },
 ]
 
-type ScoreBreakdown = NonNullable<Contact['score_breakdown']>
+function dimColor(level: string) {
+  if (level === 'high')   return '#16a34a'
+  if (level === 'medium') return '#d97706'
+  return 'var(--muted)'
+}
+function dimWidth(level: string) {
+  if (level === 'high')   return '100%'
+  if (level === 'medium') return '60%'
+  return '30%'
+}
 
-function BreakdownBars({ breakdown }: { breakdown: ScoreBreakdown }) {
+type BreakdownType = NonNullable<Contact['score_breakdown']>
+
+function BreakdownBars({ bd }: { bd: BreakdownType }) {
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '4px 12px',
-        width: 180,
-      }}
-    >
-      {BREAKDOWN_LABELS.map(({ key, label }) => {
-        const level = (breakdown as Record<string, string>)[key] ?? 'low'
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 12px', width: 180 }}>
+      {DIMS.map(({ key, label }) => {
+        const level = (bd as Record<string, string>)[key] ?? 'low'
         return (
           <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <span style={{ fontSize: 9, color: 'var(--muted)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
               {label}
             </span>
-            <div
-              style={{
-                width: 40,
-                height: 4,
-                borderRadius: 2,
-                backgroundColor: 'var(--surface)',
-                overflow: 'hidden',
-              }}
-            >
-              <div
-                style={{
-                  width: levelWidth(level),
-                  height: '100%',
-                  borderRadius: 2,
-                  backgroundColor: levelColor(level),
-                }}
-              />
+            <div style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: 'var(--surface)', overflow: 'hidden' }}>
+              <div style={{ width: dimWidth(level), height: '100%', borderRadius: 2, backgroundColor: dimColor(level) }} />
             </div>
           </div>
         )
@@ -143,211 +95,213 @@ function BreakdownBars({ breakdown }: { breakdown: ScoreBreakdown }) {
 
 function TrendIcon({ delta }: { delta: number | null }) {
   if (delta === null) return <Minus size={16} style={{ color: 'var(--muted)' }} />
-  if (delta > 0)  return <TrendingUp size={16} style={{ color: '#16a34a' }} />
+  if (delta > 0)  return <TrendingUp   size={16} style={{ color: '#16a34a' }} />
   if (delta < 0)  return <TrendingDown size={16} style={{ color: 'var(--muted)' }} />
   return <Minus size={16} style={{ color: '#d97706' }} />
 }
 
-// ── Score level dot for legend ─────────────────────────────────────────────
+// ── Health distribution bar ────────────────────────────────────────────────
 
-function LegendDot({ color }: { color: string }) {
+function HealthBar({ healthy, watch, risk }: { healthy: number; watch: number; risk: number }) {
+  const total = healthy + watch + risk
+  if (total === 0) return null
+  const hp = (healthy / total) * 100
+  const wp = (watch   / total) * 100
+  const rp = (risk    / total) * 100
   return (
-    <span
-      style={{
-        display: 'inline-block',
-        width: 8,
-        height: 8,
-        borderRadius: '50%',
-        backgroundColor: color,
-        flexShrink: 0,
-      }}
-    />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {/* Stacked bar */}
+      <div style={{ height: 10, borderRadius: 5, display: 'flex', overflow: 'hidden', backgroundColor: 'var(--surface)' }}>
+        {hp > 0 && <div style={{ width: `${hp}%`, backgroundColor: '#16a34a', transition: 'width 0.4s ease' }} />}
+        {wp > 0 && <div style={{ width: `${wp}%`, backgroundColor: '#d97706', transition: 'width 0.4s ease' }} />}
+        {rp > 0 && <div style={{ width: `${rp}%`, backgroundColor: '#52525b', transition: 'width 0.4s ease' }} />}
+      </div>
+      {/* Legend */}
+      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+        {[
+          { label: `${healthy} Healthy`, color: '#16a34a', range: '80+' },
+          { label: `${watch} Watch`,     color: '#d97706', range: '60–79' },
+          { label: `${risk} At Risk`,    color: '#52525b', range: '<60'  },
+        ].map(({ label, color, range }) => (
+          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: color, flexShrink: 0 }} />
+            <span style={{ fontSize: 12, color: 'var(--body)' }}>{label}</span>
+            <span style={{ fontSize: 11, color: 'var(--muted)' }}>({range})</span>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
 // ── Page ───────────────────────────────────────────────────────────────────
 
-export default function ScoresPage() {
+type SortMode = 'risk-first' | 'score-desc'
+
+export default function MyRelationsPage() {
   const router = useRouter()
+  const [sort, setSort] = useState<SortMode>('risk-first')
+
   const { data, isLoading } = useContacts()
   const { data: trendsData } = useScoreTrends()
+
   const trendsMap = Object.fromEntries(
     (trendsData ?? []).map(t => [t.contact_id, t.delta])
   )
 
-  const agents = (data?.items ?? [])
-    .filter(c => c.type === 'agent')
-    .sort((a, b) => b.score - a.score)
+  const contacts = (data?.items ?? []).filter(c => c.type === 'referral_agent')
 
-  const totalCount = agents.length
-  const avgScore = totalCount > 0
-    ? Math.round(agents.reduce((sum, c) => sum + c.score, 0) / totalCount)
+  const healthy = contacts.filter(c => c.score >= 80)
+  const watch   = contacts.filter(c => c.score >= 60 && c.score < 80)
+  const atRisk  = contacts.filter(c => c.score < 60)
+  const avgScore = contacts.length
+    ? Math.round(contacts.reduce((s, c) => s + c.score, 0) / contacts.length)
     : 0
-  const topContact = agents[0]
 
-  // Table column header definitions
+  const sorted = [...contacts].sort((a, b) =>
+    sort === 'risk-first' ? a.score - b.score : b.score - a.score
+  )
+
   const colHeaders = [
-    { label: 'RANK',        width: 40  },
-    { label: 'CONTACT',     width: 200 },
-    { label: 'SCORE',       width: 80  },
-    { label: 'BREAKDOWN',   width: 180 },
-    { label: 'LAST CONTACT',width: 120 },
-    { label: 'TREND',       width: 60  },
+    { label: '#',            width: 32  },
+    { label: 'CONTACT',      width: 200 },
+    { label: 'SCORE',        width: 80  },
+    { label: 'BREAKDOWN',    width: 180 },
+    { label: 'LAST CONTACT', width: 120 },
+    { label: 'TREND',        width: 60  },
   ]
 
   return (
-    <AppShell activeItem="Scores">
+    <AppShell activeItem="My Relations">
       <div className="flex flex-col" style={{ gap: 0 }}>
 
-        {/* ── Page header ─────────────────────────────────────── */}
+        {/* ── Page header ────────────────────────────────────────── */}
         <div className="flex flex-col" style={{ gap: 4 }}>
-          <h1
-            className="font-semibold leading-tight"
-            style={{ fontSize: 22, color: 'var(--foreground)' }}
-          >
-            Relationship Scores
+          <h1 className="font-semibold leading-tight" style={{ fontSize: 22, color: 'var(--foreground)' }}>
+            My Relations
           </h1>
           <p style={{ fontSize: 14, color: 'var(--muted)' }}>
-            Agent contacts ranked by relationship score
+            Health of your referral agent relationships
           </p>
         </div>
 
-        {/* ── Summary strip ───────────────────────────────────── */}
+        {/* ── Overview stat cards ─────────────────────────────────── */}
         <div
-          className="flex flex-row flex-wrap"
-          style={{ gap: 0, marginTop: 16, columnGap: 24, rowGap: 8 }}
+          className="grid grid-cols-2 md:grid-cols-4"
+          style={{ gap: 12, marginTop: 20 }}
         >
-          {/* Avg Score */}
-          <div className="flex flex-row items-baseline" style={{ gap: 6 }}>
-            <span style={{ fontSize: 12, color: 'var(--muted)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-              AVG SCORE
-            </span>
-            <span style={{ fontSize: 20, fontWeight: 700, color: '#c4a574', lineHeight: 1 }}>
-              {avgScore}
-            </span>
-          </div>
-
-          {/* Top Score */}
-          <div className="flex flex-row items-baseline" style={{ gap: 6 }}>
-            <span style={{ fontSize: 12, color: 'var(--muted)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-              TOP SCORE
-            </span>
-            <span style={{ fontSize: 20, fontWeight: 700, color: '#c4a574', lineHeight: 1 }}>
-              {topContact ? `${topContact.score} — ${topContact.name}` : '—'}
-            </span>
-          </div>
-
-          {/* Contacts Tracked */}
-          <div className="flex flex-row items-baseline" style={{ gap: 6 }}>
-            <span style={{ fontSize: 12, color: 'var(--muted)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-              CONTACTS TRACKED
-            </span>
-            <span style={{ fontSize: 20, fontWeight: 700, color: '#c4a574', lineHeight: 1 }}>
-              {totalCount}
-            </span>
-          </div>
+          {[
+            { label: 'AVG SCORE',  value: avgScore,          color: '#c4a574' },
+            { label: 'HEALTHY',    value: healthy.length,    color: '#16a34a' },
+            { label: 'WATCH',      value: watch.length,      color: '#d97706' },
+            { label: 'AT RISK',    value: atRisk.length,     color: '#71717a' },
+          ].map(({ label, value, color }) => (
+            <div
+              key={label}
+              className="fieldiq-card"
+              style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 4 }}
+            >
+              <span style={{ fontSize: 10, fontWeight: 500, letterSpacing: '0.06em', color: 'var(--muted)', textTransform: 'uppercase' }}>
+                {label}
+              </span>
+              <span style={{ fontSize: 28, fontWeight: 700, color, lineHeight: 1 }}>
+                {value}
+              </span>
+            </div>
+          ))}
         </div>
 
-        {/* ── Score legend ─────────────────────────────────────── */}
-        <div
-          className="flex flex-row flex-wrap items-center"
-          style={{ gap: 16, marginTop: 8 }}
-        >
-          <div className="flex items-center" style={{ gap: 6 }}>
-            <LegendDot color="#16a34a" />
-            <span style={{ fontSize: 12, color: 'var(--muted)' }}>High (80+)</span>
-          </div>
-          <div className="flex items-center" style={{ gap: 6 }}>
-            <LegendDot color="#d97706" />
-            <span style={{ fontSize: 12, color: 'var(--muted)' }}>Medium (60–79)</span>
-          </div>
-          <div className="flex items-center" style={{ gap: 6 }}>
-            <LegendDot color="var(--muted)" />
-            <span style={{ fontSize: 12, color: 'var(--muted)' }}>Low (&lt;60)</span>
-          </div>
-        </div>
-
-        {/* ── Contacts table card ──────────────────────────────── */}
-        <div
-          className="fieldiq-card"
-          style={{ marginTop: 16 }}
-        >
-          {/* Card header */}
+        {/* ── Health distribution bar ─────────────────────────────── */}
+        {!isLoading && contacts.length > 0 && (
           <div
-            className="flex items-center"
-            style={{
-              padding: '16px 20px',
-              borderBottom: '1px solid var(--border)',
-              gap: 10,
-            }}
+            className="fieldiq-card"
+            style={{ marginTop: 12, padding: '16px 20px' }}
           >
-            <span
-              className="font-semibold"
-              style={{ fontSize: 14, color: 'var(--foreground)' }}
+            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', marginBottom: 12 }}>
+              Relationship Health
+            </p>
+            <HealthBar healthy={healthy.length} watch={watch.length} risk={atRisk.length} />
+          </div>
+        )}
+
+        {/* ── Contacts table ──────────────────────────────────────── */}
+        <div className="fieldiq-card" style={{ marginTop: 12 }}>
+
+          {/* Card header with sort toggle */}
+          <div
+            className="flex items-center justify-between"
+            style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)' }}
+          >
+            <div className="flex items-center" style={{ gap: 8 }}>
+              <span className="font-semibold" style={{ fontSize: 14, color: 'var(--foreground)' }}>
+                All Contacts
+              </span>
+              <span
+                style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  minWidth: 22, height: 20, padding: '0 7px', borderRadius: 10,
+                  fontSize: 11, fontWeight: 600, backgroundColor: 'var(--surface)', color: 'var(--muted)',
+                }}
+              >
+                {contacts.length}
+              </span>
+            </div>
+
+            {/* Sort toggle */}
+            <div
+              className="flex overflow-hidden rounded-[6px]"
+              style={{ border: '1px solid var(--border)', backgroundColor: 'var(--surface)', height: 30, padding: 2, gap: 2 }}
             >
-              All Contacts
-            </span>
-            {/* Count badge */}
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minWidth: 22,
-                height: 20,
-                paddingLeft: 7,
-                paddingRight: 7,
-                borderRadius: 10,
-                fontSize: 11,
-                fontWeight: 600,
-                backgroundColor: 'var(--surface)',
-                color: 'var(--muted)',
-              }}
-            >
-              {totalCount}
-            </span>
+              {([
+                { mode: 'risk-first' as SortMode, label: 'At Risk First' },
+                { mode: 'score-desc' as SortMode, label: 'Top Score'     },
+              ]).map(({ mode, label }) => (
+                <button
+                  key={mode}
+                  onClick={() => setSort(mode)}
+                  style={{
+                    height: 22, paddingLeft: 10, paddingRight: 10, fontSize: 11,
+                    fontWeight: sort === mode ? 600 : 400,
+                    borderRadius: 4, border: 'none', cursor: 'pointer',
+                    backgroundColor: sort === mode ? '#c4a574' : 'transparent',
+                    color: sort === mode ? '#000' : 'var(--muted)',
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Table column headers — desktop only */}
+          {/* Column headers */}
           <div
             className="hidden md:flex items-center"
-            style={{
-              height: 32,
-              padding: '0 20px',
-              backgroundColor: 'var(--surface)',
-              borderBottom: '1px solid var(--border)',
-            }}
+            style={{ height: 32, padding: '0 20px', backgroundColor: 'var(--surface)', borderBottom: '1px solid var(--border)' }}
           >
             {colHeaders.map(({ label, width }) => (
               <span
                 key={label}
-                style={{
-                  width,
-                  flexShrink: 0,
-                  fontSize: 11,
-                  fontWeight: 500,
-                  letterSpacing: '0.06em',
-                  color: 'var(--muted)',
-                  textTransform: 'uppercase',
-                }}
+                style={{ width, flexShrink: 0, fontSize: 11, fontWeight: 500, letterSpacing: '0.06em', color: 'var(--muted)', textTransform: 'uppercase' }}
               >
                 {label}
               </span>
             ))}
           </div>
 
-          {/* Loading / empty state */}
+          {/* Loading / empty */}
           {isLoading && <SkeletonRows cols={4} rows={8} />}
-          {!isLoading && agents.length === 0 && (
+          {!isLoading && sorted.length === 0 && (
             <div className="flex items-center justify-center" style={{ padding: '48px 20px' }}>
-              <span style={{ fontSize: 14, color: 'var(--muted)' }}>No contacts tracked yet.</span>
+              <span style={{ fontSize: 14, color: 'var(--muted)' }}>No referral agent contacts yet.</span>
             </div>
           )}
 
-          {/* Table rows */}
-          {agents.map((contact, idx) => {
-            const isLast = idx === agents.length - 1
-            const breakdown = contact.score_breakdown
+          {/* Rows */}
+          {sorted.map((contact, idx) => {
+            const isLast = idx === sorted.length - 1
+            const bd = contact.score_breakdown
+            const zone = scoreZone(contact.score)
+            const delta = trendsMap[contact.id] ?? null
 
             return (
               <div
@@ -361,65 +315,40 @@ export default function ScoresPage() {
                   cursor: 'pointer',
                 }}
               >
-                {/* RANK — desktop only */}
+                {/* # */}
                 <span
                   className="hidden md:block shrink-0"
-                  style={{
-                    width: 40,
-                    fontSize: 13,
-                    color: 'var(--muted)',
-                  }}
+                  style={{ width: 32, fontSize: 12, color: 'var(--muted)' }}
                 >
                   {idx + 1}
                 </span>
 
                 {/* CONTACT */}
-                <div
-                  className="flex shrink-0 items-center"
-                  style={{ gap: 10, width: 200 }}
-                >
-                  {/* Avatar */}
+                <div className="flex shrink-0 items-center" style={{ gap: 10, width: 200 }}>
                   <div
                     className="flex items-center justify-center shrink-0"
                     style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: '50%',
-                      backgroundColor: '#c4a574',
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: '#000000',
-                      letterSpacing: '0.04em',
+                      width: 34, height: 34, borderRadius: '50%',
+                      backgroundColor: ZONE_BG[zone],
+                      border: `1px solid ${ZONE_COLOR[zone]}33`,
+                      fontSize: 11, fontWeight: 700,
+                      color: ZONE_COLOR[zone],
                     }}
                   >
                     {contact.initials}
                   </div>
                   <div className="flex flex-col" style={{ gap: 2, minWidth: 0 }}>
-                    <span
-                      className="truncate"
-                      style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}
-                    >
+                    <span className="truncate" style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>
                       {contact.name}
                     </span>
-                    <span
-                      className="truncate"
-                      style={{ fontSize: 11, color: 'var(--muted)' }}
-                    >
+                    <span className="truncate" style={{ fontSize: 11, color: 'var(--muted)' }}>
                       {contact.job_title ?? ''}
                     </span>
                   </div>
                 </div>
 
-                {/* SCORE — score ring on desktop, just number on mobile */}
-                <div
-                  style={{
-                    width: 80,
-                    flexShrink: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
+                {/* SCORE */}
+                <div style={{ width: 80, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <span className="md:hidden" style={{ fontSize: 15, fontWeight: 700, color: '#c4a574' }}>
                     {contact.score}
                   </span>
@@ -428,38 +357,28 @@ export default function ScoresPage() {
                   </span>
                 </div>
 
-                {/* BREAKDOWN — desktop only */}
-                {breakdown && (
-                  <div
-                    className="hidden md:flex shrink-0 items-center"
-                    style={{ width: 180 }}
-                  >
-                    <BreakdownBars breakdown={breakdown} />
+                {/* BREAKDOWN */}
+                {bd ? (
+                  <div className="hidden md:flex shrink-0 items-center" style={{ width: 180 }}>
+                    <BreakdownBars bd={bd} />
                   </div>
-                )}
-                {!breakdown && (
-                  <div
-                    className="hidden md:block shrink-0"
-                    style={{ width: 180, fontSize: 12, color: 'var(--muted)' }}
-                  >
-                    —
-                  </div>
+                ) : (
+                  <div className="hidden md:block shrink-0" style={{ width: 180, fontSize: 12, color: 'var(--muted)' }}>—</div>
                 )}
 
-                {/* LAST CONTACT — desktop only */}
-                <span
-                  className="hidden md:block shrink-0"
-                  style={{ width: 120, fontSize: 13, color: 'var(--muted)' }}
-                >
+                {/* LAST CONTACT */}
+                <span className="hidden md:block shrink-0" style={{ width: 120, fontSize: 13, color: 'var(--muted)' }}>
                   {formatRelativeDate(contact.last_activity_date)}
                 </span>
 
-                {/* TREND — desktop only */}
-                <div
-                  className="hidden md:flex shrink-0 items-center"
-                  style={{ width: 60 }}
-                >
-                  <TrendIcon delta={trendsMap[contact.id] ?? null} />
+                {/* TREND */}
+                <div className="hidden md:flex shrink-0 items-center" style={{ width: 60, gap: 4 }}>
+                  <TrendIcon delta={delta} />
+                  {delta !== null && (
+                    <span style={{ fontSize: 11, color: delta > 0 ? '#16a34a' : delta < 0 ? 'var(--muted)' : '#d97706' }}>
+                      {delta > 0 ? `+${delta}` : delta}
+                    </span>
+                  )}
                 </div>
               </div>
             )
