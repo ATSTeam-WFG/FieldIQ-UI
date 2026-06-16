@@ -35,7 +35,7 @@ export function TopNav() {
 
   return (
     <header
-      className="flex h-14 items-center gap-4 border-b px-6"
+      className="flex h-14 items-center gap-2 md:gap-4 border-b px-4 md:px-6 overflow-hidden"
       style={{
         backgroundColor: 'var(--card)',
         borderColor: 'var(--border)',
@@ -52,16 +52,18 @@ export function TopNav() {
           height={48}
           priority
           unoptimized
-          style={{ width: 133, height: 'auto' }}
+          className="w-[100px] md:w-[133px]"
+          style={{ height: 'auto' }}
         />
+        {/* Divider — desktop only */}
         <div
-          className="h-4 w-px"
+          className="hidden md:block h-4 w-px"
           style={{ backgroundColor: 'var(--border)' }}
         />
+        {/* Role badge — always visible */}
         <span
-          className="rounded-full border px-2 py-0.5 font-semibold"
+          className="rounded-full border px-1.5 py-px md:px-2 md:py-0.5 font-semibold text-[9px] md:text-[11px]"
           style={{
-            fontSize: '11px',
             letterSpacing: '0.06em',
             borderColor: '#c4a574',
             color: '#c4a574',
@@ -105,10 +107,10 @@ export function TopNav() {
 
       {/* Right: controls */}
       <div className="flex flex-1 md:flex-none items-center justify-end gap-1 shrink-0">
-        {/* Theme toggle */}
+        {/* Theme toggle — desktop only */}
         <button
           onClick={toggleTheme}
-          className="flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors hover:bg-[var(--surface)] focus:outline-none"
+          className="hidden md:flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors hover:bg-[var(--surface)] focus:outline-none"
           aria-label="Toggle theme"
         >
           {theme === 'dark' ? (

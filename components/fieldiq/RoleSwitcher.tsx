@@ -47,7 +47,7 @@ export function RoleSwitcher() {
               {persona.title}
             </span>
           </div>
-          <ChevronDown className="h-3.5 w-3.5" style={{ color: 'var(--muted)' }} />
+          <ChevronDown className="hidden md:block h-3.5 w-3.5" style={{ color: 'var(--muted)' }} />
         </button>
       </DropdownMenuTrigger>
 

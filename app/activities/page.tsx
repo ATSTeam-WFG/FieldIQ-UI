@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus,
   Utensils,
@@ -12,12 +12,14 @@ import {
   Phone,
   Star,
   Circle,
+  ChevronDown,
+  Activity,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { AppShell } from '@/components/fieldiq/AppShell'
 import { StatusBadge } from '@/components/fieldiq/StatusBadge'
 import type { ActivityStatus } from '@/components/fieldiq/StatusBadge'
-import { FilterSearchBar, FilterPills, FilterDropdown } from '@/components/fieldiq/FilterBar'
+import { FilterSearchBar, FilterDropdown, FilterPills, RangeSlider } from '@/components/fieldiq/FilterBar'
 import type { FilterOption } from '@/components/fieldiq/FilterBar'
 import { SkeletonRows } from '@/components/fieldiq/SkeletonRows'
 import { useActivityLog } from '@/lib/context/ActivityLogContext'
@@ -39,22 +41,26 @@ const activityIconMap: Record<string, LucideIcon> = {
 
 // ── Filter options ────────────────────────────────────────────────────────────
 
-const TYPE_FILTERS = ['All', 'Lunch', 'Pop-by', 'Coffee', 'CE Class', 'Closing Gift', 'Sponsorship', 'Call'] as const
-const STATUS_FILTERS = ['All', 'Follow-up', 'Complete', 'Logged'] as const
+const TYPE_FILTERS    = ['All', 'Lunch', 'Pop-by', 'Coffee', 'CE Class', 'Closing Gift', 'Sponsorship', 'Call'] as const
+const STATUS_FILTERS  = ['All', 'Follow-up', 'Complete', 'Logged'] as const
+const SPONSOR_FILTERS = ['All', 'Sponsored', 'Unsponsored'] as const
 
-type TypeFilter   = typeof TYPE_FILTERS[number]
-type StatusFilter = typeof STATUS_FILTERS[number]
+type TypeFilter    = typeof TYPE_FILTERS[number]
+type StatusFilter  = typeof STATUS_FILTERS[number]
+type SponsorFilter = typeof SPONSOR_FILTERS[number]
 
-const TYPE_OPTIONS: FilterOption<TypeFilter>[]   = TYPE_FILTERS.map(t => ({ value: t, label: t }))
-const STATUS_OPTIONS: FilterOption<StatusFilter>[] = STATUS_FILTERS.map(s => ({ value: s, label: s }))
+const TYPE_OPTIONS:    FilterOption<TypeFilter>[]    = TYPE_FILTERS.map(t => ({ value: t, label: t }))
+const STATUS_OPTIONS:  FilterOption<StatusFilter>[]  = STATUS_FILTERS.map(s => ({ value: s, label: s }))
+const SPONSOR_OPTIONS: FilterOption<SponsorFilter>[] = SPONSOR_FILTERS.map(s => ({ value: s, label: s }))
 
 // ── Helper ────────────────────────────────────────────────────────────────────
 
 function formatRelativeDate(dateStr: string): string {
   const date     = new Date(dateStr)
-  const now      = new Date(2026, 2, 16) // March 16, 2026
+  const now      = new Date()
   const diffMs   = now.getTime() - date.getTime()
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  if (diffDays < 0)  return 'Upcoming'
   if (diffDays === 0) return 'Today'
   if (diffDays === 1) return 'Yesterday'
   if (diffDays < 7)   return `${diffDays} days ago`
@@ -70,9 +76,14 @@ export default function ActivitiesPage() {
   const { role } = useRole()
   const isManager = role === 'manager'
 
-  const [selectedType,   setSelectedType]   = useState<TypeFilter>('All')
-  const [selectedStatus, setSelectedStatus] = useState<StatusFilter>('All')
-  const [searchQuery,    setSearchQuery]    = useState('')
+  const [selectedType,    setSelectedType]    = useState<TypeFilter>('All')
+  const [selectedStatus,  setSelectedStatus]  = useState<StatusFilter>('All')
+  const [selectedSponsor, setSelectedSponsor] = useState<SponsorFilter>('All')
+  const [costRange,       setCostRange]       = useState<[number, number]>([0, 200])
+  const [showMoreFilters, setShowMoreFilters] = useState(false)
+  const [searchQuery,     setSearchQuery]     = useState('')
+
+  const hasActiveExtras = selectedSponsor !== 'All' || costRange[0] !== 0 || costRange[1] !== 200
 
   const { data: activitiesResult, isLoading } = useActivities({ page_size: 100 })
   const allActivities = activitiesResult?.items ?? []
@@ -96,7 +107,15 @@ export default function ActivitiesPage() {
       (selectedStatus === 'Follow-up' && act.status === 'follow-up') ||
       (selectedStatus === 'Complete'  && act.status === 'complete')  ||
       (selectedStatus === 'Logged'    && act.status === 'logged')
-    return searchMatch && typeMatch && statusMatch
+    const vendors = (act as any).vendors as Array<{ name: string }> | undefined
+    const isSponsored = vendors && vendors.length > 0
+    const sponsorMatch =
+      selectedSponsor === 'All' ||
+      (selectedSponsor === 'Sponsored'   && isSponsored)  ||
+      (selectedSponsor === 'Unsponsored' && !isSponsored)
+    const spend = act.spend ?? 0
+    const costMatch = spend >= costRange[0] && (costRange[1] >= 200 || spend <= costRange[1])
+    return searchMatch && typeMatch && statusMatch && sponsorMatch && costMatch
   })
 
   return (
@@ -120,12 +139,8 @@ export default function ActivitiesPage() {
           {/* Log Activity CTA */}
           <button
             onClick={openLog}
-            className="flex shrink-0 items-center gap-1.5 rounded-[8px] font-semibold transition-opacity hover:opacity-90 active:opacity-80"
+            className="flex shrink-0 items-center gap-1.5 rounded-[8px] font-semibold transition-opacity hover:opacity-90 active:opacity-80 h-9 px-3.5 text-[13px] md:h-11 md:px-5 md:text-[14px]"
             style={{
-              height: 44,
-              paddingLeft: 20,
-              paddingRight: 20,
-              fontSize: 14,
               backgroundColor: '#c4a574',
               color: '#000000',
             }}
@@ -138,59 +153,122 @@ export default function ActivitiesPage() {
         {/* ── Filter bar ──────────────────────────────────────────────────── */}
         <div className="flex flex-col" style={{ gap: 10, marginTop: 16 }}>
           <FilterSearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search activities…" />
-          <FilterDropdown label="TYPE" options={TYPE_OPTIONS} value={selectedType} onChange={setSelectedType} />
-          <FilterPills options={STATUS_OPTIONS} value={selectedStatus} onChange={setSelectedStatus} />
+
+          {/* Primary filter row */}
+          <div className="flex gap-2">
+            <FilterDropdown className="flex-1" label="TYPE"   options={TYPE_OPTIONS}   value={selectedType}   onChange={setSelectedType} />
+            <FilterDropdown className="flex-1" label="STATUS" options={STATUS_OPTIONS} value={selectedStatus} onChange={setSelectedStatus} />
+
+            {/* More filters button — desktop only */}
+            <button
+              type="button"
+              onClick={() => setShowMoreFilters(v => !v)}
+              className="hidden md:flex items-center shrink-0 transition-opacity hover:opacity-70"
+              style={{
+                height: 44,
+                paddingLeft: 4,
+                paddingRight: 4,
+                gap: 6,
+                background: 'none',
+                border: 'none',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {hasActiveExtras && (
+                <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#c4a574', flexShrink: 0, display: 'inline-block' }} />
+              )}
+              <span style={{ fontSize: 13, color: 'var(--muted)' }}>
+                {showMoreFilters ? 'Hide filters' : 'More filters'}
+              </span>
+              <ChevronDown
+                size={14}
+                style={{
+                  color: 'var(--muted)',
+                  flexShrink: 0,
+                  transition: 'transform 0.2s',
+                  transform: showMoreFilters ? 'rotate(180deg)' : 'rotate(0deg)',
+                }}
+              />
+            </button>
+          </div>
+
+          {/* Expanded filter panel — desktop only */}
+          <AnimatePresence>
+            {showMoreFilters && (
+              <motion.div
+                key="extra-filters"
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0, transition: { duration: 0.2 } }}
+                exit={{ opacity: 0, height: 0, marginTop: 0, overflow: 'hidden', transition: { duration: 0.18 } }}
+                className="hidden md:flex items-center"
+                style={{
+                  gap: 24,
+                  padding: '16px 20px',
+                  border: '1px solid var(--border)',
+                  borderRadius: 8,
+                  backgroundColor: 'var(--card)',
+                }}
+              >
+                {/* Sponsored pills */}
+                <div className="flex flex-col" style={{ gap: 8, flex: 1 }}>
+                  <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.06em', color: 'var(--muted)' }}>
+                    SPONSORED
+                  </span>
+                  <FilterPills options={SPONSOR_OPTIONS} value={selectedSponsor} onChange={setSelectedSponsor} variant="ghost" />
+                </div>
+
+                {/* Divider */}
+                <div style={{ width: 1, alignSelf: 'stretch', backgroundColor: 'var(--border)', flexShrink: 0 }} />
+
+                {/* Cost range slider */}
+                <div className="flex flex-col" style={{ gap: 8, flex: 2 }}>
+                  <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.06em', color: 'var(--muted)' }}>
+                    COST RANGE
+                  </span>
+                  <RangeSlider min={0} max={200} value={costRange} onChange={setCostRange} />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* ── Summary stats row ───────────────────────────────────────────── */}
         <div
-          className="flex items-center"
-          style={{ gap: 24, marginTop: 16 }}
+          className="flex flex-wrap items-center gap-x-3 gap-y-1 md:gap-x-6"
+          style={{ marginTop: 16 }}
         >
-          <div className="flex items-baseline" style={{ gap: 6 }}>
+          <div className="flex items-baseline gap-1.5">
             <span
-              className="font-semibold"
-              style={{ fontSize: 15, color: '#c4a574' }}
+              className="font-semibold text-sm md:text-[15px]"
+              style={{ color: '#c4a574' }}
             >
               {activitiesResult?.total ?? allActivities.length}
             </span>
-            <span style={{ fontSize: 13, color: 'var(--muted)' }}>activities</span>
+            <span className="text-xs md:text-[13px]" style={{ color: 'var(--muted)' }}>activities</span>
           </div>
 
-          <div
-            style={{
-              width: 1,
-              height: 14,
-              backgroundColor: 'var(--border)',
-            }}
-          />
+          <div className="hidden md:block" style={{ width: 1, height: 14, backgroundColor: 'var(--border)' }} />
 
-          <div className="flex items-baseline" style={{ gap: 6 }}>
+          <div className="flex items-baseline gap-1.5">
             <span
-              className="font-semibold"
-              style={{ fontSize: 15, color: '#c4a574' }}
+              className="font-semibold text-sm md:text-[15px]"
+              style={{ color: '#c4a574' }}
             >
               ${totalSpend.toLocaleString()}
             </span>
-            <span style={{ fontSize: 13, color: 'var(--muted)' }}>total spend</span>
+            <span className="text-xs md:text-[13px]" style={{ color: 'var(--muted)' }}>total spend</span>
           </div>
 
-          <div
-            style={{
-              width: 1,
-              height: 14,
-              backgroundColor: 'var(--border)',
-            }}
-          />
+          <div className="hidden md:block" style={{ width: 1, height: 14, backgroundColor: 'var(--border)' }} />
 
-          <div className="flex items-baseline" style={{ gap: 6 }}>
+          <div className="flex items-baseline gap-1.5">
             <span
-              className="font-semibold"
-              style={{ fontSize: 15, color: '#c4a574' }}
+              className="font-semibold text-sm md:text-[15px]"
+              style={{ color: '#c4a574' }}
             >
               {followUpCount}
             </span>
-            <span style={{ fontSize: 13, color: 'var(--muted)' }}>follow-ups pending</span>
+            <span className="text-xs md:text-[13px]" style={{ color: 'var(--muted)' }}>follow-ups pending</span>
           </div>
         </div>
 
@@ -278,10 +356,9 @@ export default function ActivitiesPage() {
                 <motion.div
                   key={act.id}
                   onClick={() => openActivity(act as any)}
-                  className="flex items-center transition-colors hover:bg-[var(--surface)]"
+                  className="flex items-center transition-colors hover:bg-[var(--surface)] px-3 md:px-5"
                   style={{
                     height: 56,
-                    padding: '0 20px',
                     borderBottom: isLast ? 'none' : '1px solid var(--border)',
                     cursor: 'pointer',
                   }}
@@ -291,8 +368,8 @@ export default function ActivitiesPage() {
                 >
                   {/* TYPE */}
                   <div
-                    className="flex items-center"
-                    style={{ gap: 6, flex: 1.2, minWidth: 0 }}
+                    className="flex items-center flex-[0.9] md:flex-[1.2]"
+                    style={{ gap: 6, minWidth: 0 }}
                   >
                     <Icon size={14} style={{ color: 'var(--muted)', flexShrink: 0 }} />
                     <span className="truncate" style={{ fontSize: 13, color: 'var(--body)' }}>
@@ -396,7 +473,7 @@ export default function ActivitiesPage() {
                   })()}
 
                   {/* Mobile: contact + status stacked */}
-                  <div className="flex flex-1 items-center justify-between md:hidden">
+                  <div className="flex flex-[1.3] items-center justify-between gap-3 md:hidden">
                     <div className="flex min-w-0 flex-col" style={{ gap: 2 }}>
                       {(() => {
                         const contacts = (act as any).contacts as Array<{ name: string }> | undefined
@@ -420,9 +497,10 @@ export default function ActivitiesPage() {
           ) : (
             /* Empty state */
             <div
-              className="flex items-center justify-center"
-              style={{ height: 120 }}
+              className="flex flex-col items-center justify-center"
+              style={{ height: 120, gap: 8 }}
             >
+              <Activity size={24} style={{ color: 'var(--border)' }} />
               <span style={{ fontSize: 14, color: 'var(--muted)' }}>
                 No activities match your filters
               </span>

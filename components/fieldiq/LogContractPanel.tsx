@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { X, ChevronDown, Search, Plus, DollarSign, Users } from 'lucide-react'
+import { X, ChevronDown, Search, Plus, DollarSign, Users, Pencil, Trash2 } from 'lucide-react'
 import { SlideOverPanel } from './SlideOverPanel'
+import { FieldLabel } from './FieldLabel'
 import { useContract } from '@/lib/context/ContractContext'
 import { useRole } from '@/lib/context/RoleContext'
 import { useAddContact } from '@/lib/context/AddContactContext'
@@ -34,7 +35,6 @@ const STATUS_OPTIONS: { value: ContractStatus; label: string }[] = [
 const TYPE_OPTIONS: ContractType[] = ['Regular', 'Refinance', 'Commercial']
 
 // ── PanelSelect ───────────────────────────────────────────────────────────────
-// Branded custom dropdown for form fields — matches FilterDropdown visual style.
 
 function PanelSelect<T extends string>({
   options,
@@ -66,7 +66,7 @@ function PanelSelect<T extends string>({
         onClick={() => setOpen(o => !o)}
         className="flex w-full items-center rounded-[8px] transition-colors"
         style={{
-          height: 44,
+          height: 40,
           paddingLeft: 12,
           paddingRight: 12,
           gap: 8,
@@ -92,7 +92,7 @@ function PanelSelect<T extends string>({
         <div
           className="absolute left-0 right-0 z-30 overflow-hidden rounded-[8px]"
           style={{
-            top: 50,
+            top: 46,
             backgroundColor: 'var(--card)',
             border: '1px solid var(--border)',
             boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
@@ -139,11 +139,12 @@ function PanelSelect<T extends string>({
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function LogContractPanel() {
-  const { closeLog, editingContract } = useContract()
+  const { isOpen, closeLog, editingContract } = useContract()
   const { role } = useRole()
   const isManager = role === 'manager'
-  const isViewMode = isManager && editingContract !== null
-  const isEditMode = !isManager && editingContract !== null
+  const [isEditing, setIsEditing] = useState(false)
+  const isViewMode = editingContract !== null && !isEditing
+  const isEditMode = editingContract !== null && isEditing && !isManager
   const { openAddContactWithCallback } = useAddContact()
   const showToast = useSuccessToast()
   const { data: contactsData } = useContacts()
@@ -174,18 +175,44 @@ export function LogContractPanel() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
+  // Reset editing state when panel closes
+  useEffect(() => {
+    if (!isOpen) setIsEditing(false)
+  }, [isOpen])
+
   // Pre-populate from editingContract
+  // Handles both ContractRecord (camelCase) and API Contract (snake_case) shapes
   useEffect(() => {
     if (editingContract) {
-      setFileNumber(editingContract.fileNumber || '')
-      setAddress(editingContract.address || '')
-      setContractType(editingContract.type || 'Regular')
-      setAmount(editingContract.amount > 0 ? String(editingContract.amount) : '')
-      setStatus(editingContract.status)
-      setExpectedDate(editingContract.expectedClosingDate || editingContract.actualClosingDate || '')
-      setNotes(editingContract.notes || '')
+      const rec = editingContract as any
+
+      setFileNumber(rec.fileNumber ?? rec.file_number ?? '')
+      setAddress(rec.address ?? rec.property_address ?? '')
+
+      const rawType = rec.type ?? rec.transaction_type ?? 'Regular'
+      const REVERSE_TYPE: Record<string, ContractType> = {
+        purchase: 'Regular', refinance: 'Refinance', commercial: 'Commercial',
+        Regular: 'Regular', Refinance: 'Refinance', Commercial: 'Commercial',
+      }
+      setContractType(REVERSE_TYPE[rawType] ?? 'Regular')
+
+      setAmount((rec.amount ?? 0) > 0 ? String(rec.amount) : '')
+
+      const rawStatus = rec.status ?? 'opened'
+      const REVERSE_STATUS: Record<string, ContractStatus> = {
+        initiated: 'opened', opened: 'opened', closed: 'closed', cancelled: 'cancelled',
+      }
+      setStatus(REVERSE_STATUS[rawStatus] ?? 'opened')
+
+      setExpectedDate(
+        rec.expectedClosingDate ?? rec.expected_closing_date ??
+        rec.actualClosingDate  ?? rec.actual_closing_date  ?? ''
+      )
+      setNotes(rec.notes ?? '')
+
+      const contactName = rec.contactName ?? rec.contact?.name ?? ''
       const match = (contactsData?.items ?? []).find(
-        c => c.name === (editingContract as any).contactName
+        c => c.name === contactName
       ) as Contact | undefined ?? null
       setSelectedContact(match)
       setContactSearch('')
@@ -206,13 +233,13 @@ export function LogContractPanel() {
     : repContacts
 
   const TYPE_MAP: Record<ContractType, string> = {
-    Regular: 'purchase',
-    Refinance: 'refinance',
+    Regular:    'purchase',
+    Refinance:  'refinance',
     Commercial: 'commercial',
   }
   const STATUS_MAP: Record<ContractStatus, string> = {
-    opened: 'initiated',
-    closed: 'closed',
+    opened:    'initiated',
+    closed:    'closed',
     cancelled: 'cancelled',
   }
 
@@ -236,382 +263,376 @@ export function LogContractPanel() {
 
   const canSubmit = !!selectedContact && address.trim().length > 0
 
-  // ── Shared styles ─────────────────────────────────────────────────────────
-
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    height: 40,
-    paddingLeft: 12,
-    paddingRight: 12,
-    fontSize: 13,
-    backgroundColor: 'var(--surface)',
-    border: '1px solid var(--border)',
-    borderRadius: 8,
-    color: 'var(--foreground)',
-    outline: 'none',
-  }
-
-  const labelStyle: React.CSSProperties = {
-    fontSize: 12,
-    fontWeight: 500,
-    color: 'var(--muted)',
-    marginBottom: 6,
-    display: 'block',
-    letterSpacing: '0.04em',
-  }
-
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <SlideOverPanel onClose={closeLog} width={480}>
-        {/* ── Header ──────────────────────────────────────────────────── */}
-        <div className="flex shrink-0 flex-col" style={{ padding: '20px 24px 14px 24px', gap: 4 }}>
-          <div className="flex justify-center md:hidden" style={{ marginBottom: 8 }}>
-            <div style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: 'var(--border)' }} />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col" style={{ gap: 2 }}>
-              <span style={{ fontSize: 17, fontWeight: 600, color: 'var(--foreground)' }}>
-                {isViewMode ? 'View Contract' : isEditMode ? 'Edit Contract' : 'Add Contract'}
-              </span>
-              <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-                {isViewMode ? 'Contract details (read-only)' : isEditMode ? 'Edit this contract' : 'Record a new title closing deal'}
-              </span>
-            </div>
+    <SlideOverPanel onClose={closeLog} width={560}>
+      {/* ── Header ──────────────────────────────────────────────────── */}
+      <div className="flex shrink-0 flex-col" style={{ padding: '24px 28px 16px 28px', gap: 4 }}>
+        <div className="flex items-center justify-between">
+          <span style={{ fontSize: 17, fontWeight: 600, color: 'var(--foreground)' }}>
+            {isViewMode ? 'View Contract' : isEditMode ? 'Edit Contract' : 'Add Contract'}
+          </span>
+          <div className="flex items-center gap-2">
+            {isViewMode && !isManager && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="rounded-[6px] p-1 transition-colors hover:bg-[var(--surface)]"
+                aria-label="Edit contract"
+              >
+                <Pencil size={20} style={{ color: 'var(--muted)' }} />
+              </button>
+            )}
             <button onClick={closeLog} className="rounded-[6px] p-1 transition-colors hover:bg-[var(--surface)]">
               <X size={20} style={{ color: 'var(--muted)' }} />
             </button>
           </div>
         </div>
-        <div style={{ height: 1, backgroundColor: 'var(--border)', flexShrink: 0 }} />
+        <span style={{ fontSize: 13, color: 'var(--muted)' }}>
+          {isViewMode ? 'Contract details' : isEditMode ? 'Edit the details for this contract' : 'Record a new title closing deal'}
+        </span>
+      </div>
+      <div style={{ height: 1, backgroundColor: 'var(--border)', flexShrink: 0 }} />
 
-        {/* ── Scrollable content ───────────────────────────────────────── */}
-        <div
-          className="flex-1 min-h-0 overflow-y-auto"
-          style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 20, ...(isViewMode ? { pointerEvents: 'none', opacity: 0.75 } : {}) }}
-        >
+      {/* ── Scrollable content ───────────────────────────────────────── */}
+      <div className="flex-1 min-h-0 overflow-y-auto" style={{ padding: '20px 28px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20, ...(isViewMode ? { pointerEvents: 'none', opacity: 0.75 } : {}) }}>
 
-          {/* ── Contact ──────────────────────────────────────────────── */}
-          <div>
-            <label style={labelStyle}>Contact *</label>
-            {repContacts.length === 0 ? (
-              <div
-                className="flex flex-col items-center justify-center rounded-[8px]"
-                style={{ padding: '20px 16px', gap: 10, textAlign: 'center', border: '1px dashed var(--border)', backgroundColor: 'var(--surface)' }}
-              >
-                <Users size={20} style={{ color: 'var(--muted)' }} />
-                <div className="flex flex-col" style={{ gap: 4 }}>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--foreground)' }}>No contacts yet</span>
-                  <span style={{ fontSize: 12, color: 'var(--muted)' }}>Add your first contact to link it to this contract.</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => openAddContactWithCallback((newContact) => {
-                    setSelectedContact({
-                      id: newContact.id,
-                      name: newContact.name,
-                      initials: newContact.initials,
-                      company: newContact.company,
-                      type: newContact.type,
-                    })
-                  })}
-                  className="flex items-center gap-2 rounded-[8px] transition-opacity hover:opacity-80"
-                  style={{ height: 36, padding: '0 16px', fontSize: 13, fontWeight: 600, backgroundColor: '#c4a574', color: '#000000', border: 'none', cursor: 'pointer' }}
-                >
-                  <Plus size={13} />
-                  Add your first contact
-                </button>
+        {/* ── CONTACT ──────────────────────────────────────────────── */}
+        <div className="flex flex-col" style={{ gap: 6 }}>
+          <FieldLabel>CONTACT *</FieldLabel>
+          {repContacts.length === 0 ? (
+            <div
+              className="flex flex-col items-center justify-center rounded-[8px]"
+              style={{ padding: '20px 16px', gap: 10, textAlign: 'center', border: '1px dashed var(--border)', backgroundColor: 'var(--surface)' }}
+            >
+              <Users size={20} style={{ color: 'var(--muted)' }} />
+              <div className="flex flex-col" style={{ gap: 4 }}>
+                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--foreground)' }}>No contacts yet</span>
+                <span style={{ fontSize: 12, color: 'var(--muted)' }}>Add your first contact to link it to this contract.</span>
               </div>
-            ) : (
-              <div ref={dropdownRef} style={{ position: 'relative' }}>
-                <button
-                  type="button"
-                  onClick={() => setContactDropdownOpen(prev => !prev)}
-                  className="flex w-full items-center justify-between"
-                  style={{ ...inputStyle, cursor: 'pointer', paddingLeft: 12, paddingRight: 10, textAlign: 'left', height: 44 }}
-                >
-                  {selectedContact ? (
-                    <div className="flex items-center" style={{ gap: 8, minWidth: 0 }}>
-                      <div
-                        className="flex shrink-0 items-center justify-center rounded-full"
-                        style={{ width: 26, height: 26, backgroundColor: '#c4a574', fontSize: 10, fontWeight: 600, color: '#000' }}
-                      >
-                        {selectedContact.initials}
-                      </div>
-                      <div className="flex min-w-0 flex-col" style={{ gap: 1 }}>
-                        <span className="truncate" style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>
-                          {selectedContact.name}
-                        </span>
-                        <span className="truncate" style={{ fontSize: 11, color: 'var(--muted)' }}>
-                          {selectedContact.company}
-                        </span>
-                      </div>
+              <button
+                type="button"
+                onClick={() => openAddContactWithCallback((newContact) => {
+                  setSelectedContact({
+                    id: newContact.id,
+                    name: newContact.name,
+                    initials: newContact.initials,
+                    company: newContact.company,
+                    type: newContact.type,
+                  })
+                })}
+                className="flex items-center gap-2 rounded-[8px] transition-opacity hover:opacity-80"
+                style={{ height: 36, padding: '0 16px', fontSize: 13, fontWeight: 600, backgroundColor: '#c4a574', color: '#000000', border: 'none', cursor: 'pointer' }}
+              >
+                <Plus size={13} />
+                Add your first contact
+              </button>
+            </div>
+          ) : (
+            <div ref={dropdownRef} style={{ position: 'relative' }}>
+              <button
+                type="button"
+                onClick={() => setContactDropdownOpen(prev => !prev)}
+                className="flex w-full items-center justify-between rounded-[8px]"
+                style={{
+                  padding: selectedContact ? '8px 12px' : '0 12px',
+                  minHeight: 40,
+                  gap: 8,
+                  backgroundColor: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                {selectedContact ? (
+                  <div className="flex items-center" style={{ gap: 8, minWidth: 0 }}>
+                    <div
+                      className="flex shrink-0 items-center justify-center rounded-full"
+                      style={{ width: 24, height: 24, backgroundColor: '#c4a574', fontSize: 10, fontWeight: 600, color: '#000' }}
+                    >
+                      {selectedContact.initials}
                     </div>
-                  ) : (
-                    <span style={{ fontSize: 13, color: 'var(--muted)' }}>Select a contact…</span>
-                  )}
-                  <ChevronDown size={14} style={{ color: 'var(--muted)', flexShrink: 0 }} />
-                </button>
-
-                {contactDropdownOpen && (
-                  <div
-                    className="absolute left-0 right-0 z-10 overflow-hidden rounded-[8px]"
-                    style={{ top: 48, backgroundColor: 'var(--card)', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', maxHeight: 260, display: 'flex', flexDirection: 'column' }}
-                  >
-                    <div className="flex items-center" style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', gap: 8 }}>
-                      <Search size={13} style={{ color: 'var(--muted)', flexShrink: 0 }} />
-                      <input
-                        autoFocus
-                        value={contactSearch}
-                        onChange={e => setContactSearch(e.target.value)}
-                        placeholder="Search contacts…"
-                        style={{ flex: 1, border: 'none', outline: 'none', backgroundColor: 'transparent', fontSize: 13, color: 'var(--foreground)' }}
-                      />
-                    </div>
-                    <div className="overflow-y-auto" style={{ maxHeight: 200 }}>
-                      <button
-                        type="button"
-                        className="flex w-full items-center transition-colors hover:bg-[var(--surface)]"
-                        style={{ height: 40, padding: '0 12px', gap: 8 }}
-                        onClick={() => {
-                          setContactDropdownOpen(false)
-                          openAddContactWithCallback((newContact) => {
-                            setSelectedContact({
-                              id: newContact.id,
-                              name: newContact.name,
-                              initials: newContact.initials,
-                              company: newContact.company,
-                              type: newContact.type,
-                            })
-                          })
-                        }}
-                      >
-                        <div
-                          className="flex shrink-0 items-center justify-center rounded-full"
-                          style={{ width: 24, height: 24, backgroundColor: 'var(--surface)', border: '1px dashed var(--border)' }}
-                        >
-                          <Plus size={12} style={{ color: 'var(--muted)' }} />
-                        </div>
-                        <span style={{ fontSize: 13, color: '#c4a574', fontWeight: 500 }}>Add new contact</span>
-                      </button>
-                      {filteredContacts.length === 0 ? (
-                        <div className="flex items-center justify-center" style={{ height: 48, fontSize: 13, color: 'var(--muted)' }}>
-                          No contacts found
-                        </div>
-                      ) : (
-                        filteredContacts.map(contact => (
-                          <button
-                            key={contact.id}
-                            type="button"
-                            className="flex w-full items-center transition-colors hover:bg-[var(--surface)]"
-                            style={{ height: 44, padding: '0 12px', gap: 10 }}
-                            onClick={() => { setSelectedContact(contact); setContactDropdownOpen(false); setContactSearch('') }}
-                          >
-                            <div
-                              className="flex shrink-0 items-center justify-center rounded-full"
-                              style={{ width: 28, height: 28, backgroundColor: '#c4a574', fontSize: 10, fontWeight: 600, color: '#000' }}
-                            >
-                              {contact.initials}
-                            </div>
-                            <div className="flex min-w-0 flex-col" style={{ gap: 2 }}>
-                              <span className="truncate" style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>{contact.name}</span>
-                              <span className="truncate" style={{ fontSize: 11, color: 'var(--muted)' }}>{contact.company}</span>
-                            </div>
-                          </button>
-                        ))
-                      )}
+                    <div className="flex min-w-0 flex-col" style={{ gap: 1 }}>
+                      <span className="truncate" style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>
+                        {selectedContact.name}
+                      </span>
+                      <span className="truncate" style={{ fontSize: 11, color: 'var(--muted)' }}>
+                        {selectedContact.company}
+                      </span>
                     </div>
                   </div>
+                ) : (
+                  <span style={{ fontSize: 13, color: 'var(--muted)' }}>Select a contact…</span>
                 )}
-              </div>
-            )}
-          </div>
+                <ChevronDown size={14} style={{ color: 'var(--muted)', flexShrink: 0 }} />
+              </button>
 
-          {/* ── File Number ───────────────────────────────────────────── */}
-          <div>
-            <label style={labelStyle}>File Number / GF Number *</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength={12}
-              placeholder="e.g. 202603150001"
-              value={fileNumber}
-              onChange={e => setFileNumber(e.target.value.replace(/\D/g, '').slice(0, 12))}
-              style={{ ...inputStyle, height: 44, fontFamily: 'monospace', letterSpacing: '0.06em' }}
-            />
-            <span style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4, display: 'block' }}>
-              {fileNumber.length}/12 digits
-            </span>
-          </div>
+              {contactDropdownOpen && (
+                <div
+                  className="absolute left-0 right-0 z-10 overflow-hidden rounded-[8px]"
+                  style={{ top: 46, backgroundColor: 'var(--card)', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', maxHeight: 260, display: 'flex', flexDirection: 'column' }}
+                >
+                  <div className="flex items-center" style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', gap: 8 }}>
+                    <Search size={13} style={{ color: 'var(--muted)', flexShrink: 0 }} />
+                    <input
+                      autoFocus
+                      value={contactSearch}
+                      onChange={e => setContactSearch(e.target.value)}
+                      placeholder="Search contacts…"
+                      style={{ flex: 1, border: 'none', outline: 'none', backgroundColor: 'transparent', fontSize: 13, color: 'var(--foreground)' }}
+                    />
+                  </div>
+                  <div className="overflow-y-auto" style={{ maxHeight: 200 }}>
+                    <button
+                      type="button"
+                      className="flex w-full items-center transition-colors hover:bg-[var(--surface)]"
+                      style={{ height: 40, padding: '0 12px', gap: 8 }}
+                      onClick={() => {
+                        setContactDropdownOpen(false)
+                        openAddContactWithCallback((newContact) => {
+                          setSelectedContact({
+                            id: newContact.id,
+                            name: newContact.name,
+                            initials: newContact.initials,
+                            company: newContact.company,
+                            type: newContact.type,
+                          })
+                        })
+                      }}
+                    >
+                      <div
+                        className="flex shrink-0 items-center justify-center rounded-full"
+                        style={{ width: 24, height: 24, backgroundColor: 'var(--surface)', border: '1px dashed var(--border)' }}
+                      >
+                        <Plus size={12} style={{ color: 'var(--muted)' }} />
+                      </div>
+                      <span style={{ fontSize: 13, color: '#c4a574', fontWeight: 500 }}>+ Add new contact</span>
+                    </button>
+                    {filteredContacts.length === 0 ? (
+                      <div className="flex items-center justify-center" style={{ height: 48, fontSize: 13, color: 'var(--muted)' }}>
+                        No contacts found
+                      </div>
+                    ) : (
+                      filteredContacts.map(contact => (
+                        <button
+                          key={contact.id}
+                          type="button"
+                          className="flex w-full items-center transition-colors hover:bg-[var(--surface)]"
+                          style={{ height: 44, padding: '0 12px', gap: 10 }}
+                          onClick={() => { setSelectedContact(contact); setContactDropdownOpen(false); setContactSearch('') }}
+                        >
+                          <div
+                            className="flex shrink-0 items-center justify-center rounded-full"
+                            style={{ width: 28, height: 28, backgroundColor: '#c4a574', fontSize: 10, fontWeight: 600, color: '#000' }}
+                          >
+                            {contact.initials}
+                          </div>
+                          <div className="flex min-w-0 flex-col" style={{ gap: 2 }}>
+                            <span className="truncate" style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>{contact.name}</span>
+                            <span className="truncate" style={{ fontSize: 11, color: 'var(--muted)' }}>{contact.company}</span>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
-          {/* ── Address ───────────────────────────────────────────────── */}
-          <div>
-            <label style={labelStyle}>Address *</label>
-            <input
-              type="text"
-              placeholder="e.g. 123 Peachtree Rd NE, Atlanta, GA 30309"
-              value={address}
-              onChange={e => setAddress(e.target.value)}
-              style={{ ...inputStyle, height: 44 }}
-            />
-          </div>
+        {/* ── FILE NUMBER ───────────────────────────────────────────── */}
+        <div className="flex flex-col" style={{ gap: 6 }}>
+          <FieldLabel>FILE NUMBER / GF NUMBER</FieldLabel>
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={12}
+            placeholder="e.g. 202603150001"
+            value={fileNumber}
+            onChange={e => setFileNumber(e.target.value.replace(/\D/g, '').slice(0, 12))}
+            className="w-full rounded-[8px] outline-none focus:ring-1 focus:ring-[#c4a574] transition-shadow"
+            style={{
+              height: 40,
+              padding: '0 12px',
+              fontSize: 13,
+              fontFamily: 'monospace',
+              letterSpacing: '0.06em',
+              backgroundColor: 'var(--surface)',
+              border: '1px solid var(--border)',
+              color: 'var(--foreground)',
+            }}
+          />
+          <span style={{ fontSize: 11, color: 'var(--muted)' }}>{fileNumber.length}/12 digits</span>
+        </div>
 
-          {/* ── Type ─────────────────────────────────────────────────── */}
-          <div>
-            <label style={labelStyle}>Type</label>
+        {/* ── ADDRESS ───────────────────────────────────────────────── */}
+        <div className="flex flex-col" style={{ gap: 6 }}>
+          <FieldLabel>ADDRESS *</FieldLabel>
+          <input
+            type="text"
+            placeholder="e.g. 123 Peachtree Rd NE, Atlanta, GA 30309"
+            value={address}
+            onChange={e => setAddress(e.target.value)}
+            className="w-full rounded-[8px] outline-none focus:ring-1 focus:ring-[#c4a574] transition-shadow"
+            style={{
+              height: 40,
+              padding: '0 12px',
+              fontSize: 13,
+              backgroundColor: 'var(--surface)',
+              border: '1px solid var(--border)',
+              color: 'var(--foreground)',
+            }}
+          />
+        </div>
+
+        {/* ── TYPE ─────────────────────────────────────────────────── */}
+        <div className="flex flex-col" style={{ gap: 6 }}>
+          <FieldLabel>TYPE</FieldLabel>
+          <div
+            className="flex overflow-hidden rounded-[8px]"
+            style={{ border: '1px solid var(--border)', height: 40 }}
+          >
+            {TYPE_OPTIONS.map((opt, i) => {
+              const active = contractType === opt
+              return (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setContractType(opt)}
+                  className="flex flex-1 items-center justify-center transition-colors"
+                  style={{
+                    fontSize: 13,
+                    fontWeight: active ? 600 : 400,
+                    backgroundColor: active ? '#c4a574' : 'var(--surface)',
+                    color: active ? '#000000' : 'var(--muted)',
+                    borderRight: i < TYPE_OPTIONS.length - 1 ? '1px solid var(--border)' : 'none',
+                  }}
+                >
+                  {opt}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* ── AMOUNT + STATUS ───────────────────────────────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 12 }}>
+          <div className="flex flex-col" style={{ gap: 6 }}>
+            <FieldLabel>AMOUNT</FieldLabel>
             <div
-              className="flex overflow-hidden rounded-[8px]"
-              style={{ border: '1px solid var(--border)', height: 44 }}
+              className="flex items-center rounded-[8px]"
+              style={{ height: 40, padding: '0 12px', gap: 4, backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}
             >
-              {TYPE_OPTIONS.map((opt, i) => {
-                const active = contractType === opt
-                return (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => setContractType(opt)}
-                    className="flex flex-1 items-center justify-center transition-colors"
-                    style={{
-                      fontSize: 13,
-                      fontWeight: active ? 600 : 400,
-                      backgroundColor: active ? '#c4a574' : 'var(--surface)',
-                      color: active ? '#000000' : 'var(--muted)',
-                      borderRight: i < TYPE_OPTIONS.length - 1 ? '1px solid var(--border)' : 'none',
-                    }}
-                  >
-                    {opt}
-                  </button>
-                )
-              })}
+              <DollarSign size={13} style={{ color: 'var(--muted)', flexShrink: 0 }} />
+              <input
+                type="number"
+                min="0"
+                placeholder="0"
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+                className="flex-1 bg-transparent outline-none"
+                style={{ fontSize: 14, color: 'var(--foreground)' }}
+              />
             </div>
           </div>
-
-          {/* ── Amount + Status ───────────────────────────────────────── */}
-          <div className="flex flex-col gap-3 md:flex-row">
-            {/* Amount */}
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Amount</label>
-              <div style={{ position: 'relative' }}>
-                <DollarSign
-                  size={13}
-                  style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', pointerEvents: 'none' }}
-                />
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={amount}
-                  onChange={e => setAmount(e.target.value)}
-                  style={{ ...inputStyle, paddingLeft: 28, height: 44 }}
-                />
-              </div>
-            </div>
-
-            {/* Status */}
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Status</label>
-              <PanelSelect options={STATUS_OPTIONS} value={status} onChange={setStatus} />
-            </div>
+          <div className="flex flex-col" style={{ gap: 6 }}>
+            <FieldLabel>STATUS</FieldLabel>
+            <PanelSelect options={STATUS_OPTIONS} value={status} onChange={setStatus} />
           </div>
+        </div>
 
-          {/* ── Expected Closing Date + Time ──────────────────────────── */}
-          <div className="flex flex-col" style={{ gap: 16 }}>
-            <div>
-              <label style={labelStyle}>Expected Closing Date</label>
-              <div style={{ marginTop: 6 }}>
-                <DatePickerInput value={expectedDate} onChange={setExpectedDate} />
-              </div>
-            </div>
-            <div>
-              <label style={labelStyle}>Expected Closing Time</label>
-              <div style={{ marginTop: 6 }}>
-                <TimePickerInput value={expectedTime} onChange={setExpectedTime} />
-              </div>
-            </div>
+        {/* ── EXPECTED CLOSING DATE + TIME ──────────────────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 12 }}>
+          <div className="flex flex-col" style={{ gap: 6 }}>
+            <FieldLabel>EXPECTED CLOSING DATE</FieldLabel>
+            <DatePickerInput value={expectedDate} onChange={setExpectedDate} />
           </div>
+          <div className="flex flex-col" style={{ gap: 6 }}>
+            <FieldLabel>EXPECTED CLOSING TIME</FieldLabel>
+            <TimePickerInput value={expectedTime} onChange={setExpectedTime} />
+          </div>
+        </div>
 
-          {/* ── Notes ─────────────────────────────────────────────────── */}
-          <div>
-            <label style={labelStyle}>Notes (optional)</label>
+        {/* ── NOTES ─────────────────────────────────────────────────── */}
+        <div className="flex flex-col" style={{ gap: 6 }}>
+          <FieldLabel>NOTES <span style={{ color: 'var(--muted)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span></FieldLabel>
+          <div
+            className="flex flex-col rounded-[8px]"
+            style={{ height: 88, padding: 12, backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}
+          >
             <textarea
               placeholder="Any notes about this contract…"
               value={notes}
               onChange={e => setNotes(e.target.value)}
-              rows={3}
-              style={{ ...inputStyle, height: 'auto', paddingTop: 10, paddingBottom: 10, resize: 'none' }}
+              className="flex-1 resize-none bg-transparent outline-none"
+              style={{ fontSize: 14, color: 'var(--foreground)' }}
             />
           </div>
         </div>
 
-        {/* ── Footer ──────────────────────────────────────────────────── */}
-        <div style={{ height: 1, backgroundColor: 'var(--border)', flexShrink: 0 }} />
-        <div
-          className="flex shrink-0 items-center"
-          style={{ padding: '16px 24px', gap: 10, justifyContent: isEditMode ? 'space-between' : 'flex-end' }}
-        >
-          {isViewMode && (
+        <div style={{ height: 8 }} />
+      </div>
+      </div>
+
+      {/* ── Footer ──────────────────────────────────────────────────── */}
+      <div style={{ height: 1, backgroundColor: 'var(--border)', flexShrink: 0 }} />
+      <div
+        className="flex shrink-0 items-center"
+        style={{ height: 72, padding: '0 28px', justifyContent: isEditMode ? 'space-between' : 'flex-end' }}
+      >
+        {isEditMode && (
+          <>
             <button
-              onClick={closeLog}
-              className="flex items-center justify-center rounded-[8px] font-medium transition-colors hover:bg-[var(--surface)]"
-              style={{ height: 40, paddingLeft: 20, paddingRight: 20, fontSize: 14, border: '1px solid var(--border)', color: 'var(--body)', backgroundColor: 'transparent' }}
+              onClick={() => { showToast('Contract deleted'); closeLog() }}
+              className="flex h-10 w-10 items-center justify-center rounded-[8px] transition-colors hover:bg-[var(--surface)]"
+              style={{ color: 'var(--muted)', flexShrink: 0 }}
+              aria-label="Delete contract"
             >
-              Close
+              <Trash2 size={16} />
             </button>
-          )}
-          {isEditMode && (
-            <>
-              <button
-                onClick={() => { showToast('Contract deleted'); closeLog() }}
-                style={{ height: 40, padding: '0 16px', fontSize: 14, fontWeight: 500, color: '#d97706', background: 'none', border: 'none', cursor: 'pointer', borderRadius: 8 }}
-              >
-                Delete Contract
-              </button>
-              <div className="flex items-center" style={{ gap: 10 }}>
-                <button
-                  onClick={closeLog}
-                  className="flex items-center justify-center rounded-[8px] font-medium transition-colors hover:bg-[var(--surface)]"
-                  style={{ height: 40, paddingLeft: 20, paddingRight: 20, fontSize: 14, border: '1px solid var(--border)', color: 'var(--body)', backgroundColor: 'transparent' }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  disabled={createContract.isPending}
-                  className="flex items-center justify-center rounded-[8px] font-semibold transition-opacity"
-                  style={{ height: 40, paddingLeft: 24, paddingRight: 24, fontSize: 14, backgroundColor: '#c4a574', color: '#000000', border: 'none', cursor: createContract.isPending ? 'not-allowed' : 'pointer', opacity: createContract.isPending ? 0.6 : 1 }}
-                >
-                  {createContract.isPending ? 'Saving…' : 'Save Changes'}
-                </button>
-              </div>
-            </>
-          )}
-          {!isViewMode && !isEditMode && (
-            <>
-              <button
-                onClick={closeLog}
-                className="flex items-center justify-center rounded-[8px] font-medium transition-colors hover:bg-[var(--surface)]"
-                style={{ height: 40, paddingLeft: 20, paddingRight: 20, fontSize: 14, border: '1px solid var(--border)', color: 'var(--body)', backgroundColor: 'transparent' }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={!canSubmit || createContract.isPending}
-                className="flex items-center justify-center rounded-[8px] font-semibold transition-opacity"
-                style={{
-                  height: 40, paddingLeft: 24, paddingRight: 24, fontSize: 14,
-                  backgroundColor: canSubmit ? '#c4a574' : 'var(--surface)',
-                  color: canSubmit ? '#000000' : 'var(--muted)',
-                  cursor: (canSubmit && !createContract.isPending) ? 'pointer' : 'not-allowed',
-                  border: 'none',
-                  opacity: createContract.isPending ? 0.6 : 1,
-                }}
-              >
-                {createContract.isPending ? 'Saving…' : 'Add Contract'}
-              </button>
-            </>
-          )}
-        </div>
+            <button
+              onClick={handleSubmit}
+              disabled={createContract.isPending}
+              className="rounded-[8px] font-medium transition-opacity hover:opacity-90"
+              style={{
+                height: 40,
+                padding: '0 32px',
+                fontSize: 14,
+                fontWeight: 500,
+                backgroundColor: '#c4a574',
+                color: '#000000',
+                border: 'none',
+                cursor: createContract.isPending ? 'not-allowed' : 'pointer',
+                opacity: createContract.isPending ? 0.6 : 1,
+              }}
+            >
+              {createContract.isPending ? 'Saving…' : 'Save'}
+            </button>
+          </>
+        )}
+        {!isViewMode && !isEditMode && (
+          <button
+            onClick={handleSubmit}
+            disabled={!canSubmit || createContract.isPending}
+            className="rounded-[8px] font-medium transition-opacity hover:opacity-90"
+            style={{
+              height: 40,
+              padding: '0 32px',
+              fontSize: 14,
+              fontWeight: 500,
+              backgroundColor: canSubmit ? '#c4a574' : 'var(--surface)',
+              color: canSubmit ? '#000000' : 'var(--muted)',
+              border: 'none',
+              cursor: (canSubmit && !createContract.isPending) ? 'pointer' : 'not-allowed',
+              opacity: createContract.isPending ? 0.6 : 1,
+            }}
+          >
+            {createContract.isPending ? 'Saving…' : 'Add Contract'}
+          </button>
+        )}
+      </div>
     </SlideOverPanel>
   )
 }

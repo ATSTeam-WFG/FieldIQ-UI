@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { Plus, FileText } from 'lucide-react'
 import { AppShell } from '@/components/fieldiq/AppShell'
-import { FilterSearchBar, FilterPills } from '@/components/fieldiq/FilterBar'
+import { FilterSearchBar, FilterDropdown } from '@/components/fieldiq/FilterBar'
 import type { FilterOption } from '@/components/fieldiq/FilterBar'
 import { SkeletonRows } from '@/components/fieldiq/SkeletonRows'
 import { useContract } from '@/lib/context/ContractContext'
@@ -13,7 +14,21 @@ import type { Contract } from '@/lib/api/contracts'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type ContractStatus = 'opened' | 'closed' | 'cancelled'
+const TYPE_FILTERS    = ['All', 'Regular', 'Refinance', 'Commercial'] as const
+const STATUS_FILTERS  = ['All', 'Opened', 'Closed', 'Cancelled'] as const
+
+type TypeFilter   = typeof TYPE_FILTERS[number]
+type StatusFilter = typeof STATUS_FILTERS[number]
+
+const TYPE_OPTIONS:   FilterOption<TypeFilter>[]   = TYPE_FILTERS.map(t => ({ value: t, label: t }))
+const STATUS_OPTIONS: FilterOption<StatusFilter>[] = STATUS_FILTERS.map(s => ({ value: s, label: s }))
+
+// Map display labels to API values
+const TYPE_API_MAP: Record<string, string> = {
+  Regular:    'purchase',
+  Refinance:  'refinance',
+  Commercial: 'commercial',
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -28,10 +43,18 @@ function closingDate(contract: Contract): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+function closingDateRelative(contract: Contract): string {
+  const raw = contract.actual_closing_date ?? contract.expected_closing_date
+  if (!raw) return '—'
+  const d = new Date(raw)
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
 // ── Contract Status Badge ─────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; border: string }> = {
   opened:    { label: 'Opened',    color: 'var(--muted)', border: 'var(--border)' },
+  initiated: { label: 'Opened',    color: 'var(--muted)', border: 'var(--border)' },
   closed:    { label: 'Closed',    color: '#16a34a',      border: '#16a34a'       },
   cancelled: { label: 'Cancelled', color: '#d97706',      border: '#d97706'       },
 }
@@ -58,6 +81,12 @@ function ContractBadge({ status }: { status: string }) {
 
 // ── Type Badge ────────────────────────────────────────────────────────────────
 
+const TYPE_DISPLAY: Record<string, string> = {
+  purchase:   'Regular',
+  refinance:  'Refinance',
+  commercial: 'Commercial',
+}
+
 function TypeBadge({ type }: { type: string }) {
   return (
     <span
@@ -72,43 +101,51 @@ function TypeBadge({ type }: { type: string }) {
         whiteSpace: 'nowrap',
       }}
     >
-      {type}
+      {TYPE_DISPLAY[type] ?? type}
     </span>
   )
 }
 
-// ── Filter options ────────────────────────────────────────────────────────────
-
-const STATUS_OPTIONS: FilterOption<string>[] = [
-  { value: 'all',       label: 'All'       },
-  { value: 'opened',    label: 'Opened'    },
-  { value: 'closed',    label: 'Closed'    },
-  { value: 'cancelled', label: 'Cancelled' },
-]
-
 // ── Page ──────────────────────────────────────────────────────────────────────
-
 
 export default function ContractsPage() {
   const { openLog, openContract } = useContract()
   const { role } = useRole()
   const isManager = role === 'manager'
 
-  const [activeFilter, setActiveFilter] = useState<string>('all')
+  const [selectedType,   setSelectedType]   = useState<TypeFilter>('All')
+  const [selectedStatus, setSelectedStatus] = useState<StatusFilter>('All')
   const [search, setSearch] = useState('')
 
   const { data, isLoading } = useContracts()
   const allContracts = data?.items ?? []
 
+  // Derived stats
+  const totalValue = allContracts.reduce((sum, c) => sum + (c.amount ?? 0), 0)
+  const now = new Date()
+  const closingThisMonth = allContracts.filter(c => {
+    const raw = c.expected_closing_date ?? c.actual_closing_date
+    if (!raw) return false
+    const d = new Date(raw)
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
+  }).length
+
   const filtered = allContracts.filter(c => {
-    const matchesStatus = activeFilter === 'all' || c.status === activeFilter
+    const matchesType =
+      selectedType === 'All' ||
+      c.transaction_type === TYPE_API_MAP[selectedType]
+    const matchesStatus =
+      selectedStatus === 'All' ||
+      (selectedStatus === 'Opened'    && (c.status === 'opened' || c.status === 'initiated')) ||
+      (selectedStatus === 'Closed'    && c.status === 'closed')    ||
+      (selectedStatus === 'Cancelled' && c.status === 'cancelled')
     const q = search.toLowerCase()
     const matchesSearch =
       !q ||
       (c.contact?.name ?? '').toLowerCase().includes(q) ||
       (c.property_address ?? '').toLowerCase().includes(q) ||
       (c.file_number ?? '').toLowerCase().includes(q)
-    return matchesStatus && matchesSearch
+    return matchesType && matchesStatus && matchesSearch
   })
 
   return (
@@ -125,18 +162,14 @@ export default function ContractsPage() {
               Contracts
             </h1>
             <p style={{ fontSize: 14, color: 'var(--muted)' }}>
-              Track and manage your title closing deals.
+              All logged contracts · MTD
             </p>
           </div>
 
           <button
             onClick={openLog}
-            className="flex shrink-0 items-center gap-1.5 rounded-[8px] font-semibold transition-opacity hover:opacity-90 active:opacity-80"
+            className="flex shrink-0 items-center gap-1.5 rounded-[8px] font-semibold transition-opacity hover:opacity-90 active:opacity-80 h-9 px-3.5 text-[13px] md:h-11 md:px-5 md:text-[14px]"
             style={{
-              height: 44,
-              paddingLeft: 20,
-              paddingRight: 20,
-              fontSize: 14,
               backgroundColor: '#c4a574',
               color: '#000000',
               border: 'none',
@@ -147,14 +180,87 @@ export default function ContractsPage() {
           </button>
         </div>
 
-        {/* ── Filter + Search ───────────────────────────── */}
-        <div className="flex flex-col" style={{ marginTop: 24, gap: 10 }}>
-          <FilterSearchBar value={search} onChange={setSearch} placeholder="Search by contact or address…" />
-          <FilterPills options={STATUS_OPTIONS} value={activeFilter} onChange={setActiveFilter} />
+        {/* ── Filter bar ───────────────────────────────── */}
+        <div className="flex flex-col" style={{ gap: 10, marginTop: 16 }}>
+          <FilterSearchBar value={search} onChange={setSearch} placeholder="Search by contact, address or file number…" />
+          <div className="flex gap-2">
+            <FilterDropdown className="flex-1" label="TYPE"   options={TYPE_OPTIONS}   value={selectedType}   onChange={setSelectedType} />
+            <FilterDropdown className="flex-1" label="STATUS" options={STATUS_OPTIONS} value={selectedStatus} onChange={setSelectedStatus} />
+          </div>
         </div>
 
-        {/* ── Contracts table ───────────────────────────── */}
+        {/* ── Summary stats row ────────────────────────── */}
+        <div
+          className="flex flex-wrap items-center gap-x-3 gap-y-1 md:gap-x-6"
+          style={{ marginTop: 16 }}
+        >
+          <div className="flex items-baseline gap-1.5">
+            <span
+              className="font-semibold text-sm md:text-[15px]"
+              style={{ color: '#c4a574' }}
+            >
+              {data?.total ?? allContracts.length}
+            </span>
+            <span className="text-xs md:text-[13px]" style={{ color: 'var(--muted)' }}>contracts</span>
+          </div>
+
+          <div className="hidden md:block" style={{ width: 1, height: 14, backgroundColor: 'var(--border)' }} />
+
+          <div className="flex items-baseline gap-1.5">
+            <span
+              className="font-semibold text-sm md:text-[15px]"
+              style={{ color: '#c4a574' }}
+            >
+              {formatCurrency(totalValue)}
+            </span>
+            <span className="text-xs md:text-[13px]" style={{ color: 'var(--muted)' }}>total value</span>
+          </div>
+
+          <div className="hidden md:block" style={{ width: 1, height: 14, backgroundColor: 'var(--border)' }} />
+
+          <div className="flex items-baseline gap-1.5">
+            <span
+              className="font-semibold text-sm md:text-[15px]"
+              style={{ color: '#c4a574' }}
+            >
+              {closingThisMonth}
+            </span>
+            <span className="text-xs md:text-[13px]" style={{ color: 'var(--muted)' }}>closing this month</span>
+          </div>
+        </div>
+
+        {/* ── Contracts table card ─────────────────────── */}
         <div className="fieldiq-card" style={{ marginTop: 16 }}>
+
+          {/* Card header */}
+          <div
+            className="flex items-center justify-between"
+            style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}
+          >
+            <div className="flex items-center" style={{ gap: 8 }}>
+              <span
+                className="font-semibold"
+                style={{ fontSize: 14, color: 'var(--foreground)' }}
+              >
+                Contract Log
+              </span>
+              <span
+                className="flex items-center justify-center rounded-full font-medium"
+                style={{
+                  height: 20,
+                  minWidth: 20,
+                  paddingLeft: 6,
+                  paddingRight: 6,
+                  fontSize: 11,
+                  backgroundColor: 'var(--surface)',
+                  color: 'var(--muted)',
+                  border: '1px solid var(--border)',
+                }}
+              >
+                {filtered.length}
+              </span>
+            </div>
+          </div>
 
           {/* Desktop table header */}
           <div
@@ -167,16 +273,15 @@ export default function ContractsPage() {
             }}
           >
             {([
-                { label: 'FILE NUMBER',  flex: 1.4 },
-                { label: 'ADDRESS',      flex: 2.2 },
-                { label: 'CONTACT',      flex: 1.5 },
-                { label: 'AMOUNT',       flex: 1   },
-                { label: 'TYPE',         flex: 1   },
-                { label: 'STATUS',       flex: 1   },
-                { label: 'CLOSING DATE', flex: 1.2 },
-                ...(isManager ? [{ label: 'REP', flex: 1.2 }] : []),
-              ] as { label: string; flex: number }[]
-            ).map(col => (
+              { label: 'FILE NUMBER',  flex: 1.4 },
+              { label: 'ADDRESS',      flex: 2.2 },
+              { label: 'CONTACT',      flex: 1.5 },
+              { label: 'AMOUNT',       flex: 1   },
+              { label: 'TYPE',         flex: 1   },
+              { label: 'STATUS',       flex: 1   },
+              { label: 'CLOSING DATE', flex: 1.2 },
+              ...(isManager ? [{ label: 'REP', flex: 1.2 }] : []),
+            ] as { label: string; flex: number }[]).map(col => (
               <span
                 key={col.label}
                 style={{
@@ -193,127 +298,110 @@ export default function ContractsPage() {
             ))}
           </div>
 
-          {/* Loading / empty state */}
+          {/* Loading */}
           {isLoading ? (
             <SkeletonRows cols={5} rows={8} />
           ) : filtered.length === 0 ? (
             <div
               className="flex flex-col items-center justify-center"
-              style={{ padding: '48px 20px', gap: 8 }}
+              style={{ height: 120, gap: 8 }}
             >
-              <FileText size={28} style={{ color: 'var(--border)' }} />
-              <p style={{ fontSize: 14, color: 'var(--muted)' }}>No contracts found.</p>
+              <FileText size={24} style={{ color: 'var(--border)' }} />
+              <span style={{ fontSize: 14, color: 'var(--muted)' }}>No contracts match your filters</span>
             </div>
-          ) : null}
-
-          {/* Desktop rows */}
-          {filtered.map((contract, idx) => {
-            const isLast = idx === filtered.length - 1
-            return (
-              <div key={contract.id}>
-                {/* Desktop row */}
-                <div
+          ) : (
+            filtered.map((contract, idx) => {
+              const isLast = idx === filtered.length - 1
+              return (
+                <motion.div
+                  key={contract.id}
                   onClick={() => openContract(contract as any)}
-                  className="hidden md:flex items-center hover:bg-[var(--surface)]"
+                  className="flex items-center transition-colors hover:bg-[var(--surface)] px-3 md:px-5"
                   style={{
                     height: 56,
-                    padding: '0 20px',
                     borderBottom: isLast ? 'none' : '1px solid var(--border)',
                     cursor: 'pointer',
                   }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: Math.min(idx, 9) * 0.04, duration: 0.15 }}
                 >
-                  {/* FILE NUMBER */}
-                  <div style={{ flex: 1.4, minWidth: 0 }}>
+                  {/* FILE NUMBER — desktop */}
+                  <div className="hidden md:block" style={{ flex: 1.4, minWidth: 0 }}>
                     <span className="truncate block" style={{ fontSize: 12, fontFamily: 'monospace', color: 'var(--body)' }}>
                       {contract.file_number ?? '—'}
                     </span>
                   </div>
 
-                  {/* ADDRESS */}
-                  <div style={{ flex: 2.2, minWidth: 0 }}>
+                  {/* ADDRESS — desktop */}
+                  <div className="hidden md:block" style={{ flex: 2.2, minWidth: 0 }}>
                     <span className="truncate block" style={{ fontSize: 13, fontWeight: 500, color: 'var(--foreground)' }}>
                       {contract.property_address ?? '—'}
                     </span>
                   </div>
 
-                  {/* CONTACT */}
-                  <div style={{ flex: 1.5, minWidth: 0 }}>
-                    <span className="truncate block" style={{ fontSize: 13, color: 'var(--body)' }}>
+                  {/* CONTACT — desktop */}
+                  <div className="hidden md:flex flex-col justify-center" style={{ flex: 1.5, minWidth: 0, gap: 2 }}>
+                    <span className="truncate" style={{ fontSize: 13, color: 'var(--body)' }}>
                       {contract.contact?.name ?? '—'}
                     </span>
-                    <span className="truncate block" style={{ fontSize: 11, color: 'var(--muted)' }}>
+                    <span className="truncate" style={{ fontSize: 11, color: 'var(--muted)' }}>
                       {contract.contact?.company ?? ''}
                     </span>
                   </div>
 
-                  {/* AMOUNT */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  {/* AMOUNT — desktop */}
+                  <div className="hidden md:block" style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ fontSize: 13, fontWeight: 600, color: '#c4a574' }}>
                       {formatCurrency(contract.amount ?? 0)}
                     </span>
                   </div>
 
-                  {/* TYPE */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  {/* TYPE — desktop */}
+                  <div className="hidden md:flex items-center" style={{ flex: 1, minWidth: 0 }}>
                     <TypeBadge type={contract.transaction_type} />
                   </div>
 
-                  {/* STATUS */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  {/* STATUS — desktop */}
+                  <div className="hidden md:flex items-center" style={{ flex: 1, minWidth: 0 }}>
                     <ContractBadge status={contract.status} />
                   </div>
 
-                  {/* CLOSING DATE */}
-                  <div style={{ flex: 1.2, minWidth: 0 }}>
+                  {/* CLOSING DATE — desktop */}
+                  <div className="hidden md:block" style={{ flex: 1.2, minWidth: 0 }}>
                     <span style={{ fontSize: 13, color: 'var(--muted)' }}>
                       {closingDate(contract)}
                     </span>
                   </div>
 
-                  {/* REP — manager only */}
+                  {/* REP — manager + desktop */}
                   {isManager && (
-                    <div style={{ flex: 1.2, minWidth: 0 }}>
+                    <div className="hidden md:block" style={{ flex: 1.2, minWidth: 0 }}>
                       <span className="truncate" style={{ fontSize: 13, color: 'var(--muted)' }}>—</span>
                     </div>
                   )}
 
-                </div>
-
-                {/* Mobile card row */}
-                <div
-                  onClick={() => openContract(contract as any)}
-                  className="flex items-center md:hidden"
-                  style={{
-                    padding: '14px 16px',
-                    borderBottom: isLast ? 'none' : '1px solid var(--border)',
-                    gap: 12,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <div className="flex flex-1 min-w-0 flex-col" style={{ gap: 4 }}>
-                    <span
-                      className="truncate font-medium"
-                      style={{ fontSize: 13, color: 'var(--foreground)' }}
-                    >
-                      {contract.property_address ?? '—'}
-                    </span>
-                    <span
-                      className="truncate"
-                      style={{ fontSize: 11, color: 'var(--muted)' }}
-                    >
-                      {contract.contact?.name ?? '—'} · {closingDate(contract)}
-                    </span>
+                  {/* Mobile: address + contact·date left, amount + status right */}
+                  <div className="flex flex-1 items-center justify-between gap-3 md:hidden">
+                    <div className="flex min-w-0 flex-col" style={{ gap: 2 }}>
+                      <span className="truncate font-medium" style={{ fontSize: 13, color: 'var(--foreground)' }}>
+                        {contract.property_address ?? '—'}
+                      </span>
+                      <span className="truncate" style={{ fontSize: 11, color: 'var(--muted)' }}>
+                        {contract.contact?.name ?? '—'} · {closingDateRelative(contract)}
+                      </span>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end" style={{ gap: 4 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: '#c4a574' }}>
+                        {formatCurrency(contract.amount ?? 0)}
+                      </span>
+                      <ContractBadge status={contract.status} />
+                    </div>
                   </div>
-                  <div className="flex shrink-0 flex-col items-end" style={{ gap: 4 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#c4a574' }}>
-                      {formatCurrency(contract.amount ?? 0)}
-                    </span>
-                    <ContractBadge status={contract.status} />
-                  </div>
-                </div>
-              </div>
-            )
-          })}
+                </motion.div>
+              )
+            })
+          )}
         </div>
 
       </div>

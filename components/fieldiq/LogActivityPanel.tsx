@@ -5,7 +5,7 @@ import type { LucideIcon } from 'lucide-react'
 import { SlideOverPanel } from './SlideOverPanel'
 import {
   X, Utensils, Hand, GraduationCap, Coffee, Gift, Phone,
-  Plus, ChevronDown, Upload, Mic, Sparkles, Check, Users,
+  Plus, ChevronDown, Upload, Mic, Sparkles, Check, Users, Pencil, Trash2,
 } from 'lucide-react'
 import { useActivityLog } from '@/lib/context/ActivityLogContext'
 import { useAddContact } from '@/lib/context/AddContactContext'
@@ -16,6 +16,7 @@ import { toast } from '@/lib/hooks/use-toast'
 import { ToastAction } from '@/components/ui/toast'
 import { DatePickerInput } from '@/components/fieldiq/DatePickerInput'
 import { TimePickerInput } from '@/components/fieldiq/TimePickerInput'
+import { FieldLabel } from '@/components/fieldiq/FieldLabel'
 import { useContacts } from '@/lib/hooks/useContacts'
 import { useCreateActivity } from '@/lib/hooks/useActivities'
 import { TYPE_ENUM } from '@/lib/api/activities'
@@ -685,8 +686,9 @@ export function LogActivityPanel() {
   const { isOpen, closeLog, editingActivity, prefilledContact } = useActivityLog()
   const { role } = useRole()
   const isManager = role === 'manager'
-  const isViewMode = isManager && editingActivity !== null
-  const isEditMode = !isManager && editingActivity !== null
+  const [isEditing, setIsEditing] = useState(false)
+  const isViewMode = editingActivity !== null && !isEditing
+  const isEditMode = editingActivity !== null && isEditing && !isManager
   const showToast = useSuccessToast()
   const { theme } = useTheme()
   const { openAddContactWithCallback } = useAddContact()
@@ -734,6 +736,7 @@ export function LogActivityPanel() {
   const contactSearchRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { setMounted(true) }, [])
+  useEffect(() => { if (!isOpen) setIsEditing(false) }, [isOpen])
 
 
   // Pre-populate from editingActivity or prefilledContact
@@ -897,22 +900,29 @@ export function LogActivityPanel() {
               {isViewMode ? 'View Activity' : isEditMode ? 'Edit Activity' : 'Log Activity'}
             </span>
             <div className="flex items-center gap-2">
+              {isViewMode && !isManager && (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="rounded-[6px] p-1 transition-colors hover:bg-[var(--surface)]"
+                  aria-label="Edit activity"
+                >
+                  <Pencil size={20} style={{ color: 'var(--muted)' }} />
+                </button>
+              )}
               <button onClick={closeLog} className="rounded-[6px] p-1 transition-colors hover:bg-[var(--surface)]">
                 <X size={20} style={{ color: 'var(--muted)' }} />
               </button>
             </div>
           </div>
           <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-            {isViewMode ? 'Activity details (read-only)' : isEditMode ? 'Edit the details for this activity' : 'Fill in the details for your field activity'}
+            {isViewMode ? 'Activity details' : isEditMode ? 'Edit the details for this activity' : 'Fill in the details for your field activity'}
           </span>
         </div>
         <div style={{ height: 1, backgroundColor: 'var(--border)', flexShrink: 0 }} />
 
         {/* ── Scrollable content ──────────────────────────────────────── */}
-        <div
-          className="flex-1 min-h-0 overflow-y-auto"
-          style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 20, ...(isViewMode ? { pointerEvents: 'none', opacity: 0.75 } : {}) }}
-        >
+        <div className="flex-1 min-h-0 overflow-y-auto" style={{ padding: '20px 28px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, ...(isViewMode ? { pointerEvents: 'none', opacity: 0.75 } : {}) }}>
 
           {/* AI Auto-fill banner */}
           {aiAutoFilled && (
@@ -1335,86 +1345,53 @@ export function LogActivityPanel() {
 
           <div style={{ height: 8 }} />
         </div>
+        </div>
 
         {/* ── Footer ──────────────────────────────────────────────────── */}
         <div style={{ height: 1, backgroundColor: 'var(--border)', flexShrink: 0 }} />
         <div
           className="flex shrink-0 items-center"
-          style={{ height: 72, padding: '0 28px', gap: 12, justifyContent: isEditMode ? 'space-between' : 'flex-end' }}
+          style={{ height: 72, padding: '0 28px', justifyContent: isEditMode ? 'space-between' : 'flex-end' }}
         >
-          {isViewMode && (
-            <button
-              onClick={closeLog}
-              className="rounded-[8px] transition-colors hover:bg-[var(--surface)]"
-              style={{ height: 40, padding: '0 20px', fontSize: 14, fontWeight: 500, color: 'var(--muted)' }}
-            >
-              Close
-            </button>
-          )}
           {isEditMode && (
             <>
+              {/* Trash — icon only */}
               <button
                 onClick={() => { showToast('Activity deleted'); closeLog() }}
-                className="rounded-[8px] transition-colors"
-                style={{ height: 40, padding: '0 16px', fontSize: 14, fontWeight: 500, color: '#d97706', background: 'none', border: 'none', cursor: 'pointer' }}
+                className="flex h-10 w-10 items-center justify-center rounded-[8px] transition-colors hover:bg-[var(--surface)]"
+                style={{ color: 'var(--muted)', flexShrink: 0 }}
+                aria-label="Delete activity"
               >
-                Delete Activity
-              </button>
-              <div className="flex items-center" style={{ gap: 12 }}>
-                <button
-                  onClick={closeLog}
-                  className="rounded-[8px] transition-colors hover:bg-[var(--surface)]"
-                  style={{ height: 40, padding: '0 16px', fontSize: 14, fontWeight: 500, color: 'var(--muted)' }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="rounded-[8px] font-medium transition-opacity hover:opacity-90"
-                  style={{
-                    height: 40, width: 140, fontSize: 14, fontWeight: 500,
-                    backgroundColor: theme === 'dark' ? '#c4a574' : '#000000',
-                    color: theme === 'dark' ? '#000000' : '#fafaf9',
-                  }}
-                >
-                  Save Changes
-                </button>
-              </div>
-            </>
-          )}
-          {!isViewMode && !isEditMode && (
-            <>
-              <button
-                onClick={closeLog}
-                className="rounded-[8px] transition-colors hover:bg-[var(--surface)]"
-                style={{ height: 40, padding: '0 16px', fontSize: 14, fontWeight: 500, color: 'var(--muted)' }}
-              >
-                Cancel
+                <Trash2 size={16} />
               </button>
               <button
                 onClick={handleSave}
                 className="rounded-[8px] font-medium transition-opacity hover:opacity-90"
                 style={{
-                  height: 40, width: 140, fontSize: 14, fontWeight: 500,
+                  height: 40, padding: '0 32px', fontSize: 14, fontWeight: 500,
                   backgroundColor: theme === 'dark' ? '#c4a574' : '#000000',
                   color: theme === 'dark' ? '#000000' : '#fafaf9',
                 }}
               >
-                Save Activity
+                Save
               </button>
             </>
+          )}
+          {!isViewMode && !isEditMode && (
+            <button
+              onClick={handleSave}
+              className="rounded-[8px] font-medium transition-opacity hover:opacity-90"
+              style={{
+                height: 40, padding: '0 32px', fontSize: 14, fontWeight: 500,
+                backgroundColor: theme === 'dark' ? '#c4a574' : '#000000',
+                color: theme === 'dark' ? '#000000' : '#fafaf9',
+              }}
+            >
+              Save Activity
+            </button>
           )}
         </div>
     </SlideOverPanel>
   )
 }
 
-// ── Helper ───────────────────────────────────────────────────────────────────
-
-function FieldLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <span style={{ fontSize: 12, fontWeight: 500, letterSpacing: '0.06em', color: 'var(--muted)' }}>
-      {children}
-    </span>
-  )
-}

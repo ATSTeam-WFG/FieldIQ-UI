@@ -45,7 +45,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
 
   return (
     <span
-      className={cn('inline-flex items-center justify-center rounded-[4px] border px-2', className)}
+      className={cn('inline-flex items-center justify-center rounded-[4px] border px-2 whitespace-nowrap shrink-0', className)}
       style={{
         height: 22,
         fontSize: 11,

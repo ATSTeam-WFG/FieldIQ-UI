@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, ChevronUp, ChevronDown, UserPlus, ChevronRight } from 'lucide-react'
+import { UserPlus, Star, ChevronRight, Search } from 'lucide-react'
 import { AppShell } from '@/components/fieldiq/AppShell'
-import { FilterSearchBar, FilterPills } from '@/components/fieldiq/FilterBar'
-import type { FilterOption } from '@/components/fieldiq/FilterBar'
+import { FilterSearchBar } from '@/components/fieldiq/FilterBar'
 import { SkeletonRows } from '@/components/fieldiq/SkeletonRows'
 import { useAddContact } from '@/lib/context/AddContactContext'
 import { useContacts } from '@/lib/hooks/useContacts'
@@ -13,7 +12,7 @@ import type { Contact } from '@/lib/api/contacts'
 
 // ── Sub-components ──────────────────────────────────────────────────────────
 
-function ContactAvatar({ initials, size = 32 }: { initials: string; size?: number }) {
+function ContactAvatar({ initials, size = 36 }: { initials: string; size?: number }) {
   return (
     <div
       className="flex shrink-0 items-center justify-center rounded-full"
@@ -31,65 +30,21 @@ function ContactAvatar({ initials, size = 32 }: { initials: string; size?: numbe
   )
 }
 
+const TYPE_LABEL: Record<string, string> = {
+  referral_agent: 'Agent',
+  sponsor:        'Sponsor',
+  lender:         'Lender',
+  attorney:       'Attorney',
+  inspector:      'Inspector',
+  other:          'Other',
+}
+
 function ScoreBadge({ score, type }: { score: number; type: string }) {
-  if (type === 'vendor') {
-    return <span style={{ color: 'var(--muted)', fontWeight: 600 }}>—</span>
-  }
-  const color =
-    score >= 80 ? '#c4a574' : score >= 60 ? '#d97706' : 'var(--muted)'
+  if (type !== 'referral_agent') return null
   return (
-    <span style={{ color, fontWeight: 700, fontSize: 14 }}>{score}</span>
-  )
-}
-
-function ActivityCell({ type, date }: { type: string | null; date: string | null }) {
-  if (!type || !date) {
-    return <span style={{ color: 'var(--muted)' }}>—</span>
-  }
-  const d = new Date(date)
-  const formatted = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  return (
-    <span style={{ color: 'var(--body)', fontSize: 13 }}>
-      {type} · {formatted}
+    <span style={{ color: '#c4a574', fontWeight: 700, fontSize: 14, minWidth: 28, textAlign: 'right' }}>
+      {score}
     </span>
-  )
-}
-
-function TagChips({ tags, max = 2 }: { tags: string[]; max?: number }) {
-  const shown = tags.slice(0, max)
-  const overflow = tags.length - max
-  return (
-    <div className="flex items-center gap-1 flex-wrap">
-      {shown.map(tag => (
-        <span
-          key={tag}
-          style={{
-            backgroundColor: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 4,
-            fontSize: 11,
-            color: 'var(--body)',
-            padding: '1px 6px',
-          }}
-        >
-          {tag}
-        </span>
-      ))}
-      {overflow > 0 && (
-        <span
-          style={{
-            backgroundColor: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 4,
-            fontSize: 11,
-            color: 'var(--muted)',
-            padding: '1px 6px',
-          }}
-        >
-          +{overflow}
-        </span>
-      )}
-    </div>
   )
 }
 
@@ -102,150 +57,187 @@ function TypeBadge({ type }: { type: string }) {
         fontSize: 11,
         color: 'var(--muted)',
         padding: '2px 8px',
+        whiteSpace: 'nowrap',
       }}
     >
-      {type === 'agent' ? 'Agent' : 'Vendor'}
+      {TYPE_LABEL[type] ?? type}
     </span>
   )
 }
 
-function SortableHeader({
-  label,
-  sortKey: key,
-  currentKey,
-  currentDir,
-  onSort,
-  align = 'left',
-}: {
-  label: string
-  sortKey: string
-  currentKey: string
-  currentDir: 'asc' | 'desc'
-  onSort: (key: string) => void
-  align?: 'left' | 'right'
-}) {
-  const active = currentKey === key
+function SectionLabel({ label }: { label: string }) {
   return (
-    <button
-      onClick={() => onSort(key)}
-      className="flex items-center gap-0.5"
+    <div
       style={{
-        color: active ? 'var(--foreground)' : 'var(--muted)',
-        fontWeight: active ? 600 : 400,
-        fontSize: 12,
-        background: 'none',
-        border: 'none',
-        cursor: 'pointer',
-        padding: 0,
-        justifyContent: align === 'right' ? 'flex-end' : 'flex-start',
-        width: '100%',
+        padding: '20px 0 6px',
+        fontSize: 11,
+        fontWeight: 700,
+        color: 'var(--muted)',
+        letterSpacing: '0.06em',
+        textTransform: 'uppercase',
       }}
     >
       {label}
-      {active ? (
-        currentDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />
-      ) : (
-        <ChevronDown size={12} style={{ opacity: 0.3 }} />
-      )}
+    </div>
+  )
+}
+
+function FavoriteButton({
+  active,
+  onToggle,
+}: {
+  active: boolean
+  onToggle: (e: React.MouseEvent) => void
+}) {
+  return (
+    <button
+      onClick={onToggle}
+      style={{
+        background: 'none',
+        border: 'none',
+        cursor: 'pointer',
+        padding: 4,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+      }}
+    >
+      <Star
+        size={14}
+        fill={active ? '#c4a574' : 'none'}
+        style={{ color: active ? '#c4a574' : 'var(--muted)', transition: 'color 0.15s' }}
+      />
     </button>
+  )
+}
+
+function ContactRow({
+  contact,
+  isFavorite,
+  onToggleFavorite,
+  onClick,
+}: {
+  contact: Contact
+  isFavorite: boolean
+  onToggleFavorite: (id: string) => void
+  onClick: () => void
+}) {
+  function handleStar(e: React.MouseEvent) {
+    e.stopPropagation()
+    onToggleFavorite(contact.id)
+  }
+
+  return (
+    <div
+      onClick={onClick}
+      style={{ borderBottom: '1px solid var(--border)', cursor: 'pointer' }}
+      onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--surface)')}
+      onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+      onTouchStart={e => (e.currentTarget.style.backgroundColor = 'var(--surface)')}
+      onTouchEnd={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+    >
+      {/* Desktop row */}
+      <div
+        className="hidden md:grid items-center"
+        style={{
+          gridTemplateColumns: '2fr 1.5fr 80px 56px 32px',
+          height: 56,
+          gap: 16,
+        }}
+      >
+        {/* Name + job title */}
+        <div className="flex items-center gap-3 min-w-0">
+          <ContactAvatar initials={contact.initials} size={34} />
+          <div className="flex flex-col min-w-0" style={{ gap: 1 }}>
+            <span className="truncate" style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>
+              {contact.name}
+            </span>
+            {contact.job_title && (
+              <span className="truncate" style={{ fontSize: 11, color: 'var(--muted)' }}>
+                {contact.job_title}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Company */}
+        <span className="truncate" style={{ fontSize: 13, color: 'var(--body)' }}>
+          {contact.company ?? '—'}
+        </span>
+
+        {/* Type */}
+        <TypeBadge type={contact.type} />
+
+        {/* Score */}
+        <div style={{ textAlign: 'right' }}>
+          <ScoreBadge score={contact.score} type={contact.type} />
+        </div>
+
+        {/* Star */}
+        <FavoriteButton active={isFavorite} onToggle={handleStar} />
+      </div>
+
+      {/* Mobile row */}
+      <div className="md:hidden flex items-center gap-3" style={{ padding: '11px 16px' }}>
+        <ContactAvatar initials={contact.initials} size={36} />
+        <div className="flex flex-1 flex-col min-w-0" style={{ gap: 2 }}>
+          <span className="truncate" style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)' }}>
+            {contact.name}
+          </span>
+          {contact.company && (
+            <span className="truncate" style={{ fontSize: 12, color: 'var(--muted)' }}>
+              {contact.company}
+            </span>
+          )}
+        </div>
+        <FavoriteButton active={isFavorite} onToggle={handleStar} />
+      </div>
+    </div>
+  )
+}
+
+function AlphaScrubber({
+  letters,
+  onSelect,
+}: {
+  letters: string[]
+  onSelect: (letter: string) => void
+}) {
+  return (
+    <div
+      className="md:hidden fixed flex flex-col justify-center"
+      style={{ right: 4, top: 48, bottom: 56, zIndex: 50, gap: 0, pointerEvents: 'none' }}
+    >
+      {letters.map(l => (
+        <button
+          key={l}
+          onTouchStart={() => onSelect(l)}
+          onClick={() => onSelect(l)}
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            color: 'var(--muted)',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '1px 5px',
+            lineHeight: 1.5,
+            pointerEvents: 'auto',
+          }}
+        >
+          {l}
+        </button>
+      ))}
+    </div>
   )
 }
 
 function EmptyState() {
   return (
-    <div
-      className="flex flex-col items-center justify-center py-16"
-      style={{ color: 'var(--muted)' }}
-    >
+    <div className="flex flex-col items-center justify-center py-16" style={{ color: 'var(--muted)' }}>
       <Search size={28} style={{ opacity: 0.3, marginBottom: 10 }} />
       <p style={{ fontSize: 14 }}>No contacts match your search</p>
-    </div>
-  )
-}
-
-// ── Mobile card row ──────────────────────────────────────────────────────────
-
-function MobileContactRow({
-  contact,
-  activeTab,
-  onClick,
-}: {
-  contact: Contact
-  activeTab: 'all' | 'agents' | 'vendors'
-  onClick: () => void
-}) {
-  return (
-    <div
-      onClick={onClick}
-      style={{
-        padding: '12px 16px',
-        borderBottom: '1px solid var(--border)',
-        cursor: 'pointer',
-      }}
-      onTouchStart={e => (e.currentTarget.style.backgroundColor = 'var(--surface)')}
-      onTouchEnd={e => (e.currentTarget.style.backgroundColor = 'transparent')}
-    >
-      {/* Row 1: avatar + name/role + score/chevron */}
-      <div className="flex items-center gap-3">
-        <ContactAvatar initials={contact.initials} size={36} />
-        <div className="flex flex-1 flex-col min-w-0" style={{ gap: 2 }}>
-          <span
-            className="truncate"
-            style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)' }}
-          >
-            {contact.name}
-          </span>
-          <span
-            className="truncate"
-            style={{ fontSize: 12, color: 'var(--muted)' }}
-          >
-            {contact.job_title ?? ''}
-          </span>
-        </div>
-        {/* Right side: score (or type badge) + chevron */}
-        <div className="flex shrink-0 items-center gap-2">
-          {activeTab === 'all' ? (
-            <TypeBadge type={contact.type} />
-          ) : null}
-          {contact.type === 'agent' && (
-            <ScoreBadge score={contact.score} type={contact.type} />
-          )}
-          <ChevronRight size={14} style={{ color: 'var(--muted)' }} />
-        </div>
-      </div>
-
-      {/* Row 2: company */}
-      <div style={{ marginTop: 6, paddingLeft: 48 }}>
-        <span
-          className="truncate block"
-          style={{ fontSize: 12, color: 'var(--body)' }}
-        >
-          {contact.company}
-        </span>
-      </div>
-
-      {/* Row 3: last activity + tags (agents only) or just tags */}
-      <div
-        className="flex items-center gap-2 flex-wrap"
-        style={{ marginTop: 6, paddingLeft: 48 }}
-      >
-        {contact.type === 'agent' && (
-          <span style={{ fontSize: 11, color: 'var(--muted)' }}>
-            {contact.last_activity_type && contact.last_activity_date ? (
-              <>
-                {contact.last_activity_type} ·{' '}
-                {new Date(contact.last_activity_date).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                })}
-              </>
-            ) : (
-              'No activity'
-            )}
-          </span>
-        )}
-        <TagChips tags={contact.tags} max={2} />
-      </div>
     </div>
   )
 }
@@ -256,79 +248,75 @@ export default function ContactsPage() {
   const router = useRouter()
   const { openAddContact } = useAddContact()
   const { data, isLoading } = useContacts()
-  const [activeTab, setActiveTab] = useState<'all' | 'agents' | 'vendors'>('all')
   const [search, setSearch] = useState('')
-  const [sortKey, setSortKey] = useState('score')
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+  const [favorites, setFavorites] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') return new Set()
+    try {
+      const stored = localStorage.getItem('fieldiq_contact_favorites')
+      return stored ? new Set(JSON.parse(stored) as string[]) : new Set()
+    } catch {
+      return new Set()
+    }
+  })
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   const allContacts = data?.items ?? []
-  const allCount = allContacts.length
-  const agentCount = allContacts.filter(c => c.type === 'agent').length
-  const vendorCount = allContacts.filter(c => c.type === 'vendor').length
 
-  function handleSort(key: string) {
-    if (key === sortKey) {
-      setSortDir(d => (d === 'asc' ? 'desc' : 'asc'))
-    } else {
-      setSortKey(key)
-      setSortDir('desc')
-    }
+  function toggleFavorite(id: string) {
+    setFavorites(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      localStorage.setItem('fieldiq_contact_favorites', JSON.stringify([...next]))
+      return next
+    })
   }
 
-  const visibleContacts = useMemo(() => {
-    let list = allContacts
-    if (activeTab === 'agents') list = list.filter(c => c.type === 'agent')
-    if (activeTab === 'vendors') list = list.filter(c => c.type === 'vendor')
+  const scrollToSection = useCallback((letter: string) => {
+    sectionRefs.current[letter]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [])
+
+  const filteredContacts = useMemo(() => {
+    let list = [...allContacts]
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(
-        c =>
-          c.name.toLowerCase().includes(q) ||
-          (c.company ?? '').toLowerCase().includes(q)
+        c => c.name.toLowerCase().includes(q) || (c.company ?? '').toLowerCase().includes(q)
       )
     }
-    list = [...list].sort((a, b) => {
-      const aVal = a[sortKey as keyof Contact]
-      const bVal = b[sortKey as keyof Contact]
-      if (aVal == null) return 1
-      if (bVal == null) return -1
-      if (typeof aVal === 'number' && typeof bVal === 'number')
-        return sortDir === 'asc' ? aVal - bVal : bVal - aVal
-      return sortDir === 'asc'
-        ? String(aVal).localeCompare(String(bVal))
-        : String(bVal).localeCompare(String(aVal))
-    })
-    return list
-  }, [allContacts, activeTab, search, sortKey, sortDir])
+    return list.sort((a, b) => a.name.localeCompare(b.name))
+  }, [allContacts, search])
 
-  const tabs = [
-    { key: 'all' as const,      label: `All ${allCount}` },
-    { key: 'agents' as const,   label: `Agents ${agentCount}` },
-    { key: 'vendors' as const, label: `Vendors ${vendorCount}` },
-  ]
+  const favoriteContacts = useMemo(
+    () => filteredContacts.filter(c => favorites.has(c.id)),
+    [filteredContacts, favorites]
+  )
 
-  function handleTabChange(key: 'all' | 'agents' | 'vendors') {
-    setActiveTab(key)
-    setSortKey(key === 'vendors' ? 'name' : 'score')
-    setSortDir(key === 'vendors' ? 'asc' : 'desc')
-  }
+  const alphabetGroups = useMemo(() => {
+    const nonFavs = filteredContacts.filter(c => !favorites.has(c.id))
+    const groups: Record<string, Contact[]> = {}
+    for (const c of nonFavs) {
+      const letter = c.name[0]?.toUpperCase() ?? '#'
+      if (!groups[letter]) groups[letter] = []
+      groups[letter].push(c)
+    }
+    return Object.entries(groups)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([letter, contacts]) => ({ letter, contacts }))
+  }, [filteredContacts, favorites])
 
-  const desktopColumns = {
-    all:      '1fr 200px 90px 72px 160px 180px',
-    agents:   '1fr 200px 72px 160px 80px 72px 180px',
-    vendors: '1fr 200px 1fr',
-  }
+  const scrubberLetters = alphabetGroups.map(g => g.letter)
 
   return (
     <AppShell activeItem="Contacts">
-      {/* Page header */}
+      {/* Header */}
       <div className="mb-5 flex items-start justify-between">
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--foreground)', marginBottom: 4 }}>
             Contacts
           </h1>
           <p style={{ fontSize: 13, color: 'var(--muted)' }}>
-            {allCount} contacts
+            {allContacts.length} contacts
           </p>
         </div>
         <button
@@ -347,168 +335,61 @@ export default function ContactsPage() {
           }}
         >
           <UserPlus size={14} />
-          {/* Label hidden on very small screens */}
           <span className="hidden sm:inline">Add Contact</span>
         </button>
       </div>
 
-      {/* Card wrapper */}
-      <div
-        className="fieldiq-card"
-        style={{
-          borderRadius: 8,
-          border: '1px solid var(--border)',
-          borderTop: '2px solid #c4a574',
-          backgroundColor: 'var(--card)',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Toolbar */}
-        <div
-          className="flex flex-col gap-3 p-4"
-          style={{ borderBottom: '1px solid var(--border)' }}
-        >
-          <FilterSearchBar value={search} onChange={setSearch} placeholder="Search name or company…" />
-          <FilterPills<'all' | 'agents' | 'vendors'>
-            options={tabs.map(t => ({ value: t.key, label: t.label } as FilterOption<'all' | 'agents' | 'vendors'>))}
-            value={activeTab}
-            onChange={handleTabChange}
-          />
-        </div>
+      {/* Search bar — half-width on desktop, full-width on mobile */}
+      <div className="w-full md:w-1/2 mb-6">
+        <FilterSearchBar value={search} onChange={setSearch} placeholder="Search name or company…" />
+      </div>
 
-        {/* ── Mobile list (hidden on md+) ── */}
-        <div className="md:hidden">
-          {isLoading ? (
-            <SkeletonRows cols={2} rows={8} />
-          ) : visibleContacts.length === 0 ? (
-            <EmptyState />
-          ) : (
-            visibleContacts.map(contact => (
-              <MobileContactRow
-                key={contact.id}
-                contact={contact}
-                activeTab={activeTab}
-                onClick={() => router.push(`/contacts/${contact.id}`)}
-              />
-            ))
-          )}
-        </div>
-
-        {/* ── Desktop table (hidden on mobile) ── */}
-        <div className="hidden md:block" style={{ overflowX: 'auto' }}>
-          {/* Header */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: desktopColumns[activeTab],
-              backgroundColor: 'var(--surface)',
-              borderBottom: '1px solid var(--border)',
-              padding: '0 16px',
-              height: 40,
-              alignItems: 'center',
-              gap: 12,
-            }}
-          >
-            {activeTab === 'all' && (
-              <>
-                <SortableHeader label="Name" sortKey="name" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
-                <SortableHeader label="Company" sortKey="company" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
-                <span style={{ fontSize: 12, color: 'var(--muted)' }}>Type</span>
-                <SortableHeader label="Score" sortKey="score" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
-                <SortableHeader label="Last Activity" sortKey="lastActivityDate" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
-                <span style={{ fontSize: 12, color: 'var(--muted)' }}>Tags</span>
-              </>
-            )}
-            {activeTab === 'agents' && (
-              <>
-                <SortableHeader label="Name" sortKey="name" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
-                <SortableHeader label="Company" sortKey="company" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
-                <SortableHeader label="Score" sortKey="score" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
-                <SortableHeader label="Last Activity" sortKey="lastActivityDate" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
-                <SortableHeader label="Spend" sortKey="spend" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} align="right" />
-                <SortableHeader label="Closings" sortKey="closings" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} align="right" />
-                <span style={{ fontSize: 12, color: 'var(--muted)' }}>Tags</span>
-              </>
-            )}
-            {activeTab === 'vendors' && (
-              <>
-                <SortableHeader label="Name" sortKey="name" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
-                <SortableHeader label="Company" sortKey="company" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
-                <span style={{ fontSize: 12, color: 'var(--muted)' }}>Tags</span>
-              </>
-            )}
-          </div>
-
-          {/* Rows */}
-          {isLoading ? (
-            <SkeletonRows cols={6} rows={8} />
-          ) : visibleContacts.length === 0 ? (
-            <EmptyState />
-          ) : (
-            visibleContacts.map(contact => (
-              <div
-                key={contact.id}
-                onClick={() => router.push(`/contacts/${contact.id}`)}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: desktopColumns[activeTab],
-                  padding: '0 16px',
-                  height: 56,
-                  alignItems: 'center',
-                  gap: 12,
-                  cursor: 'pointer',
-                  borderBottom: '1px solid var(--border)',
-                  transition: 'background-color 0.1s',
-                }}
-                onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--surface)')}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <ContactAvatar initials={contact.initials} />
-                  <div className="flex flex-col min-w-0" style={{ gap: 2 }}>
-                    <span className="truncate" style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>
-                      {contact.name}
-                    </span>
-                    <span className="truncate" style={{ fontSize: 11, color: 'var(--muted)' }}>
-                      {contact.job_title ?? ''}
-                    </span>
-                  </div>
-                </div>
-
-                <span className="truncate" style={{ fontSize: 13, color: 'var(--body)' }}>
-                  {contact.company}
-                </span>
-
-                {activeTab === 'all' && (
-                  <>
-                    <TypeBadge type={contact.type} />
-                    <ScoreBadge score={contact.score} type={contact.type} />
-                    <ActivityCell type={contact.last_activity_type} date={contact.last_activity_date} />
-                    <TagChips tags={contact.tags} />
-                  </>
-                )}
-
-                {activeTab === 'agents' && (
-                  <>
-                    <ScoreBadge score={contact.score} type={contact.type} />
-                    <ActivityCell type={contact.last_activity_type} date={contact.last_activity_date} />
-                    <span style={{ fontSize: 13, color: 'var(--body)', textAlign: 'right' }}>
-                      ${contact.spend}
-                    </span>
-                    <span style={{ fontSize: 13, color: 'var(--body)', textAlign: 'right' }}>
-                      {contact.closings}
-                    </span>
-                    <TagChips tags={contact.tags} />
-                  </>
-                )}
-
-                {activeTab === 'vendors' && (
-                  <TagChips tags={contact.tags} max={99} />
-                )}
+      {/* Contact list */}
+      <div className="relative pr-8 md:pr-0">
+        {isLoading ? (
+          <SkeletonRows cols={3} rows={10} />
+        ) : filteredContacts.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <>
+            {favoriteContacts.length > 0 && (
+              <div>
+                <SectionLabel label="Favorites" />
+                {favoriteContacts.map(c => (
+                  <ContactRow
+                    key={c.id}
+                    contact={c}
+                    isFavorite
+                    onToggleFavorite={toggleFavorite}
+                    onClick={() => router.push(`/contacts/${c.id}`)}
+                  />
+                ))}
               </div>
-            ))
-          )}
-        </div>
+            )}
+
+            {alphabetGroups.map(({ letter, contacts }) => (
+              <div
+                key={letter}
+                ref={el => { sectionRefs.current[letter] = el }}
+              >
+                <SectionLabel label={letter} />
+                {contacts.map(c => (
+                  <ContactRow
+                    key={c.id}
+                    contact={c}
+                    isFavorite={favorites.has(c.id)}
+                    onToggleFavorite={toggleFavorite}
+                    onClick={() => router.push(`/contacts/${c.id}`)}
+                  />
+                ))}
+              </div>
+            ))}
+          </>
+        )}
+
+        {scrubberLetters.length > 0 && (
+          <AlphaScrubber letters={scrubberLetters} onSelect={scrollToSection} />
+        )}
       </div>
     </AppShell>
   )
