@@ -26,7 +26,7 @@ interface NotificationContextValue {
   openNotifications: () => void
   closeNotifications: () => void
   markAllRead: () => void
-  addNotification: (n: Omit<Notification, 'id' | 'read'>) => void
+  addNotification: (n: Omit<Notification, 'id' | 'read' | 'entity_type' | 'entity_id'>) => void
 }
 
 const NotificationContext = createContext<NotificationContextValue>({
