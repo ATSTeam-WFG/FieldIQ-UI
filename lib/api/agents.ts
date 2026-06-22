@@ -53,6 +53,19 @@ export interface AgentKPIs {
   topContactName: string | null
 }
 
+export interface NudgeResponse {
+  contact_id: string
+  contact_name: string
+  days_since_contact: number | null
+  score: number
+  delta: number | null
+  message: string
+}
+
+export async function getNudge(): Promise<NudgeResponse | null> {
+  return api.get<NudgeResponse | null>('/agents/me/nudge')
+}
+
 export async function getMyKpis(): Promise<AgentKPIs> {
   const d = await api.get<KPIBackend>('/agents/me/kpis')
   return {

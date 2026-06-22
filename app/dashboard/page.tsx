@@ -30,6 +30,7 @@ import { useRole } from '@/lib/context/RoleContext'
 import { useActivityLog } from '@/lib/context/ActivityLogContext'
 import { useContract } from '@/lib/context/ContractContext'
 import { useAgentKpis } from '@/lib/hooks/useAgentKpis'
+import { useAgentNudge } from '@/lib/hooks/useAgentNudge'
 import { useActivities } from '@/lib/hooks/useActivities'
 import { useContracts } from '@/lib/hooks/useContracts'
 
@@ -58,6 +59,7 @@ export default function DashboardPage() {
   const [nudgeDismissed, setNudgeDismissed] = useState(false)
 
   const { data: kpis, isLoading: kpisLoading } = useAgentKpis()
+  const { data: nudge } = useAgentNudge()
   const { data: activitiesData, isLoading: activitiesLoading } = useActivities({ page_size: 5 })
   const { data: contractsData, isLoading: contractsLoading } = useContracts()
 
@@ -166,7 +168,7 @@ export default function DashboardPage() {
 
         {/* ── AI Priority Nudge ─────────────────────────── */}
         <AnimatePresence>
-          {!nudgeDismissed && !isRepFirstTime && (
+          {!nudgeDismissed && !isRepFirstTime && nudge && (
             <motion.div
               key="nudge"
               initial={{ opacity: 0, y: -8 }}
@@ -176,9 +178,9 @@ export default function DashboardPage() {
             >
               <AICard label="Daily Nudge" onDismiss={() => setNudgeDismissed(true)}>
                 <p style={{ fontSize: 13, color: 'var(--body)', lineHeight: 1.6, maxWidth: 560, margin: 0 }}>
-                  David Okafor hasn&apos;t been contacted in 18 days. His score is dropping. A pop-by today would help.{' '}
+                  {nudge.message}{' '}
                   <button
-                    onClick={() => openLogWithContact('david-okafor')}
+                    onClick={() => openLogWithContact(nudge.contact_name)}
                     className="hover:underline"
                     style={{ color: '#c4a574', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 'inherit' }}
                   >

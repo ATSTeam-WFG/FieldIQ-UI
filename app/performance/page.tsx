@@ -6,6 +6,8 @@ import { AppShell } from '@/components/fieldiq/AppShell'
 import { KPICard } from '@/components/fieldiq/KPICard'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useRole } from '@/lib/context/RoleContext'
+import { useAgentKpis } from '@/lib/hooks/useAgentKpis'
+import { useAgentNudge } from '@/lib/hooks/useAgentNudge'
 import { useAgentPerformance } from '@/lib/hooks/useAgentPerformance'
 import { useManagerPerformance } from '@/lib/hooks/useManagerPerformance'
 import {
@@ -195,6 +197,8 @@ function ManagerPerformancePage() {
 
 function AgentPerformancePage() {
   const { data, isLoading } = useAgentPerformance()
+  const { data: kpis } = useAgentKpis()
+  const { data: nudge } = useAgentNudge()
 
   const monthlySpend = data?.monthlySpend ?? []
   const activityTypeBreakdown = data?.activityBreakdown ?? []
@@ -240,7 +244,13 @@ function AgentPerformancePage() {
         <div style={{ marginTop: 20 }}>
           <AICard label="Summary" sublabel="Updated today" readAloud>
             <p style={{ fontSize: 13, color: 'var(--body)', lineHeight: 1.6, margin: 0 }}>
-              This month you&apos;ve logged {activitiesMtd} activities. You&apos;re on track to hit your Q2 target. Your strongest relationship is Michelle Tran (score 91). The contact that needs the most attention is James Ellison — you haven&apos;t touched him in 23 days.
+              This month you&apos;ve logged {activitiesMtd} {activitiesMtd === 1 ? 'activity' : 'activities'}.
+              {kpis?.topContactName
+                ? ` Your strongest relationship is ${kpis.topContactName} (score ${kpis.topRelationshipScore}).`
+                : ''}
+              {nudge
+                ? ` ${nudge.message}`
+                : ' All your key relationships are looking healthy.'}
             </p>
           </AICard>
         </div>

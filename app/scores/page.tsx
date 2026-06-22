@@ -26,8 +26,8 @@ function scoreZone(score: number): 'healthy' | 'watch' | 'risk' {
   return 'risk'
 }
 
-const ZONE_COLOR = { healthy: '#16a34a', watch: '#d97706', risk: 'var(--muted)' }
-const ZONE_BG    = { healthy: 'rgba(22,163,74,0.1)', watch: 'rgba(217,119,6,0.1)', risk: 'var(--surface)' }
+const ZONE_COLOR = { healthy: '#16a34a', watch: '#d97706', risk: '#d4d4d8' }
+const ZONE_BG    = { healthy: 'rgba(22,163,74,0.1)', watch: 'rgba(217,119,6,0.1)', risk: 'rgba(212,212,216,0.08)' }
 
 // ── Score ring (compact, for list rows) ───────────────────────────────────
 
@@ -73,7 +73,7 @@ type BreakdownType = NonNullable<Contact['score_breakdown']>
 
 function BreakdownBars({ bd }: { bd: BreakdownType }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 12px', width: 180 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 20px', width: '100%', maxWidth: 420 }}>
       {DIMS.map(({ key, label }) => {
         const level = (bd as Record<string, string>)[key] ?? 'low'
         return (
@@ -81,8 +81,8 @@ function BreakdownBars({ bd }: { bd: BreakdownType }) {
             <span style={{ fontSize: 9, color: 'var(--muted)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
               {label}
             </span>
-            <div style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: 'var(--surface)', overflow: 'hidden' }}>
-              <div style={{ width: dimWidth(level), height: '100%', borderRadius: 2, backgroundColor: dimColor(level) }} />
+            <div style={{ width: '100%', height: 6, borderRadius: 3, backgroundColor: 'var(--surface)', overflow: 'hidden' }}>
+              <div style={{ width: dimWidth(level), height: '100%', borderRadius: 3, backgroundColor: dimColor(level) }} />
             </div>
           </div>
         )
@@ -149,26 +149,26 @@ export default function MyRelationsPage() {
     (trendsData ?? []).map(t => [t.contact_id, t.delta])
   )
 
-  const contacts = (data?.items ?? []).filter(c => c.type === 'referral_agent')
+  const allContacts = (data?.items ?? []).filter(c => c.type === 'referral_agent')
 
-  const healthy = contacts.filter(c => c.score >= 80)
-  const watch   = contacts.filter(c => c.score >= 60 && c.score < 80)
-  const atRisk  = contacts.filter(c => c.score < 60)
-  const avgScore = contacts.length
-    ? Math.round(contacts.reduce((s, c) => s + c.score, 0) / contacts.length)
+  const healthy = allContacts.filter(c => c.score >= 80)
+  const watch   = allContacts.filter(c => c.score >= 60 && c.score < 80)
+  const atRisk  = allContacts.filter(c => c.score < 60)
+  const avgScore = allContacts.length
+    ? Math.round(allContacts.reduce((s, c) => s + c.score, 0) / allContacts.length)
     : 0
 
-  const sorted = [...contacts].sort((a, b) =>
+  const sorted = [...allContacts].sort((a, b) =>
     sort === 'risk-first' ? a.score - b.score : b.score - a.score
   )
 
   const colHeaders = [
-    { label: '#',            width: 32  },
-    { label: 'CONTACT',      width: 200 },
-    { label: 'SCORE',        width: 80  },
-    { label: 'BREAKDOWN',    width: 180 },
-    { label: 'LAST CONTACT', width: 120 },
-    { label: 'TREND',        width: 60  },
+    { label: '#',            w: 32,  grow: false, center: false },
+    { label: 'CONTACT',      w: 220, grow: false, center: false },
+    { label: 'SCORE',        w: 60,  grow: false, center: true  },
+    { label: 'BREAKDOWN',    w: 180, grow: true,  center: false },
+    { label: 'LAST CONTACT', w: 110, grow: false, center: false },
+    { label: 'TREND',        w: 80,  grow: false, center: true  },
   ]
 
   return (
@@ -212,7 +212,7 @@ export default function MyRelationsPage() {
         </div>
 
         {/* ── Health distribution bar ─────────────────────────────── */}
-        {!isLoading && contacts.length > 0 && (
+        {!isLoading && allContacts.length > 0 && (
           <div
             className="fieldiq-card"
             style={{ marginTop: 12, padding: '16px 20px' }}
@@ -243,7 +243,7 @@ export default function MyRelationsPage() {
                   fontSize: 11, fontWeight: 600, backgroundColor: 'var(--surface)', color: 'var(--muted)',
                 }}
               >
-                {contacts.length}
+                {allContacts.length}
               </span>
             </div>
 
@@ -278,10 +278,14 @@ export default function MyRelationsPage() {
             className="hidden md:flex items-center"
             style={{ height: 32, padding: '0 20px', backgroundColor: 'var(--surface)', borderBottom: '1px solid var(--border)' }}
           >
-            {colHeaders.map(({ label, width }) => (
+            {colHeaders.map(({ label, w, grow, center }) => (
               <span
                 key={label}
-                style={{ width, flexShrink: 0, fontSize: 11, fontWeight: 500, letterSpacing: '0.06em', color: 'var(--muted)', textTransform: 'uppercase' }}
+                style={{
+                  ...(grow ? { flex: 1, minWidth: w } : { width: w, flexShrink: 0 }),
+                  fontSize: 11, fontWeight: 500, letterSpacing: '0.06em', color: 'var(--muted)', textTransform: 'uppercase',
+                  ...(center ? { textAlign: 'center' } : {}),
+                }}
               >
                 {label}
               </span>
@@ -292,7 +296,7 @@ export default function MyRelationsPage() {
           {isLoading && <SkeletonRows cols={4} rows={8} />}
           {!isLoading && sorted.length === 0 && (
             <div className="flex items-center justify-center" style={{ padding: '48px 20px' }}>
-              <span style={{ fontSize: 14, color: 'var(--muted)' }}>No referral agent contacts yet.</span>
+              <span style={{ fontSize: 14, color: 'var(--muted)' }}>No contacts yet.</span>
             </div>
           )}
 
@@ -324,15 +328,15 @@ export default function MyRelationsPage() {
                 </span>
 
                 {/* CONTACT */}
-                <div className="flex shrink-0 items-center" style={{ gap: 10, width: 200 }}>
+                <div className="flex items-center shrink-0" style={{ gap: 10, width: 220 }}>
                   <div
                     className="flex items-center justify-center shrink-0"
                     style={{
                       width: 34, height: 34, borderRadius: '50%',
-                      backgroundColor: ZONE_BG[zone],
-                      border: `1px solid ${ZONE_COLOR[zone]}33`,
+                      backgroundColor: '#c4a574',
+                      boxShadow: `0 0 0 2px var(--card), 0 0 0 4px ${ZONE_COLOR[zone]}`,
                       fontSize: 11, fontWeight: 700,
-                      color: ZONE_COLOR[zone],
+                      color: '#000',
                     }}
                   >
                     {contact.initials}
@@ -348,8 +352,8 @@ export default function MyRelationsPage() {
                 </div>
 
                 {/* SCORE */}
-                <div style={{ width: 80, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span className="md:hidden" style={{ fontSize: 15, fontWeight: 700, color: '#c4a574' }}>
+                <div style={{ width: 60, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span className="md:hidden" style={{ fontSize: 15, fontWeight: 700, color: '#c4a574' }}>
                     {contact.score}
                   </span>
                   <span className="hidden md:flex items-center justify-center">
@@ -359,20 +363,20 @@ export default function MyRelationsPage() {
 
                 {/* BREAKDOWN */}
                 {bd ? (
-                  <div className="hidden md:flex shrink-0 items-center" style={{ width: 180 }}>
+                  <div className="hidden md:flex items-center" style={{ flex: 1, minWidth: 180 }}>
                     <BreakdownBars bd={bd} />
                   </div>
                 ) : (
-                  <div className="hidden md:block shrink-0" style={{ width: 180, fontSize: 12, color: 'var(--muted)' }}>—</div>
+                  <div className="hidden md:block" style={{ flex: 1, minWidth: 180, fontSize: 12, color: 'var(--muted)' }}>—</div>
                 )}
 
                 {/* LAST CONTACT */}
-                <span className="hidden md:block shrink-0" style={{ width: 120, fontSize: 13, color: 'var(--muted)' }}>
+                <span className="hidden md:block shrink-0" style={{ width: 110, fontSize: 13, color: 'var(--muted)' }}>
                   {formatRelativeDate(contact.last_activity_date)}
                 </span>
 
                 {/* TREND */}
-                <div className="hidden md:flex shrink-0 items-center" style={{ width: 60, gap: 4 }}>
+                <div className="hidden md:flex shrink-0 items-center justify-center" style={{ width: 80, gap: 4 }}>
                   <TrendIcon delta={delta} />
                   {delta !== null && (
                     <span style={{ fontSize: 11, color: delta > 0 ? '#16a34a' : delta < 0 ? 'var(--muted)' : '#d97706' }}>

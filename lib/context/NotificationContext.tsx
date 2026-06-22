@@ -13,6 +13,8 @@ export interface Notification {
   message: string
   timestamp: string
   read: boolean
+  entity_type: string | null
+  entity_id: string | null
 }
 
 const INITIAL_NOTIFICATIONS: Notification[] = []
@@ -37,6 +39,13 @@ const NotificationContext = createContext<NotificationContextValue>({
   addNotification: () => {},
 })
 
+function toFrontendType(t: string): Notification['type'] {
+  if (t === 'activity') return 'activity'
+  if (t === 'overdue_followup') return 'follow-up'
+  if (t === 'broadcast') return 'broadcast'
+  return 'alert'
+}
+
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS)
@@ -47,10 +56,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       .then(({ items }) => {
         setNotifications(items.map(n => ({
           id: n.id,
-          type: n.type as Notification['type'],
+          type: toFrontendType(n.type),
           message: n.message,
           timestamp: n.created_at,
           read: n.read,
+          entity_type: n.entity_type ?? null,
+          entity_id: n.entity_id ?? null,
         })))
       })
       .catch(() => {})
@@ -58,9 +69,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const unreadCount = notifications.filter(n => !n.read).length
 
-  function addNotification(n: Omit<Notification, 'id' | 'read'>) {
+  function addNotification(n: Omit<Notification, 'id' | 'read' | 'entity_type' | 'entity_id'>) {
     setNotifications(prev => [
-      { ...n, id: `n-${Date.now()}`, read: false },
+      { ...n, id: `n-${Date.now()}`, read: false, entity_type: null, entity_id: null },
       ...prev,
     ])
   }
