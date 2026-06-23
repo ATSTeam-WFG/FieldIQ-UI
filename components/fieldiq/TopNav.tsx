@@ -2,11 +2,13 @@
 
 import { useEffect } from 'react'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { Bell, Moon, Search, Sun } from 'lucide-react'
 import { useTheme } from '@/lib/context/ThemeContext'
 import { useRole } from '@/lib/context/RoleContext'
 import { useNotifications } from '@/lib/context/NotificationContext'
 import { useSearch } from '@/lib/context/SearchContext'
+import { useIsMobile } from '@/lib/hooks/useIsMobile'
 import { RoleSwitcher } from './RoleSwitcher'
 
 const roleBadgeLabel: Record<string, string> = {
@@ -20,6 +22,8 @@ export function TopNav() {
   const { role } = useRole()
   const { openNotifications, unreadCount } = useNotifications()
   const { openSearch } = useSearch()
+  const isMobile = useIsMobile()
+  const router = useRouter()
 
   // Global Cmd+K / Ctrl+K hotkey
   useEffect(() => {
@@ -132,7 +136,7 @@ export function TopNav() {
         {/* Notifications */}
         <div className="relative">
           <button
-            onClick={openNotifications}
+            onClick={() => isMobile ? router.push('/notifications') : openNotifications()}
             className="flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors hover:bg-[var(--surface)] focus:outline-none"
             aria-label="Notifications"
           >

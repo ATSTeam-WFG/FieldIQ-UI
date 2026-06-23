@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { getNotifications, markAllRead as apiMarkAllRead } from '@/lib/api/notifications'
+import { getNotifications, markAllRead as apiMarkAllRead, markRead as apiMarkRead } from '@/lib/api/notifications'
 
 function hasToken() {
   return typeof window !== 'undefined' && !!localStorage.getItem('fieldiq_token')
@@ -25,6 +25,7 @@ interface NotificationContextValue {
   notifications: Notification[]
   openNotifications: () => void
   closeNotifications: () => void
+  markRead: (id: string) => void
   markAllRead: () => void
   addNotification: (n: Omit<Notification, 'id' | 'read' | 'entity_type' | 'entity_id'>) => void
 }
@@ -35,6 +36,7 @@ const NotificationContext = createContext<NotificationContextValue>({
   notifications: INITIAL_NOTIFICATIONS,
   openNotifications: () => {},
   closeNotifications: () => {},
+  markRead: () => {},
   markAllRead: () => {},
   addNotification: () => {},
 })
@@ -76,6 +78,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     ])
   }
 
+  async function markRead(id: string) {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
+    try { await apiMarkRead(id) } catch {}
+  }
+
   async function markAllRead() {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })))
     try {
@@ -91,6 +98,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         notifications,
         openNotifications: () => setIsOpen(true),
         closeNotifications: () => setIsOpen(false),
+        markRead,
         markAllRead,
         addNotification,
       }}
