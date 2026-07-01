@@ -139,6 +139,43 @@ export interface MonthlyTrendItem {
   activities: number
 }
 
+export interface ContactSpendItem {
+  contactId: string
+  contactName: string
+  initials: string
+  totalSpend: number
+  activityCount: number
+  avgCostPerActivity: number
+}
+
+export interface SpendEfficiency {
+  spendPerClosing: number | null
+  activitiesPerClosing: number | null
+  efficiencyScore: number
+  totalSpend: number
+  totalActivities: number
+  closedContracts: number
+  closedContractValue: number
+}
+
+export interface SponsorSpendItem {
+  sponsorId: string
+  sponsorName: string
+  initials: string
+  totalContributed: number
+  activityCount: number
+  pctOfTotalSpend: number
+}
+
+export interface AgentEfficiencyEntry {
+  agentId: string
+  name: string
+  initials: string
+  efficiencyScore: number
+  spendPerClosing: number | null
+  activitiesPerClosing: number | null
+}
+
 export interface AgentPerformance {
   monthlySpend: MonthlyTrendItem[]
   activityBreakdown: ActivityBreakdownItem[]
@@ -147,6 +184,9 @@ export interface AgentPerformance {
   contactsEngaged: number
   mostActiveType: string
   avgCostPerActivity: number
+  costPerContact: ContactSpendItem[]
+  efficiency: SpendEfficiency
+  sponsorActivity: SponsorSpendItem[]
 }
 
 interface AgentPerformanceBackend {
@@ -157,10 +197,23 @@ interface AgentPerformanceBackend {
   contacts_engaged: number
   most_active_type: string
   avg_cost_per_activity: number
+  cost_per_contact: Array<{
+    contact_id: string; contact_name: string; initials: string
+    total_spend: number; activity_count: number; avg_cost_per_activity: number
+  }>
+  efficiency: {
+    spend_per_closing: number | null; activities_per_closing: number | null
+    efficiency_score: number; total_spend: number; total_activities: number
+    closed_contracts: number; closed_contract_value: number
+  }
+  sponsor_activity: Array<{
+    sponsor_id: string; sponsor_name: string; initials: string
+    total_contributed: number; activity_count: number; pct_of_total_spend: number
+  }>
 }
 
-export async function getAgentPerformance(): Promise<AgentPerformance> {
-  const d = await api.get<AgentPerformanceBackend>('/analytics/performance/agent')
+export async function getAgentPerformance(period: Period = 'mtd'): Promise<AgentPerformance> {
+  const d = await api.get<AgentPerformanceBackend>(`/analytics/performance/agent?period=${period}`)
   return {
     monthlySpend: d.monthly_spend,
     activityBreakdown: d.activity_breakdown,
@@ -169,6 +222,25 @@ export async function getAgentPerformance(): Promise<AgentPerformance> {
     contactsEngaged: d.contacts_engaged,
     mostActiveType: d.most_active_type,
     avgCostPerActivity: d.avg_cost_per_activity,
+    costPerContact: d.cost_per_contact.map(r => ({
+      contactId: r.contact_id, contactName: r.contact_name, initials: r.initials,
+      totalSpend: r.total_spend, activityCount: r.activity_count,
+      avgCostPerActivity: r.avg_cost_per_activity,
+    })),
+    efficiency: {
+      spendPerClosing: d.efficiency.spend_per_closing,
+      activitiesPerClosing: d.efficiency.activities_per_closing,
+      efficiencyScore: d.efficiency.efficiency_score,
+      totalSpend: d.efficiency.total_spend,
+      totalActivities: d.efficiency.total_activities,
+      closedContracts: d.efficiency.closed_contracts,
+      closedContractValue: d.efficiency.closed_contract_value,
+    },
+    sponsorActivity: d.sponsor_activity.map(r => ({
+      sponsorId: r.sponsor_id, sponsorName: r.sponsor_name, initials: r.initials,
+      totalContributed: r.total_contributed, activityCount: r.activity_count,
+      pctOfTotalSpend: r.pct_of_total_spend,
+    })),
   }
 }
 
@@ -194,6 +266,8 @@ export interface TeamPerformance {
   totalSpendMtd: number
   avgScore: number
   mostActiveAgent: string
+  agentEfficiency: AgentEfficiencyEntry[]
+  teamSponsors: SponsorSpendItem[]
 }
 
 interface TeamPerformanceBackend {
@@ -204,10 +278,18 @@ interface TeamPerformanceBackend {
   total_spend_mtd: number
   avg_score: number
   most_active_agent: string
+  agent_efficiency: Array<{
+    agent_id: string; name: string; initials: string; efficiency_score: number
+    spend_per_closing: number | null; activities_per_closing: number | null
+  }>
+  team_sponsors: Array<{
+    sponsor_id: string; sponsor_name: string; initials: string
+    total_contributed: number; activity_count: number; pct_of_total_spend: number
+  }>
 }
 
-export async function getTeamPerformance(): Promise<TeamPerformance> {
-  const d = await api.get<TeamPerformanceBackend>('/analytics/performance/team')
+export async function getTeamPerformance(period: Period = 'mtd'): Promise<TeamPerformance> {
+  const d = await api.get<TeamPerformanceBackend>(`/analytics/performance/team?period=${period}`)
   return {
     teamWeekly: d.team_weekly,
     activityBreakdown: d.activity_breakdown,
@@ -216,5 +298,27 @@ export async function getTeamPerformance(): Promise<TeamPerformance> {
     totalSpendMtd: d.total_spend_mtd,
     avgScore: d.avg_score,
     mostActiveAgent: d.most_active_agent,
+    agentEfficiency: d.agent_efficiency.map(r => ({
+      agentId: r.agent_id, name: r.name, initials: r.initials,
+      efficiencyScore: r.efficiency_score,
+      spendPerClosing: r.spend_per_closing,
+      activitiesPerClosing: r.activities_per_closing,
+    })),
+    teamSponsors: d.team_sponsors.map(r => ({
+      sponsorId: r.sponsor_id, sponsorName: r.sponsor_name, initials: r.initials,
+      totalContributed: r.total_contributed, activityCount: r.activity_count,
+      pctOfTotalSpend: r.pct_of_total_spend,
+    })),
   }
+}
+
+// ── Activity Heatmap ──────────────────────────────────────────────────────────
+
+export interface ActivityDayItem {
+  date: string   // YYYY-MM-DD
+  count: number
+}
+
+export async function getActivityDays(period: Period = 'mtd'): Promise<ActivityDayItem[]> {
+  return api.get<ActivityDayItem[]>(`/analytics/performance/agent/activity-days?period=${period}`)
 }

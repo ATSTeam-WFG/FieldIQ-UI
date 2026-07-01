@@ -79,6 +79,5 @@ See PRD for full structure. Key paths:
 - Out-of-scope screens show a Coming Soon page.
 
 ## Role Personas
-- Agent: Sarah Chen, Senior Title Agent, Buckhead Territory
-- Manager: Jane Doe, Regional Sales Manager, Premier Title Agency
-- Executive: stub only
+- Sales Rep (Field Agent): Sarah Chen, Field Agent, Buckhead Territory
+- Sales Manager (Title Owner): Jane Doe, Sales Manager, Premier Title Agency

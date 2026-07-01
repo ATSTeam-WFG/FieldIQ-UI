@@ -26,9 +26,7 @@ const US_STATES = [
 ]
 
 const REP_ROLES = [
-  { value: 'rep',        label: 'Sales Rep' },
-  { value: 'senior-rep', label: 'Senior Sales Rep' },
-  { value: 'team-lead',  label: 'Team Lead' },
+  { value: 'rep', label: 'Sales Rep' },
 ]
 
 const REP_COUNTS = ['1–5', '6–15', '16–50', '50+']
@@ -222,7 +220,7 @@ function SignupContent() {
     '1–5': '1-5', '6–15': '6-15', '16–50': '16-50', '50+': '50+',
   }
   const REP_TIER_MAP: Record<string, string> = {
-    'rep': 'sales_rep', 'senior-rep': 'senior_sales_rep', 'team-lead': 'team_lead',
+    'rep': 'sales_rep',
   }
 
   async function handleCreateAccount(e: React.FormEvent) {

@@ -222,17 +222,6 @@ export default function DashboardPage() {
                 <KPICard {...card} />
               </motion.div>
             ))}
-            <motion.div
-              className="col-span-2 md:col-span-3"
-              variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.2 } } }}
-            >
-              <KPICard
-                label="TOP RELATIONSHIP SCORE"
-                value={kpis?.topRelationshipScore ?? '—'}
-                subLabel={kpis?.topContactName ?? ''}
-                href="/scores"
-              />
-            </motion.div>
           </motion.div>
         )}
 
@@ -241,7 +230,13 @@ export default function DashboardPage() {
           <div style={{ marginTop: 16 }}>
             <AICard label="Summary" sublabel="Updated today" readAloud>
               <p style={{ fontSize: 13, color: 'var(--body)', lineHeight: 1.6, margin: 0 }}>
-                This month you&apos;ve logged 21 activities, your best March yet, up 8% from last year. You&apos;re on track to hit your Q2 target. Your strongest relationship is Michelle Tran (score 91). The contact that needs the most attention is James Ellison. You haven&apos;t touched him in 23 days.
+                This week you&apos;ve logged {kpis?.activitiesThisWeek ?? '—'} {kpis?.activitiesThisWeek === 1 ? 'activity' : 'activities'}.
+                {kpis?.topContactName
+                  ? ` Your strongest relationship is ${kpis.topContactName} (score ${kpis.topRelationshipScore}).`
+                  : ''}
+                {nudge
+                  ? ` ${nudge.message}`
+                  : ' All your key relationships are looking healthy.'}
               </p>
             </AICard>
           </div>

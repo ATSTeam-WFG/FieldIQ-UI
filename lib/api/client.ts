@@ -32,7 +32,7 @@ export function clearToken(): void {
 // Deduplication — one refresh flight at a time across concurrent 401s
 let _refreshPromise: Promise<string> | null = null
 
-async function attemptRefresh(): Promise<string> {
+export async function attemptRefresh(): Promise<string> {
   if (_refreshPromise) return _refreshPromise
   _refreshPromise = (async () => {
     const rt = localStorage.getItem('fieldiq_refresh_token')

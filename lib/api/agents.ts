@@ -190,6 +190,12 @@ export async function getAgentDetail(agentId: string): Promise<AgentDetail> {
       contactsEngaged: d.performance.contacts_engaged,
       mostActiveType: d.performance.most_active_type,
       avgCostPerActivity: d.performance.avg_cost_per_activity,
+      costPerContact: [],
+      efficiency: {
+        spendPerClosing: null, activitiesPerClosing: null, efficiencyScore: 0,
+        totalSpend: 0, totalActivities: 0, closedContracts: 0, closedContractValue: 0,
+      },
+      sponsorActivity: [],
     },
   }
 }

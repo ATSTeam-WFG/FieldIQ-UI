@@ -1,12 +1,15 @@
 'use client'
 
-import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { Suspense } from 'react'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, FileText } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
 import { AppShell } from '@/components/fieldiq/AppShell'
 import { FilterSearchBar, FilterDropdown } from '@/components/fieldiq/FilterBar'
 import type { FilterOption } from '@/components/fieldiq/FilterBar'
 import { SkeletonRows } from '@/components/fieldiq/SkeletonRows'
+import { ContractDetailPanel } from '@/components/fieldiq/ContractDetailPanel'
 import { useContract } from '@/lib/context/ContractContext'
 import { useRole } from '@/lib/context/RoleContext'
 import { useContracts } from '@/lib/hooks/useContracts'
@@ -108,17 +111,27 @@ function TypeBadge({ type }: { type: string }) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default function ContractsPage() {
+function ContractsPageContent() {
   const { openLog, openContract } = useContract()
   const { role } = useRole()
   const isManager = role === 'manager'
+  const searchParams = useSearchParams()
 
   const [selectedType,   setSelectedType]   = useState<TypeFilter>('All')
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>('All')
   const [search, setSearch] = useState('')
+  const [detailContract, setDetailContract] = useState<Contract | null>(null)
 
   const { data, isLoading } = useContracts()
   const allContracts = data?.items ?? []
+
+  // Open detail panel when ?view={id} is present (e.g. from a notification)
+  useEffect(() => {
+    const viewId = searchParams.get('view')
+    if (!viewId || !allContracts.length) return
+    const found = allContracts.find(c => c.id === viewId)
+    if (found) setDetailContract(found)
+  }, [searchParams, allContracts])
 
   // Derived stats
   const totalValue = allContracts.reduce((sum, c) => sum + (c.amount ?? 0), 0)
@@ -405,6 +418,21 @@ export default function ContractsPage() {
         </div>
 
       </div>
+
+      {/* Contract detail panel — opened from ?view= param or notification */}
+      <AnimatePresence>
+        {detailContract && (
+          <ContractDetailPanel
+            contract={detailContract}
+            onClose={() => setDetailContract(null)}
+          />
+        )}
+      </AnimatePresence>
+
     </AppShell>
   )
+}
+
+export default function ContractsPage() {
+  return <Suspense><ContractsPageContent /></Suspense>
 }

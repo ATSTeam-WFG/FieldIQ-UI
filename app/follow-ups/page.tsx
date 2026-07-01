@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { Plus, Circle, CalendarPlus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Suspense } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { Plus, Circle, CalendarPlus, ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
 import { AppShell } from '@/components/fieldiq/AppShell'
 import { SkeletonRows } from '@/components/fieldiq/SkeletonRows'
 import { useActivityLog } from '@/lib/context/ActivityLogContext'
@@ -93,6 +95,23 @@ function formatNavLabel(cursor: Date, viewMode: ViewMode): string {
   if (viewMode === 'month') return `${MONTH_NAMES[cursor.getMonth()]} ${cursor.getFullYear()}`
   if (viewMode === 'week') return `${MONTH_SHORT[startOfWeek(cursor).getMonth()]} ${cursor.getFullYear()}`
   return `${MONTH_SHORT[cursor.getMonth()]} ${cursor.getFullYear()}`
+}
+
+function ordinal(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd']
+  const v = n % 100
+  return n + (s[(v - 20) % 10] || s[v] || s[0])
+}
+
+function mobileNavLabel(cursor: Date, viewMode: ViewMode): string {
+  if (viewMode === 'month') return `${MONTH_NAMES[cursor.getMonth()]} ${cursor.getFullYear()}`
+  if (viewMode === 'week') {
+    const s = startOfWeek(cursor)
+    const e = addDays(s, 6)
+    if (s.getMonth() === e.getMonth()) return `${ordinal(s.getDate())} – ${ordinal(e.getDate())}`
+    return `${MONTH_SHORT[s.getMonth()]} ${s.getDate()} – ${MONTH_SHORT[e.getMonth()]} ${e.getDate()}`
+  }
+  return `${DAY_LONG[cursor.getDay()]} ${cursor.getDate()}`
 }
 
 // ── Calendar URL helpers ──────────────────────────────────────────────────────
@@ -210,6 +229,8 @@ function EventChip({ item, today }: { item: FollowUp; today: Date }) {
       borderRadius: '0 3px 3px 0',
       padding: '2px 5px',
       marginBottom: 2,
+      display: 'block',
+      width: '100%', maxWidth: '100%', boxSizing: 'border-box',
       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
     }}>
       {item.contact?.name ?? 'Follow-up'}
@@ -220,9 +241,9 @@ function EventChip({ item, today }: { item: FollowUp; today: Date }) {
 // ── MONTH VIEW ────────────────────────────────────────────────────────────────
 
 function MonthView({
-  cursor, followUps, selectedDay, today, onDayClick,
+  cursor, followUps, selectedDay, today, onDayClick, isMobile,
 }: {
-  cursor: Date; followUps: FollowUp[]; selectedDay: string | null; today: Date; onDayClick: (s: string) => void
+  cursor: Date; followUps: FollowUp[]; selectedDay: string | null; today: Date; onDayClick: (s: string) => void; isMobile?: boolean
 }) {
   const year = cursor.getFullYear()
   const month = cursor.getMonth()
@@ -236,14 +257,17 @@ function MonthView({
     const arr = byDate.get(item.due_date) ?? []; arr.push(item); byDate.set(item.due_date, arr)
   }
 
+  const borderColor = isMobile ? 'rgba(255,255,255,0.07)' : 'var(--border)'
+  const dayLetters = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
       {/* Day-of-week headers */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
-        {DAY_LONG.map((d, i) => (
-          <div key={d} style={{ padding: '10px 0', textAlign: 'center', borderLeft: i > 0 ? '1px solid var(--border)' : 'none' }}>
-            <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              {d.slice(0, 3)}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: `1px solid ${borderColor}`, flexShrink: 0 }}>
+        {dayLetters.map((d, i) => (
+          <div key={i} style={{ padding: isMobile ? '7px 0' : '10px 0', textAlign: 'center', borderLeft: (!isMobile && i > 0) ? '1px solid var(--border)' : 'none' }}>
+            <span style={{ fontSize: isMobile ? 11 : 11, fontWeight: 500, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: isMobile ? '0.02em' : '0.05em' }}>
+              {isMobile ? d : DAY_LONG[i].slice(0, 3)}
             </span>
           </div>
         ))}
@@ -258,7 +282,7 @@ function MonthView({
         overflow: 'hidden',
       }}>
         {Array.from({ length: firstDOW }).map((_, i) => (
-          <div key={`pad-${i}`} style={{ borderRight: '1px solid var(--border)', borderBottom: '1px solid var(--border)', backgroundColor: 'var(--surface)', opacity: 0.4 }} />
+          <div key={`pad-${i}`} style={{ borderRight: `1px solid ${borderColor}`, borderBottom: `1px solid ${borderColor}`, backgroundColor: isMobile ? 'transparent' : 'var(--surface)', opacity: 0.4 }} />
         ))}
         {Array.from({ length: daysInMonth }).map((_, i) => {
           const day = i + 1
@@ -268,16 +292,15 @@ function MonthView({
           const isSelected = selectedDay === dateStr
           const items = byDate.get(dateStr) ?? []
           const col = (firstDOW + i) % 7
-          const isLastCol = col === 6
 
           return (
             <div
               key={day}
               onClick={() => onDayClick(dateStr)}
               style={{
-                borderLeft: col > 0 ? '1px solid var(--border)' : 'none',
-                borderBottom: '1px solid var(--border)',
-                padding: '6px 8px',
+                borderLeft: col > 0 ? `1px solid ${borderColor}` : 'none',
+                borderBottom: `1px solid ${borderColor}`,
+                padding: isMobile ? '3px 2px' : '6px 8px',
                 cursor: 'pointer',
                 backgroundColor: isSelected ? 'rgba(196,165,116,0.07)' : 'transparent',
                 transition: 'background-color 0.12s ease',
@@ -286,11 +309,11 @@ function MonthView({
               }}
             >
               {/* Day number */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4 }}>
+              <div style={{ display: 'flex', justifyContent: isMobile ? 'center' : 'flex-end', marginBottom: isMobile ? 2 : 4 }}>
                 <span style={{
-                  width: 26, height: 26,
+                  width: isMobile ? 24 : 26, height: isMobile ? 24 : 26,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  borderRadius: '50%', fontSize: 12,
+                  borderRadius: '50%', fontSize: isMobile ? 11 : 12,
                   fontWeight: isToday ? 700 : isSelected ? 600 : 400,
                   backgroundColor: isToday ? '#c4a574' : 'transparent',
                   color: isToday ? '#000' : isSelected ? '#c4a574' : 'var(--body)',
@@ -300,11 +323,24 @@ function MonthView({
               </div>
 
               {/* Event chips */}
-              {items.slice(0, 3).map(item => <EventChip key={item.id} item={item} today={today} />)}
-              {items.length > 3 && (
-                <div style={{ fontSize: 10, color: 'var(--muted)', paddingLeft: 3, marginTop: 1 }}>
-                  +{items.length - 3} more
-                </div>
+              {isMobile ? (
+                items.length > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <div style={{
+                      width: 5, height: 5, borderRadius: '50%',
+                      backgroundColor: items.some(it => !!it.due_date && parseDate(it.due_date) < today) ? '#d97706' : '#c4a574',
+                    }} />
+                  </div>
+                )
+              ) : (
+                <>
+                  {items.slice(0, 3).map(item => <EventChip key={item.id} item={item} today={today} />)}
+                  {items.length > 3 && (
+                    <div style={{ fontSize: 10, color: 'var(--muted)', paddingLeft: 3, marginTop: 1 }}>
+                      +{items.length - 3} more
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )
@@ -317,9 +353,9 @@ function MonthView({
 // ── WEEK VIEW ─────────────────────────────────────────────────────────────────
 
 function WeekView({
-  cursor, followUps, selectedDay, today, onDayClick,
+  cursor, followUps, selectedDay, today, onDayClick, isMobile,
 }: {
-  cursor: Date; followUps: FollowUp[]; selectedDay: string | null; today: Date; onDayClick: (s: string) => void
+  cursor: Date; followUps: FollowUp[]; selectedDay: string | null; today: Date; onDayClick: (s: string) => void; isMobile?: boolean
 }) {
   const weekStart = startOfWeek(cursor)
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
@@ -330,13 +366,16 @@ function WeekView({
     const arr = byDate.get(item.due_date) ?? []; arr.push(item); byDate.set(item.due_date, arr)
   }
 
-  const cols = `${GUTTER}px repeat(7, 1fr)`
+  const gutter = isMobile ? 40 : GUTTER
+  const cols = `${gutter}px repeat(7, 1fr)`
+  const borderColor = isMobile ? 'rgba(255,255,255,0.07)' : 'var(--border)'
+  const dayLetters = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
 
       {/* Day header row */}
-      <div style={{ display: 'grid', gridTemplateColumns: cols, borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: cols, borderBottom: `1px solid ${borderColor}`, flexShrink: 0 }}>
         <div /> {/* gutter */}
         {days.map((d, i) => {
           const dateStr = toDateStr(d)
@@ -346,16 +385,18 @@ function WeekView({
             <button key={i} onClick={() => onDayClick(dateStr)}
               style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                padding: '8px 4px', gap: 4, border: 'none', backgroundColor: 'transparent', cursor: 'pointer',
-                borderLeft: i > 0 ? '1px solid var(--border)' : 'none',
+                padding: isMobile ? '6px 2px' : '8px 4px', gap: isMobile ? 3 : 4,
+                border: 'none', backgroundColor: 'transparent', cursor: 'pointer',
+                borderLeft: i > 0 ? `1px solid ${borderColor}` : 'none',
               }}
             >
-              <span style={{ fontSize: 10, fontWeight: 500, color: isToday ? '#c4a574' : 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                {DAY_SHORT[d.getDay()]}
+              <span style={{ fontSize: 10, fontWeight: 500, color: isToday ? '#c4a574' : 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                {isMobile ? dayLetters[d.getDay()] : DAY_SHORT[d.getDay()]}
               </span>
               <span style={{
-                width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                borderRadius: '50%', fontSize: 16, fontWeight: 700,
+                width: isMobile ? 28 : 32, height: isMobile ? 28 : 32,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                borderRadius: '50%', fontSize: isMobile ? 15 : 16, fontWeight: 700,
                 backgroundColor: isToday ? '#c4a574' : 'transparent',
                 color: isToday ? '#000' : isSelected ? '#c4a574' : 'var(--foreground)',
               }}>
@@ -367,14 +408,24 @@ function WeekView({
       </div>
 
       {/* All-day row */}
-      <div style={{ display: 'grid', gridTemplateColumns: cols, borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', paddingRight: 8, paddingTop: 6, paddingBottom: 4 }}>
-          <span style={{ fontSize: 9, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>All day</span>
+      <div style={{ display: 'grid', gridTemplateColumns: cols, borderBottom: `1px solid ${borderColor}`, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', paddingRight: isMobile ? 4 : 8, paddingTop: 5, paddingBottom: 4, borderRight: `1px solid ${borderColor}` }}>
+          <span style={{ fontSize: 9, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>all</span>
         </div>
         {days.map((d, i) => {
           const items = byDate.get(toDateStr(d)) ?? []
+          const dateStr = toDateStr(d)
           return (
-            <div key={i} style={{ padding: '4px 5px', borderLeft: i > 0 ? '1px solid var(--border)' : 'none', minHeight: 32 }}>
+            <div
+              key={i}
+              onClick={isMobile && items.length > 0 ? () => onDayClick(dateStr) : undefined}
+              style={{
+                padding: '4px 3px',
+                borderLeft: i > 0 ? `1px solid ${borderColor}` : 'none',
+                minHeight: 28, overflow: 'hidden', minWidth: 0,
+                cursor: isMobile && items.length > 0 ? 'pointer' : 'default',
+              }}
+            >
               {items.map(item => <EventChip key={item.id} item={item} today={today} />)}
             </div>
           )
@@ -385,11 +436,11 @@ function WeekView({
       <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
         {HOURS.map(h => (
           <div key={h} style={{ display: 'grid', gridTemplateColumns: cols, height: SLOT_H, flexShrink: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', paddingRight: 8, paddingTop: 5 }}>
-              <span style={{ fontSize: 10, color: 'var(--muted)' }}>{formatHour(h)}</span>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', paddingRight: isMobile ? 4 : 8, paddingTop: 5, borderRight: `1px solid ${borderColor}` }}>
+              <span style={{ fontSize: isMobile ? 9 : 10, color: 'var(--muted)' }}>{formatHour(h)}</span>
             </div>
             {days.map((_, i) => (
-              <div key={i} style={{ borderLeft: i > 0 ? '1px solid var(--border)' : 'none', borderTop: '1px solid var(--border)' }} />
+              <div key={i} style={{ borderLeft: i > 0 ? `1px solid ${borderColor}` : 'none', borderTop: `1px solid ${borderColor}` }} />
             ))}
           </div>
         ))}
@@ -401,9 +452,9 @@ function WeekView({
 // ── DAY VIEW ──────────────────────────────────────────────────────────────────
 
 function DayView({
-  cursor, followUps, today,
+  cursor, followUps, today, isMobile, onDayClick,
 }: {
-  cursor: Date; followUps: FollowUp[]; today: Date
+  cursor: Date; followUps: FollowUp[]; today: Date; isMobile?: boolean; onDayClick?: (dateStr: string) => void
 }) {
   const dateStr = toDateStr(cursor)
   const dayItems = followUps.filter(i => i.due_date === dateStr)
@@ -420,20 +471,22 @@ function DayView({
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
 
-      {/* Day header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '12px 0', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
-        <span style={{ fontSize: 11, fontWeight: 500, color: isToday ? '#c4a574' : 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-          {DAY_LONG[cursor.getDay()]}
-        </span>
-        <span style={{
-          width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          borderRadius: '50%', fontSize: 20, fontWeight: 700,
-          backgroundColor: isToday ? '#c4a574' : 'transparent',
-          color: isToday ? '#000' : 'var(--foreground)',
-        }}>
-          {cursor.getDate()}
-        </span>
-      </div>
+      {/* Day header — desktop only; mobile shows this in the nav row above */}
+      {!isMobile && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '12px 0', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+          <span style={{ fontSize: 11, fontWeight: 500, color: isToday ? '#c4a574' : 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            {DAY_LONG[cursor.getDay()]}
+          </span>
+          <span style={{
+            width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            borderRadius: '50%', fontSize: 20, fontWeight: 700,
+            backgroundColor: isToday ? '#c4a574' : 'transparent',
+            color: isToday ? '#000' : 'var(--foreground)',
+          }}>
+            {cursor.getDate()}
+          </span>
+        </div>
+      )}
 
       {/* All-day row */}
       <div style={{ display: 'grid', gridTemplateColumns: cols, borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
@@ -445,15 +498,20 @@ function DayView({
             <span style={{ fontSize: 12, color: 'var(--muted)', fontStyle: 'italic' }}>No follow-ups</span>
           ) : (
             dayItems.map(item => (
-              <div key={item.id} style={{
-                fontSize: 12,
-                backgroundColor: 'rgba(196,165,116,0.12)',
-                color: '#c4a574',
-                borderLeft: '2px solid #c4a574',
-                borderRadius: '0 4px 4px 0',
-                padding: '4px 10px',
-                marginBottom: 3,
-              }}>
+              <div
+                key={item.id}
+                onClick={isMobile && onDayClick ? () => onDayClick(toDateStr(cursor)) : undefined}
+                style={{
+                  fontSize: 12,
+                  backgroundColor: 'rgba(196,165,116,0.12)',
+                  color: '#c4a574',
+                  borderLeft: '2px solid #c4a574',
+                  borderRadius: '0 4px 4px 0',
+                  padding: '4px 10px',
+                  marginBottom: 3,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  cursor: isMobile && onDayClick ? 'pointer' : 'default',
+                }}>
                 <span style={{ fontWeight: 600 }}>{item.contact?.name ?? 'Follow-up'}</span>
                 {item.contact?.company && <span style={{ color: 'var(--muted)' }}> — {item.contact.company}</span>}
               </div>
@@ -487,16 +545,76 @@ function DayView({
   )
 }
 
+// ── Mobile bottom sheet ───────────────────────────────────────────────────────
+
+function MobileSheet({ open, title, items, onClose }: {
+  open: boolean; title: string; items: FollowUp[]; onClose: () => void
+}) {
+  if (!open) return null
+  return (
+    <>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.55)', zIndex: 200 }} />
+      <div style={{
+        position: 'fixed', bottom: 56, left: 0, right: 0,
+        backgroundColor: 'var(--card)',
+        borderRadius: '16px 16px 0 0',
+        borderTop: '2px solid #c4a574',
+        border: '1px solid var(--border)',
+        zIndex: 201,
+        maxHeight: '65vh',
+        display: 'flex', flexDirection: 'column',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 0', flexShrink: 0 }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: 'var(--border)' }} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px 12px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)', margin: 0 }}>{title}</h3>
+          <button onClick={onClose} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--muted)', display: 'flex', alignItems: 'center' }}>
+            <X size={16} />
+          </button>
+        </div>
+        <div style={{ overflowY: 'auto', flex: 1 }}>
+          {items.length === 0 ? (
+            <div style={{ padding: '28px 16px', textAlign: 'center' }}>
+              <span style={{ fontSize: 13, color: 'var(--muted)' }}>No follow-ups scheduled</span>
+            </div>
+          ) : (
+            items.map((item, idx) => <FollowUpRow key={item.id} item={item} isLast={idx === items.length - 1} />)
+          )}
+        </div>
+      </div>
+    </>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default function FollowUpsPage() {
+function FollowUpsPageContent() {
   const { openLog } = useActivityLog()
   const { data, isLoading } = useFollowUps({ page_size: 100 })
+  const searchParams = useSearchParams()
 
   const [viewMode, setViewMode] = useState<ViewMode>('month')
   const [cursor, setCursor] = useState<Date>(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d })
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  const [isMobile, setIsMobile] = useState(false)
+  const [sheet, setSheet] = useState<{ open: boolean; title: string; items: FollowUp[] }>({ open: false, title: '', items: [] })
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
+  // Position calendar at ?date= param when arriving from a notification
+  useEffect(() => {
+    const dateParam = searchParams.get('date')
+    if (!dateParam) return
+    const d = parseDate(dateParam)
+    if (!isNaN(d.getTime())) setCursor(d)
+  }, [searchParams])
 
   const today = new Date(); today.setHours(0, 0, 0, 0)
 
@@ -540,6 +658,16 @@ export default function FollowUpsPage() {
   }
 
   function handleDayClick(dateStr: string) {
+    if (isMobile) {
+      const dayItems = pendingItems.filter(i => i.due_date === dateStr)
+      const d = parseDate(dateStr)
+      setSheet({
+        open: true,
+        title: d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }),
+        items: dayItems,
+      })
+      return
+    }
     if (viewMode === 'day') {
       setCursor(parseDate(dateStr))
     } else {
@@ -552,7 +680,7 @@ export default function FollowUpsPage() {
 
   return (
     <AppShell activeItem="Follow-ups">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, height: 'calc(100vh - 56px - 64px)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, height: isMobile ? undefined : 'calc(100vh - 56px - 64px)' }}>
 
         {/* Page header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0 }}>
@@ -572,80 +700,160 @@ export default function FollowUpsPage() {
           </button>
         </div>
 
-        {/* Split layout */}
-        <div style={{ display: 'flex', flex: 1, gap: 16, minHeight: 0, alignItems: 'stretch' }}>
-
-          {/* ── LEFT: Calendar Panel (62%) ─────────────────────────── */}
-          <div
-            className="fieldiq-card"
-            style={{ flex: '0 0 62%', display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 0 }}
+        {/* Mobile overdue strip */}
+        {isMobile && overdueItems.length > 0 && (
+          <button
+            onClick={() => setSheet({ open: true, title: `Overdue (${overdueItems.length})`, items: overdueItems })}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', backgroundColor: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.25)', borderRadius: 8, cursor: 'pointer', textAlign: 'left', flexShrink: 0 }}
           >
-            {/* Calendar header: view switcher + nav */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid var(--border)', flexShrink: 0, gap: 12 }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: '#d97706', display: 'inline-block', flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: '#d97706', fontWeight: 500 }}>{overdueItems.length} overdue follow-ups — tap to review</span>
+            <ChevronRight size={13} style={{ color: '#d97706', marginLeft: 'auto' }} />
+          </button>
+        )}
 
-              {/* View switcher */}
-              <div style={{ display: 'flex', backgroundColor: 'var(--surface)', borderRadius: 8, padding: 3, gap: 2 }}>
-                {(['month', 'week', 'day'] as ViewMode[]).map(mode => (
-                  <button key={mode} onClick={() => switchView(mode)}
-                    style={{
-                      height: 30, paddingLeft: 14, paddingRight: 14, fontSize: 12, borderRadius: 6, border: 'none',
-                      fontWeight: viewMode === mode ? 600 : 400,
-                      backgroundColor: viewMode === mode ? 'var(--card)' : 'transparent',
-                      color: viewMode === mode ? 'var(--foreground)' : 'var(--muted)',
-                      boxShadow: viewMode === mode ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
-                      cursor: 'pointer', transition: 'all 0.12s ease', textTransform: 'capitalize',
-                    }}
+        {/* Split layout */}
+        <div style={{ display: 'flex', flex: isMobile ? undefined : 1, gap: 16, minHeight: 0, alignItems: 'stretch' }}>
+
+          {/* ── Calendar Panel ─────────────────────────────────────── */}
+          <div
+            className={isMobile ? '' : 'fieldiq-card'}
+            style={{
+              flex: isMobile ? undefined : '0 0 62%',
+              // Full-bleed on mobile: break out of p-4 padding
+              ...(isMobile ? {
+                width: 'calc(100% + 32px)',
+                marginLeft: -16,
+                marginRight: -16,
+                height: `calc(100dvh - ${overdueItems.length > 0 ? 265 : 215}px)`,
+                backgroundColor: 'transparent',
+                border: 'none',
+                borderRadius: 0,
+              } : {}),
+              display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 0,
+            }}
+          >
+            {/* Calendar header */}
+            {isMobile ? (
+              <>
+                {/* Row 1: Full-width tab bar */}
+                <div style={{ display: 'flex', flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                  {(['month', 'week', 'day'] as ViewMode[]).map(mode => (
+                    <button key={mode} onClick={() => switchView(mode)}
+                      style={{
+                        flex: 1, height: 40, fontSize: 13, border: 'none', background: 'transparent',
+                        fontWeight: viewMode === mode ? 600 : 400,
+                        color: viewMode === mode ? 'var(--foreground)' : 'var(--muted)',
+                        borderBottom: viewMode === mode ? '2px solid #c4a574' : '2px solid transparent',
+                        cursor: 'pointer', textTransform: 'capitalize', marginBottom: -1,
+                      }}
+                    >
+                      {mode}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Row 2: Nav arrows + context label + Today */}
+                <div style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', gap: 6, flexShrink: 0 }}>
+                  <button onClick={() => navigate(-1)}
+                    style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'transparent', cursor: 'pointer', flexShrink: 0 }}
                   >
-                    {mode}
+                    <ChevronLeft size={18} style={{ color: 'var(--muted)' }} />
                   </button>
-                ))}
-              </div>
-
-              {/* Navigation */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <button onClick={() => navigate(-1)}
-                  style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)', backgroundColor: 'transparent', borderRadius: 6, cursor: 'pointer' }}
-                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--surface)')}
-                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  {viewMode === 'day' ? (
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: isSameDay(cursor, today) ? '#c4a574' : 'var(--foreground)' }}>
+                        {DAY_LONG[cursor.getDay()]}
+                      </span>
+                      <span style={{
+                        width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        borderRadius: '50%', fontSize: 14, fontWeight: 700,
+                        backgroundColor: isSameDay(cursor, today) ? '#c4a574' : 'transparent',
+                        border: isSameDay(cursor, today) ? 'none' : '1px solid var(--border)',
+                        color: isSameDay(cursor, today) ? '#000' : 'var(--foreground)',
+                      }}>
+                        {cursor.getDate()}
+                      </span>
+                    </div>
+                  ) : (
+                    <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: 'var(--foreground)', textAlign: 'center' }}>
+                      {mobileNavLabel(cursor, viewMode)}
+                    </span>
+                  )}
+                  <button onClick={() => navigate(1)}
+                    style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'transparent', cursor: 'pointer', flexShrink: 0 }}
+                  >
+                    <ChevronRight size={18} style={{ color: 'var(--muted)' }} />
+                  </button>
+                  <button onClick={goToday}
+                    style={{ height: 28, paddingLeft: 12, paddingRight: 12, fontSize: 12, fontWeight: 500, border: '1px solid var(--border)', borderRadius: 8, background: 'transparent', color: 'var(--muted)', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
+                  >
+                    Today
+                  </button>
+                </div>
+              </>
+            ) : (
+              /* Desktop: single-row header */
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid var(--border)', flexShrink: 0, gap: 12 }}>
+                <div style={{ display: 'flex', backgroundColor: 'var(--surface)', borderRadius: 8, padding: 3, gap: 2 }}>
+                  {(['month', 'week', 'day'] as ViewMode[]).map(mode => (
+                    <button key={mode} onClick={() => switchView(mode)}
+                      style={{
+                        height: 30, paddingLeft: 14, paddingRight: 14, fontSize: 12, borderRadius: 6, border: 'none',
+                        fontWeight: viewMode === mode ? 600 : 400,
+                        backgroundColor: viewMode === mode ? 'var(--card)' : 'transparent',
+                        color: viewMode === mode ? 'var(--foreground)' : 'var(--muted)',
+                        boxShadow: viewMode === mode ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                        cursor: 'pointer', transition: 'all 0.12s ease', textTransform: 'capitalize',
+                      }}
+                    >
+                      {mode}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <button onClick={() => navigate(-1)}
+                    style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)', backgroundColor: 'transparent', borderRadius: 6, cursor: 'pointer' }}
+                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--surface)')}
+                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <ChevronLeft size={15} style={{ color: 'var(--muted)' }} />
+                  </button>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)', minWidth: 130, textAlign: 'center' }}>
+                    {formatNavLabel(cursor, viewMode)}
+                  </span>
+                  <button onClick={() => navigate(1)}
+                    style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)', backgroundColor: 'transparent', borderRadius: 6, cursor: 'pointer' }}
+                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--surface)')}
+                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <ChevronRight size={15} style={{ color: 'var(--muted)' }} />
+                  </button>
+                </div>
+                <button onClick={goToday}
+                  style={{ height: 30, paddingLeft: 14, paddingRight: 14, fontSize: 12, fontWeight: 500, border: '1px solid var(--border)', borderRadius: 8, backgroundColor: 'transparent', color: 'var(--muted)', cursor: 'pointer', transition: 'color 0.15s, border-color 0.15s' }}
+                  onMouseEnter={e => { e.currentTarget.style.color = '#c4a574'; e.currentTarget.style.borderColor = '#c4a574' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.borderColor = 'var(--border)' }}
                 >
-                  <ChevronLeft size={15} style={{ color: 'var(--muted)' }} />
-                </button>
-                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)', minWidth: 130, textAlign: 'center' }}>
-                  {formatNavLabel(cursor, viewMode)}
-                </span>
-                <button onClick={() => navigate(1)}
-                  style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)', backgroundColor: 'transparent', borderRadius: 6, cursor: 'pointer' }}
-                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--surface)')}
-                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
-                >
-                  <ChevronRight size={15} style={{ color: 'var(--muted)' }} />
+                  Today
                 </button>
               </div>
-
-              {/* Today button */}
-              <button onClick={goToday}
-                style={{ height: 30, paddingLeft: 14, paddingRight: 14, fontSize: 12, fontWeight: 500, border: '1px solid var(--border)', borderRadius: 8, backgroundColor: 'transparent', color: 'var(--muted)', cursor: 'pointer', transition: 'color 0.15s, border-color 0.15s' }}
-                onMouseEnter={e => { e.currentTarget.style.color = '#c4a574'; e.currentTarget.style.borderColor = '#c4a574' }}
-                onMouseLeave={e => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.borderColor = 'var(--border)' }}
-              >
-                Today
-              </button>
-            </div>
+            )}
 
             {/* Calendar body */}
             {viewMode === 'month' && (
-              <MonthView cursor={cursor} followUps={pendingItems} selectedDay={selectedDay} today={today} onDayClick={handleDayClick} />
+              <MonthView cursor={cursor} followUps={pendingItems} selectedDay={selectedDay} today={today} onDayClick={handleDayClick} isMobile={isMobile} />
             )}
             {viewMode === 'week' && (
-              <WeekView cursor={cursor} followUps={pendingItems} selectedDay={selectedDay} today={today} onDayClick={handleDayClick} />
+              <WeekView cursor={cursor} followUps={pendingItems} selectedDay={selectedDay} today={today} onDayClick={handleDayClick} isMobile={isMobile} />
             )}
             {viewMode === 'day' && (
-              <DayView cursor={cursor} followUps={pendingItems} today={today} />
+              <DayView cursor={cursor} followUps={pendingItems} today={today} isMobile={isMobile} onDayClick={isMobile ? handleDayClick : undefined} />
             )}
           </div>
 
-          {/* ── RIGHT: List Panel (38%) ────────────────────────────── */}
-          <div ref={listRef} style={{ flex: '0 0 38%', display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto', minHeight: 0 }}>
+          {/* ── RIGHT: List Panel — desktop only ───────────────────── */}
+          {!isMobile && <div ref={listRef} style={{ flex: '0 0 38%', display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto', minHeight: 0 }}>
 
             {/* Range label */}
             <h2 style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)', margin: 0, flexShrink: 0 }}>
@@ -726,9 +934,22 @@ export default function FollowUpsPage() {
 
               </div>
             )}
-          </div>
+          </div>}
         </div>
       </div>
+
+      {isMobile && (
+        <MobileSheet
+          open={sheet.open}
+          title={sheet.title}
+          items={sheet.items}
+          onClose={() => setSheet(s => ({ ...s, open: false }))}
+        />
+      )}
     </AppShell>
   )
+}
+
+export default function FollowUpsPage() {
+  return <Suspense><FollowUpsPageContent /></Suspense>
 }

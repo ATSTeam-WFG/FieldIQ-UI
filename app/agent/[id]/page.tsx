@@ -21,7 +21,7 @@ import {
 
 function repTierLabel(tier: string | null): string {
   if (!tier) return ''
-  return { sales_rep: 'Sales Rep', senior_sales_rep: 'Senior Rep', team_lead: 'Team Lead' }[tier] ?? tier
+  return tier === 'sales_rep' ? 'Sales Rep' : tier
 }
 
 function statusConfig(status: string) {

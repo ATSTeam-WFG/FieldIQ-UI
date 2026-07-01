@@ -98,8 +98,13 @@ export function NotifRow({
   if (notif.type === 'alert' && hasContact) {
     contextActions.push({ label: 'Log Activity', onClick: onLogActivity })
     contextActions.push({ label: 'View Contact', onClick: () => onNavigate(`/contacts/${notif.entity_id}`) })
+  } else if (notif.type === 'alert' && notif.entity_type === 'contract' && notif.entity_id) {
+    contextActions.push({ label: 'View Contract', onClick: () => onNavigate(`/contracts?view=${notif.entity_id}`) })
   } else if (notif.type === 'follow-up') {
-    contextActions.push({ label: 'View Follow-ups', onClick: () => onNavigate('/follow-ups') })
+    // Extract due date from message to position the calendar on the right period
+    const dateMatch = notif.message.match(/\(due (\d{4}-\d{2}-\d{2})\)/)
+    const followUpPath = dateMatch ? `/follow-ups?date=${dateMatch[1]}` : '/follow-ups'
+    contextActions.push({ label: 'View Follow-ups', onClick: () => onNavigate(followUpPath) })
   } else if (notif.type === 'activity') {
     contextActions.push({ label: 'View Activities', onClick: () => onNavigate('/activities') })
   }

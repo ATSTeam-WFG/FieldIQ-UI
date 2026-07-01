@@ -11,9 +11,7 @@ import { createInvites } from '@/lib/api/agencies'
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const ROLES = [
-  { value: 'rep',         label: 'Sales Rep' },
-  { value: 'senior-rep',  label: 'Senior Sales Rep' },
-  { value: 'team-lead',   label: 'Team Lead' },
+  { value: 'rep', label: 'Sales Rep' },
 ]
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -81,8 +79,6 @@ export function InviteAgentPanel() {
 
   const REP_TIER_MAP: Record<string, string> = {
     'rep': 'sales_rep',
-    'senior-rep': 'senior_sales_rep',
-    'team-lead': 'team_lead',
   }
 
   async function handleSend() {
@@ -164,7 +160,7 @@ export function InviteAgentPanel() {
 
           <div>
             <FieldLabel label="Role" required />
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 gap-2">
               {ROLES.map(({ value, label }) => {
                 const active = role === value
                 return (

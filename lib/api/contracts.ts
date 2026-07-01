@@ -56,6 +56,10 @@ export async function createContract(payload: {
   return api.post<Contract>('/contracts/', payload)
 }
 
+export async function getContract(id: string): Promise<Contract> {
+  return api.get<Contract>(`/contracts/${id}`)
+}
+
 export async function updateContract(id: string, payload: Partial<{
   contact_id: string | null
   title: string | null

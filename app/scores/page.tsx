@@ -7,6 +7,8 @@ import { SkeletonRows } from '@/components/fieldiq/SkeletonRows'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { useContacts } from '@/lib/hooks/useContacts'
 import { useScoreTrends } from '@/lib/hooks/useScoreTrends'
+import { useAgentPerformance } from '@/lib/hooks/useAgentPerformance'
+import { SponsorActivitySection } from '@/components/fieldiq/SponsorActivitySection'
 import type { Contact } from '@/lib/api/contacts'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -143,6 +145,7 @@ export default function MyRelationsPage() {
   const [sort, setSort] = useState<SortMode>('risk-first')
 
   const { data, isLoading } = useContacts()
+  const { data: perfData } = useAgentPerformance('mtd')
   const { data: trendsData } = useScoreTrends()
 
   const trendsMap = Object.fromEntries(
@@ -387,6 +390,11 @@ export default function MyRelationsPage() {
               </div>
             )
           })}
+        </div>
+
+        {/* ── Sponsor Activity ────────────────────────────── */}
+        <div style={{ marginTop: 12 }}>
+          <SponsorActivitySection items={perfData?.sponsorActivity ?? []} />
         </div>
 
       </div>

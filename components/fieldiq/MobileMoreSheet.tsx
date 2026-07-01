@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { X, FileText, TrendingUp, Settings, HelpCircle, BarChart2, ChevronRight } from 'lucide-react'
+import { X, FileText, TrendingUp, Settings, HelpCircle, BarChart2, ChevronRight, Download } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { motion } from 'framer-motion'
 
@@ -14,6 +14,7 @@ interface MoreTab {
 const agentTabs: MoreTab[] = [
   { label: 'Contracts',            href: '/contracts',    icon: FileText    },
   { label: 'My Performance',       href: '/performance',  icon: TrendingUp  },
+  { label: 'Exports',              href: '/exports',      icon: Download    },
   { label: 'Settings',             href: '/settings',     icon: Settings    },
   { label: 'Help & Support',       href: '/coming-soon',  icon: HelpCircle  },
 ]
@@ -21,6 +22,7 @@ const agentTabs: MoreTab[] = [
 const managerTabs: MoreTab[] = [
   { label: 'Performance',    href: '/performance',  icon: TrendingUp  },
   { label: 'Reports',        href: '/coming-soon',  icon: BarChart2   },
+  { label: 'Exports',        href: '/exports',      icon: Download    },
   { label: 'Settings',       href: '/settings',     icon: Settings    },
   { label: 'Help & Support', href: '/coming-soon',  icon: HelpCircle  },
 ]
