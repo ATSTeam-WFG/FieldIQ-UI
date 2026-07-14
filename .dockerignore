@@ -1,0 +1,16 @@
+node_modules
+.next
+out
+.git
+.github
+tests
+test-results
+playwright-report
+designs
+*.log
+.env
+.env.local
+.DS_Store
+README.md
+THINKPAD.md
+CLAUDE.md
