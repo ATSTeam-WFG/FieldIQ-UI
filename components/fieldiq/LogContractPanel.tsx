@@ -136,6 +136,157 @@ function PanelSelect<T extends string>({
   )
 }
 
+// ── ContactPicker ───────────────────────────────────────────────────────────
+
+function ContactPicker({
+  value,
+  onChange,
+  contacts,
+  placeholder,
+  clearable,
+  onAddNew,
+}: {
+  value: Contact | null
+  onChange: (c: Contact | null) => void
+  contacts: Contact[]
+  placeholder: string
+  clearable?: boolean
+  onAddNew?: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const filtered = search
+    ? contacts.filter(
+        c =>
+          c.name.toLowerCase().includes(search.toLowerCase()) ||
+          (c.company ?? '').toLowerCase().includes(search.toLowerCase())
+      )
+    : contacts
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button
+        type="button"
+        onClick={() => setOpen(prev => !prev)}
+        className="flex w-full items-center justify-between rounded-[8px]"
+        style={{
+          padding: value ? '8px 12px' : '0 12px',
+          minHeight: 40,
+          gap: 8,
+          backgroundColor: 'var(--surface)',
+          border: '1px solid var(--border)',
+          cursor: 'pointer',
+          textAlign: 'left',
+        }}
+      >
+        {value ? (
+          <div className="flex items-center" style={{ gap: 8, minWidth: 0 }}>
+            <div
+              className="flex shrink-0 items-center justify-center rounded-full"
+              style={{ width: 24, height: 24, backgroundColor: '#c4a574', fontSize: 10, fontWeight: 600, color: '#000' }}
+            >
+              {value.initials}
+            </div>
+            <div className="flex min-w-0 flex-col" style={{ gap: 1 }}>
+              <span className="truncate" style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>{value.name}</span>
+              <span className="truncate" style={{ fontSize: 11, color: 'var(--muted)' }}>{value.company}</span>
+            </div>
+          </div>
+        ) : (
+          <span style={{ fontSize: 13, color: 'var(--muted)' }}>{placeholder}</span>
+        )}
+        <div className="flex items-center" style={{ gap: 4, flexShrink: 0 }}>
+          {value && clearable && (
+            <span
+              role="button"
+              aria-label="Clear"
+              onClick={e => { e.stopPropagation(); onChange(null) }}
+              className="rounded-[4px] p-0.5 transition-colors hover:bg-[var(--border)]"
+              style={{ display: 'flex', color: 'var(--muted)', cursor: 'pointer' }}
+            >
+              <X size={13} />
+            </span>
+          )}
+          <ChevronDown size={14} style={{ color: 'var(--muted)' }} />
+        </div>
+      </button>
+
+      {open && (
+        <div
+          className="absolute left-0 right-0 z-10 overflow-hidden rounded-[8px]"
+          style={{ top: 46, backgroundColor: 'var(--card)', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', maxHeight: 260, display: 'flex', flexDirection: 'column' }}
+        >
+          <div className="flex items-center" style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', gap: 8 }}>
+            <Search size={13} style={{ color: 'var(--muted)', flexShrink: 0 }} />
+            <input
+              autoFocus
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search contacts…"
+              style={{ flex: 1, border: 'none', outline: 'none', backgroundColor: 'transparent', fontSize: 13, color: 'var(--foreground)' }}
+            />
+          </div>
+          <div className="overflow-y-auto" style={{ maxHeight: 200 }}>
+            {onAddNew && (
+              <button
+                type="button"
+                className="flex w-full items-center transition-colors hover:bg-[var(--surface)]"
+                style={{ height: 40, padding: '0 12px', gap: 8 }}
+                onClick={() => { setOpen(false); onAddNew() }}
+              >
+                <div
+                  className="flex shrink-0 items-center justify-center rounded-full"
+                  style={{ width: 24, height: 24, backgroundColor: 'var(--surface)', border: '1px dashed var(--border)' }}
+                >
+                  <Plus size={12} style={{ color: 'var(--muted)' }} />
+                </div>
+                <span style={{ fontSize: 13, color: '#c4a574', fontWeight: 500 }}>+ Add new contact</span>
+              </button>
+            )}
+            {filtered.length === 0 ? (
+              <div className="flex items-center justify-center" style={{ height: 48, fontSize: 13, color: 'var(--muted)' }}>
+                No contacts found
+              </div>
+            ) : (
+              filtered.map(contact => (
+                <button
+                  key={contact.id}
+                  type="button"
+                  className="flex w-full items-center transition-colors hover:bg-[var(--surface)]"
+                  style={{ height: 44, padding: '0 12px', gap: 10 }}
+                  onClick={() => { onChange(contact); setOpen(false); setSearch('') }}
+                >
+                  <div
+                    className="flex shrink-0 items-center justify-center rounded-full"
+                    style={{ width: 28, height: 28, backgroundColor: '#c4a574', fontSize: 10, fontWeight: 600, color: '#000' }}
+                  >
+                    {contact.initials}
+                  </div>
+                  <div className="flex min-w-0 flex-col" style={{ gap: 2 }}>
+                    <span className="truncate" style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>{contact.name}</span>
+                    <span className="truncate" style={{ fontSize: 11, color: 'var(--muted)' }}>{contact.company}</span>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function LogContractPanel() {
@@ -152,28 +303,20 @@ export function LogContractPanel() {
 
   // Form state
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
-  const [contactSearch, setContactSearch] = useState('')
-  const [contactDropdownOpen, setContactDropdownOpen] = useState(false)
+  const [selectedSecondary, setSelectedSecondary] = useState<Contact | null>(null)
+  const [selectedLender, setSelectedLender] = useState<Contact | null>(null)
+  const [referrer, setReferrer] = useState<'primary' | 'secondary' | 'none'>('none')
   const [fileNumber, setFileNumber] = useState('')
   const [address, setAddress] = useState('')
+  const [city, setCity] = useState('')
   const [contractType, setContractType] = useState<ContractType>('Regular')
   const [amount, setAmount] = useState('')
+  const [loanAmount, setLoanAmount] = useState('')
   const [status, setStatus] = useState<ContractStatus>('opened')
+  const [openingDate, setOpeningDate] = useState('')
   const [expectedDate, setExpectedDate] = useState('')
   const [expectedTime, setExpectedTime] = useState('')
   const [notes, setNotes] = useState('')
-
-  const dropdownRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setContactDropdownOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
 
   // Reset editing state when panel closes
   useEffect(() => {
@@ -204,33 +347,46 @@ export function LogContractPanel() {
       }
       setStatus(REVERSE_STATUS[rawStatus] ?? 'opened')
 
+      setOpeningDate(rec.openingDate ?? rec.opening_date ?? '')
       setExpectedDate(
         rec.expectedClosingDate ?? rec.expected_closing_date ??
         rec.actualClosingDate  ?? rec.actual_closing_date  ?? ''
       )
+      setCity(rec.city ?? '')
+      setLoanAmount((rec.loanAmount ?? rec.loan_amount ?? 0) > 0 ? String(rec.loanAmount ?? rec.loan_amount) : '')
       setNotes(rec.notes ?? '')
 
-      const contactName = rec.contactName ?? rec.contact?.name ?? ''
-      const match = (contactsData?.items ?? []).find(
-        c => c.name === contactName
-      ) as Contact | undefined ?? null
-      setSelectedContact(match)
-      setContactSearch('')
+      const items = (contactsData?.items ?? []) as Contact[]
+      const byId = (id: string | null | undefined) =>
+        id ? (items.find(c => c.id === id) ?? null) : null
+      // Fall back to name match for the legacy ContractRecord shape (primary only)
+      const primary =
+        byId(rec.contact_id ?? rec.contact?.id) ??
+        (items.find(c => c.name === (rec.contactName ?? rec.contact?.name)) ?? null)
+      const secondary = byId(rec.secondary_contact_id ?? rec.secondary_contact?.id)
+      setSelectedContact(primary)
+      setSelectedSecondary(secondary)
+      setSelectedLender(byId(rec.lender_contact_id ?? rec.lender_contact?.id))
+
+      const refId = rec.referring_contact_id ?? null
+      if (refId && primary && refId === primary.id) setReferrer('primary')
+      else if (refId && secondary && refId === secondary.id) setReferrer('secondary')
+      else setReferrer('none')
     } else {
       setSelectedContact(null)
-      setContactSearch('')
+      setSelectedSecondary(null)
+      setSelectedLender(null)
+      setReferrer('none')
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingContract])
 
-  const repContacts = (contactsData?.items ?? []).filter(c => c.type !== 'vendor') as Contact[]
-  const filteredContacts = contactSearch
-    ? repContacts.filter(
-        c =>
-          c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
-          (c.company ?? '').toLowerCase().includes(contactSearch.toLowerCase())
-      )
-    : repContacts
+  const allContacts = (contactsData?.items ?? []) as Contact[]
+  // Realtors fill the two deal slots; lenders finance the loan.
+  const realtorContacts = allContacts.filter(c => c.type === 'realtor')
+  const lenderContacts = allContacts.filter(c => c.type === 'lender')
+  // Keep the secondary picker from re-offering the primary and vice-versa
+  const secondaryOptions = realtorContacts.filter(c => c.id !== selectedContact?.id)
 
   const TYPE_MAP: Record<ContractType, string> = {
     Regular:    'purchase',
@@ -243,16 +399,40 @@ export function LogContractPanel() {
     cancelled: 'cancelled',
   }
 
+  const hasTwoRealtors = !!selectedContact && !!selectedSecondary
+
+  function referringContactId(): string | null {
+    if (referrer === 'primary') return selectedContact?.id ?? null
+    if (referrer === 'secondary') return selectedSecondary?.id ?? null
+    return null
+  }
+
+  function addRealtor(setter: (c: Contact) => void) {
+    openAddContactWithCallback(newContact => setter({
+      id: newContact.id,
+      name: newContact.name,
+      initials: newContact.initials,
+      company: newContact.company,
+      type: newContact.type,
+    }))
+  }
+
   async function handleSubmit() {
     if (!selectedContact || !address.trim()) return
     try {
       await createContract.mutateAsync({
         contact_id: selectedContact.id,
+        secondary_contact_id: selectedSecondary?.id ?? null,
+        referring_contact_id: referringContactId(),
+        lender_contact_id: selectedLender?.id ?? null,
         property_address: address,
+        city: city || null,
         transaction_type: TYPE_MAP[contractType],
         status: STATUS_MAP[status],
         file_number: fileNumber || null,
         amount: amount ? parseFloat(amount) : null,
+        loan_amount: loanAmount ? parseFloat(loanAmount) : null,
+        opening_date: openingDate || null,
         expected_closing_date: expectedDate || null,
         notes: notes || null,
       })
@@ -298,149 +478,98 @@ export function LogContractPanel() {
       <div className="flex-1 min-h-0 overflow-y-auto" style={{ padding: '20px 28px' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20, ...(isViewMode ? { pointerEvents: 'none', opacity: 0.75 } : {}) }}>
 
-        {/* ── CONTACT ──────────────────────────────────────────────── */}
+        {/* ── REALTOR (primary) ────────────────────────────────────── */}
         <div className="flex flex-col" style={{ gap: 6 }}>
-          <FieldLabel>CONTACT *</FieldLabel>
-          {repContacts.length === 0 ? (
+          <FieldLabel>REALTOR *</FieldLabel>
+          {realtorContacts.length === 0 && !selectedContact ? (
             <div
               className="flex flex-col items-center justify-center rounded-[8px]"
               style={{ padding: '20px 16px', gap: 10, textAlign: 'center', border: '1px dashed var(--border)', backgroundColor: 'var(--surface)' }}
             >
               <Users size={20} style={{ color: 'var(--muted)' }} />
               <div className="flex flex-col" style={{ gap: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--foreground)' }}>No contacts yet</span>
-                <span style={{ fontSize: 12, color: 'var(--muted)' }}>Add your first contact to link it to this contract.</span>
+                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--foreground)' }}>No realtors yet</span>
+                <span style={{ fontSize: 12, color: 'var(--muted)' }}>Add a realtor contact to link it to this contract.</span>
               </div>
               <button
                 type="button"
-                onClick={() => openAddContactWithCallback((newContact) => {
-                  setSelectedContact({
-                    id: newContact.id,
-                    name: newContact.name,
-                    initials: newContact.initials,
-                    company: newContact.company,
-                    type: newContact.type,
-                  })
-                })}
+                onClick={() => addRealtor(setSelectedContact)}
                 className="flex items-center gap-2 rounded-[8px] transition-opacity hover:opacity-80"
                 style={{ height: 36, padding: '0 16px', fontSize: 13, fontWeight: 600, backgroundColor: '#c4a574', color: '#000000', border: 'none', cursor: 'pointer' }}
               >
                 <Plus size={13} />
-                Add your first contact
+                Add your first realtor
               </button>
             </div>
           ) : (
-            <div ref={dropdownRef} style={{ position: 'relative' }}>
-              <button
-                type="button"
-                onClick={() => setContactDropdownOpen(prev => !prev)}
-                className="flex w-full items-center justify-between rounded-[8px]"
-                style={{
-                  padding: selectedContact ? '8px 12px' : '0 12px',
-                  minHeight: 40,
-                  gap: 8,
-                  backgroundColor: 'var(--surface)',
-                  border: '1px solid var(--border)',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                }}
-              >
-                {selectedContact ? (
-                  <div className="flex items-center" style={{ gap: 8, minWidth: 0 }}>
-                    <div
-                      className="flex shrink-0 items-center justify-center rounded-full"
-                      style={{ width: 24, height: 24, backgroundColor: '#c4a574', fontSize: 10, fontWeight: 600, color: '#000' }}
-                    >
-                      {selectedContact.initials}
-                    </div>
-                    <div className="flex min-w-0 flex-col" style={{ gap: 1 }}>
-                      <span className="truncate" style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>
-                        {selectedContact.name}
-                      </span>
-                      <span className="truncate" style={{ fontSize: 11, color: 'var(--muted)' }}>
-                        {selectedContact.company}
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <span style={{ fontSize: 13, color: 'var(--muted)' }}>Select a contact…</span>
-                )}
-                <ChevronDown size={14} style={{ color: 'var(--muted)', flexShrink: 0 }} />
-              </button>
-
-              {contactDropdownOpen && (
-                <div
-                  className="absolute left-0 right-0 z-10 overflow-hidden rounded-[8px]"
-                  style={{ top: 46, backgroundColor: 'var(--card)', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', maxHeight: 260, display: 'flex', flexDirection: 'column' }}
-                >
-                  <div className="flex items-center" style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', gap: 8 }}>
-                    <Search size={13} style={{ color: 'var(--muted)', flexShrink: 0 }} />
-                    <input
-                      autoFocus
-                      value={contactSearch}
-                      onChange={e => setContactSearch(e.target.value)}
-                      placeholder="Search contacts…"
-                      style={{ flex: 1, border: 'none', outline: 'none', backgroundColor: 'transparent', fontSize: 13, color: 'var(--foreground)' }}
-                    />
-                  </div>
-                  <div className="overflow-y-auto" style={{ maxHeight: 200 }}>
-                    <button
-                      type="button"
-                      className="flex w-full items-center transition-colors hover:bg-[var(--surface)]"
-                      style={{ height: 40, padding: '0 12px', gap: 8 }}
-                      onClick={() => {
-                        setContactDropdownOpen(false)
-                        openAddContactWithCallback((newContact) => {
-                          setSelectedContact({
-                            id: newContact.id,
-                            name: newContact.name,
-                            initials: newContact.initials,
-                            company: newContact.company,
-                            type: newContact.type,
-                          })
-                        })
-                      }}
-                    >
-                      <div
-                        className="flex shrink-0 items-center justify-center rounded-full"
-                        style={{ width: 24, height: 24, backgroundColor: 'var(--surface)', border: '1px dashed var(--border)' }}
-                      >
-                        <Plus size={12} style={{ color: 'var(--muted)' }} />
-                      </div>
-                      <span style={{ fontSize: 13, color: '#c4a574', fontWeight: 500 }}>+ Add new contact</span>
-                    </button>
-                    {filteredContacts.length === 0 ? (
-                      <div className="flex items-center justify-center" style={{ height: 48, fontSize: 13, color: 'var(--muted)' }}>
-                        No contacts found
-                      </div>
-                    ) : (
-                      filteredContacts.map(contact => (
-                        <button
-                          key={contact.id}
-                          type="button"
-                          className="flex w-full items-center transition-colors hover:bg-[var(--surface)]"
-                          style={{ height: 44, padding: '0 12px', gap: 10 }}
-                          onClick={() => { setSelectedContact(contact); setContactDropdownOpen(false); setContactSearch('') }}
-                        >
-                          <div
-                            className="flex shrink-0 items-center justify-center rounded-full"
-                            style={{ width: 28, height: 28, backgroundColor: '#c4a574', fontSize: 10, fontWeight: 600, color: '#000' }}
-                          >
-                            {contact.initials}
-                          </div>
-                          <div className="flex min-w-0 flex-col" style={{ gap: 2 }}>
-                            <span className="truncate" style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>{contact.name}</span>
-                            <span className="truncate" style={{ fontSize: 11, color: 'var(--muted)' }}>{contact.company}</span>
-                          </div>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+            <ContactPicker
+              value={selectedContact}
+              onChange={c => {
+                setSelectedContact(c)
+                // A cleared/changed primary can invalidate a 'primary' referrer choice
+                if (!c && referrer === 'primary') setReferrer('none')
+              }}
+              contacts={realtorContacts}
+              placeholder="Select a realtor…"
+              onAddNew={() => addRealtor(setSelectedContact)}
+            />
           )}
         </div>
+
+        {/* ── SECOND REALTOR (optional) ────────────────────────────── */}
+        {selectedContact && (
+          <div className="flex flex-col" style={{ gap: 6 }}>
+            <FieldLabel>SECOND REALTOR <span style={{ color: 'var(--muted)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span></FieldLabel>
+            <ContactPicker
+              value={selectedSecondary}
+              onChange={c => {
+                setSelectedSecondary(c)
+                if (!c && referrer === 'secondary') setReferrer('none')
+              }}
+              contacts={secondaryOptions}
+              placeholder="Add a second realtor…"
+              clearable
+              onAddNew={() => addRealtor(setSelectedSecondary)}
+            />
+          </div>
+        )}
+
+        {/* ── WHO BROUGHT THE BUSINESS (only with 2 realtors) ──────── */}
+        {hasTwoRealtors && (
+          <div className="flex flex-col" style={{ gap: 6 }}>
+            <FieldLabel>WHO BROUGHT THE BUSINESS?</FieldLabel>
+            <div className="flex overflow-hidden rounded-[8px]" style={{ border: '1px solid var(--border)', height: 40 }}>
+              {([
+                { value: 'primary' as const,   label: selectedContact!.name },
+                { value: 'secondary' as const, label: selectedSecondary!.name },
+                { value: 'none' as const,      label: 'Unknown' },
+              ]).map((opt, i, arr) => {
+                const active = referrer === opt.value
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setReferrer(opt.value)}
+                    className="flex flex-1 items-center justify-center transition-colors"
+                    style={{
+                      fontSize: 12,
+                      fontWeight: active ? 600 : 400,
+                      backgroundColor: active ? '#c4a574' : 'var(--surface)',
+                      color: active ? '#000000' : 'var(--muted)',
+                      borderRight: i < arr.length - 1 ? '1px solid var(--border)' : 'none',
+                      padding: '0 8px',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    <span className="truncate">{opt.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ── FILE NUMBER ───────────────────────────────────────────── */}
         <div className="flex flex-col" style={{ gap: 6 }}>
@@ -467,14 +596,33 @@ export function LogContractPanel() {
           <span style={{ fontSize: 11, color: 'var(--muted)' }}>{fileNumber.length}/12 digits</span>
         </div>
 
-        {/* ── ADDRESS ───────────────────────────────────────────────── */}
+        {/* ── ADDRESS + CITY ────────────────────────────────────────── */}
         <div className="flex flex-col" style={{ gap: 6 }}>
           <FieldLabel>ADDRESS *</FieldLabel>
           <input
             type="text"
-            placeholder="e.g. 123 Peachtree Rd NE, Atlanta, GA 30309"
+            placeholder="e.g. 123 Peachtree Rd NE"
             value={address}
             onChange={e => setAddress(e.target.value)}
+            className="w-full rounded-[8px] outline-none focus:ring-1 focus:ring-[#c4a574] transition-shadow"
+            style={{
+              height: 40,
+              padding: '0 12px',
+              fontSize: 13,
+              backgroundColor: 'var(--surface)',
+              border: '1px solid var(--border)',
+              color: 'var(--foreground)',
+            }}
+          />
+        </div>
+
+        <div className="flex flex-col" style={{ gap: 6 }}>
+          <FieldLabel>CITY</FieldLabel>
+          <input
+            type="text"
+            placeholder="e.g. Atlanta"
+            value={city}
+            onChange={e => setCity(e.target.value)}
             className="w-full rounded-[8px] outline-none focus:ring-1 focus:ring-[#c4a574] transition-shadow"
             style={{
               height: 40,
@@ -541,6 +689,44 @@ export function LogContractPanel() {
             <FieldLabel>STATUS</FieldLabel>
             <PanelSelect options={STATUS_OPTIONS} value={status} onChange={setStatus} />
           </div>
+        </div>
+
+        {/* ── LENDER + LOAN AMOUNT (refinance/financed deals) ───────── */}
+        <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 12 }}>
+          <div className="flex flex-col" style={{ gap: 6 }}>
+            <FieldLabel>LENDER <span style={{ color: 'var(--muted)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span></FieldLabel>
+            <ContactPicker
+              value={selectedLender}
+              onChange={setSelectedLender}
+              contacts={lenderContacts}
+              placeholder="Select a lender…"
+              clearable
+            />
+          </div>
+          <div className="flex flex-col" style={{ gap: 6 }}>
+            <FieldLabel>LOAN AMOUNT <span style={{ color: 'var(--muted)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span></FieldLabel>
+            <div
+              className="flex items-center rounded-[8px]"
+              style={{ height: 40, padding: '0 12px', gap: 4, backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}
+            >
+              <DollarSign size={13} style={{ color: 'var(--muted)', flexShrink: 0 }} />
+              <input
+                type="number"
+                min="0"
+                placeholder="0"
+                value={loanAmount}
+                onChange={e => setLoanAmount(e.target.value)}
+                className="flex-1 bg-transparent outline-none"
+                style={{ fontSize: 14, color: 'var(--foreground)' }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ── OPENING DATE ──────────────────────────────────────────── */}
+        <div className="flex flex-col" style={{ gap: 6 }}>
+          <FieldLabel>OPENING DATE</FieldLabel>
+          <DatePickerInput value={openingDate} onChange={setOpeningDate} />
         </div>
 
         {/* ── EXPECTED CLOSING DATE + TIME ──────────────────────────── */}

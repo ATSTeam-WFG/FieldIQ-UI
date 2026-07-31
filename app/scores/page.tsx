@@ -152,7 +152,8 @@ export default function MyRelationsPage() {
     (trendsData ?? []).map(t => [t.contact_id, t.delta])
   )
 
-  const allContacts = (data?.items ?? []).filter(c => c.type === 'referral_agent')
+  // Scored contacts only: realtors and lenders (vendors are not scored)
+  const allContacts = (data?.items ?? []).filter(c => c.type !== 'vendor')
 
   const healthy = allContacts.filter(c => c.score >= 80)
   const watch   = allContacts.filter(c => c.score >= 60 && c.score < 80)

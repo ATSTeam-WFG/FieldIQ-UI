@@ -147,10 +147,13 @@ function SponsorSection({
 }) {
   const [vendorSearch, setVendorSearch] = useState('')
   const [showDrop, setShowDrop] = useState(false)
-  const { data: sponsorResult } = useContacts({ type: 'sponsor', page_size: 100 })
-  const vendorContacts: Contact[] = (sponsorResult?.items ?? []).map(c => ({
-    id: c.id, name: c.name, initials: c.initials, company: c.company ?? '', type: c.type,
-  }))
+  // Vendors and lenders can both sponsor activities (realtors cannot).
+  const { data: sponsorResult } = useContacts({ page_size: 100 })
+  const vendorContacts: Contact[] = (sponsorResult?.items ?? [])
+    .filter(c => c.type === 'vendor' || c.type === 'lender')
+    .map(c => ({
+      id: c.id, name: c.name, initials: c.initials, company: c.company ?? '', type: c.type,
+    }))
 
   const addedIds = new Set(vendorEntries.map(e => e.contact.id))
   const filtered = vendorContacts.filter(c =>
@@ -771,7 +774,7 @@ export function LogActivityPanel() {
   }, [isOpen])
 
   const selectedContactIds = new Set(selectedContacts.map(c => c.id))
-  const nonVendorContacts = allContacts.filter(c => c.type !== 'sponsor')
+  const nonVendorContacts = allContacts.filter(c => c.type !== 'vendor')
   const filteredContacts = nonVendorContacts.filter(c =>
     !selectedContactIds.has(c.id) &&
     (c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||

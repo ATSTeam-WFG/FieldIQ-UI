@@ -49,12 +49,9 @@ const ACTIVITY_TILES = [
 ]
 
 const CONTACT_TYPES = [
-  { value: 'referral_agent', label: 'Referral Agent' },
-  { value: 'lender',         label: 'Lender' },
-  { value: 'attorney',       label: 'Attorney' },
-  { value: 'inspector',      label: 'Inspector' },
-  { value: 'sponsor',        label: 'Sponsor' },
-  { value: 'other',          label: 'Other' },
+  { value: 'realtor', label: 'Realtor' },
+  { value: 'lender',  label: 'Lender' },
+  { value: 'vendor',  label: 'Vendor' },
 ]
 
 // ── Sub-components ─────────────────────────────────────────────────────────────

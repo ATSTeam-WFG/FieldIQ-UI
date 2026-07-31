@@ -121,23 +121,65 @@ export function ContractDetailPanel({ contract, onClose }: Props) {
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-          {/* Contact */}
-          {contract.contact && (
-            <Field label="Contact" value={contract.contact.name} />
+          {/* Realtors */}
+          {(contract.contact || contract.secondary_contact) && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+                {contract.secondary_contact ? 'Realtors' : 'Realtor'}
+              </span>
+              {[contract.contact, contract.secondary_contact].filter(Boolean).map(rc => (
+                <div key={rc!.id} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 14, color: 'var(--foreground)' }}>{rc!.name}</span>
+                  {rc!.company && (
+                    <span style={{ fontSize: 12, color: 'var(--muted)' }}>· {rc!.company}</span>
+                  )}
+                  {contract.referring_contact_id === rc!.id && (
+                    <span style={{
+                      fontSize: 10, fontWeight: 600, letterSpacing: '0.04em',
+                      color: '#c4a574', border: '1px solid #c4a574',
+                      borderRadius: 4, padding: '1px 6px',
+                    }}>
+                      BROUGHT THE BUSINESS
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
 
-          {/* Amount */}
-          <Field label="Transaction Value" value={formatCurrency(contract.amount)} />
+          {/* Financing lender */}
+          {contract.lender_contact && (
+            <Field
+              label="Financing Lender"
+              value={
+                contract.lender_contact.company
+                  ? `${contract.lender_contact.name} · ${contract.lender_contact.company}`
+                  : contract.lender_contact.name
+              }
+            />
+          )}
+
+          {/* Amounts */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <Field label="Purchase Price" value={formatCurrency(contract.amount)} />
+            {contract.loan_amount != null && (
+              <Field label="Loan Amount" value={formatCurrency(contract.loan_amount)} />
+            )}
+          </div>
 
           {/* Dates */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <Field label="Opening Date" value={formatDate(contract.opening_date)} />
             <Field label="Expected Closing" value={formatDate(contract.expected_closing_date)} />
             <Field label="Actual Closing" value={formatDate(contract.actual_closing_date)} />
           </div>
 
-          {/* Address */}
+          {/* Address + City */}
           {contract.property_address && (
             <Field label="Property Address" value={contract.property_address} />
+          )}
+          {contract.city && (
+            <Field label="City" value={contract.city} />
           )}
 
           {/* File number */}

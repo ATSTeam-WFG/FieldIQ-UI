@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Users, Building2 } from 'lucide-react'
+import { X, Users, Building2, Landmark } from 'lucide-react'
 import { useAddContact } from '@/lib/context/AddContactContext'
 import { useSuccessToast } from '@/components/fieldiq/SuccessToast'
 import { useTheme } from '@/lib/context/ThemeContext'
@@ -10,17 +10,33 @@ import { useCreateContact } from '@/lib/hooks/useContacts'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const AGENT_TAGS = [
+const REALTOR_TAGS = [
   'high-value', 'residential', 'commercial', 'luxury', 'referral-source',
   'loyal', 'new-contact', 'growth', 'team-lead', 'social-media-active',
   'multi-listing', 'out-of-state-buyers',
 ]
 
-const VENDOR_TAGS = [
-  'vendor', 'mortgage', 'home-warranty', 'inspection',
+const LENDER_TAGS = [
+  'mortgage', 'refinance', 'residential-lending', 'commercial-lending', 'bank',
+  'credit-union', 'hard-money', 'high-volume', 'preferred-partner', 'new-contact',
 ]
 
-const AGENT_TYPE_OPTIONS: ('Buyer' | 'Seller' | 'Realtor')[] = ['Buyer', 'Seller', 'Realtor']
+const VENDOR_TAGS = [
+  'home-warranty', 'inspection', 'roofing', 'painting', 'landscaping',
+  'staging', 'photography', 'insurance', 'moving', 'new-contact',
+]
+
+const TAGS_BY_TYPE = { realtor: REALTOR_TAGS, lender: LENDER_TAGS, vendor: VENDOR_TAGS }
+
+type ContactType = 'realtor' | 'lender' | 'vendor'
+
+const CONTACT_TYPE_OPTIONS: { value: ContactType; label: string; Icon: typeof Users }[] = [
+  { value: 'realtor', label: 'Realtor', Icon: Users },
+  { value: 'lender',  label: 'Lender',  Icon: Landmark },
+  { value: 'vendor',  label: 'Vendor',  Icon: Building2 },
+]
+
+const REALTOR_SUBTYPE_OPTIONS: ('Buyer' | 'Seller')[] = ['Buyer', 'Seller']
 
 // ── FieldLabel helper ─────────────────────────────────────────────────────────
 
@@ -85,23 +101,26 @@ export function AddContactPanel() {
   const createContact = useCreateContact()
 
   // Form state
-  const [contactType, setContactType] = useState<'agent' | 'vendor'>('agent')
+  const [contactType, setContactType] = useState<ContactType>('realtor')
   const [name, setName] = useState('')
   const [company, setCompany] = useState('')
-  const [agentType, setAgentType] = useState<'Buyer' | 'Seller' | 'Realtor'>('Realtor')
+  const [realtorSubtype, setRealtorSubtype] = useState<'Buyer' | 'Seller'>('Buyer')
   const [industry, setIndustry] = useState('')
   const [role, setRole] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [tagInput, setTagInput] = useState('')
   const [notes, setNotes] = useState('')
 
-  const availableTags = contactType === 'agent' ? AGENT_TAGS : VENDOR_TAGS
+  const availableTags = TAGS_BY_TYPE[contactType]
 
   // Pre-populate when editing
   useEffect(() => {
     if (editingContact) {
-      setContactType(editingContact.type === 'vendor' ? 'vendor' : 'agent')
+      const t = (editingContact.type as ContactType) ?? 'realtor'
+      setContactType(t === 'lender' || t === 'vendor' ? t : 'realtor')
+      setRealtorSubtype(editingContact.subtype === 'seller' ? 'Seller' : 'Buyer')
       setName(editingContact.name)
       setCompany(editingContact.company)
       setRole(editingContact.role || '')
@@ -122,7 +141,7 @@ export function AddContactPanel() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, closeAddContact])
 
-  function handleTypeChange(type: 'agent' | 'vendor') {
+  function handleTypeChange(type: ContactType) {
     setContactType(type)
     setSelectedTags([])
   }
@@ -133,16 +152,25 @@ export function AddContactPanel() {
     )
   }
 
+  function addCustomTag() {
+    const tag = tagInput.trim().toLowerCase().replace(/\s+/g, '-')
+    if (tag && !selectedTags.includes(tag)) {
+      setSelectedTags(prev => [...prev, tag])
+    }
+    setTagInput('')
+  }
+
   function resetForm() {
-    setContactType('agent')
+    setContactType('realtor')
     setName('')
     setCompany('')
-    setAgentType('Realtor')
+    setRealtorSubtype('Buyer')
     setIndustry('')
     setRole('')
     setEmail('')
     setPhone('')
     setSelectedTags([])
+    setTagInput('')
     setNotes('')
   }
 
@@ -152,7 +180,8 @@ export function AddContactPanel() {
         name,
         company: company || null,
         job_title: role || null,
-        type: contactType === 'vendor' ? 'sponsor' : 'referral_agent',
+        type: contactType,
+        subtype: contactType === 'realtor' ? realtorSubtype.toLowerCase() : null,
         email: email || null,
         phone: phone || null,
         tags: selectedTags,
@@ -199,19 +228,18 @@ export function AddContactPanel() {
           {/* Section 1 — Contact Type */}
           <div style={{ marginBottom: 20 }}>
             <FieldLabel label="Contact Type" />
-            <div className="grid grid-cols-2 gap-2">
-              {(['agent', 'vendor'] as const).map(type => {
-                const active = contactType === type
-                const Icon = type === 'agent' ? Users : Building2
+            <div className="grid grid-cols-3 gap-2">
+              {CONTACT_TYPE_OPTIONS.map(({ value, label, Icon }) => {
+                const active = contactType === value
                 return (
                   <button
-                    key={type}
+                    key={value}
                     type="button"
-                    onClick={() => handleTypeChange(type)}
-                    className="flex items-center gap-2 rounded-[8px] transition-colors"
+                    onClick={() => handleTypeChange(value)}
+                    className="flex items-center justify-center gap-2 rounded-[8px] transition-colors"
                     style={{
                       height: 48,
-                      padding: '0 16px',
+                      padding: '0 12px',
                       border: active ? '2px solid #c4a574' : '1px solid var(--border)',
                       backgroundColor: active ? activeTileBg : 'var(--surface)',
                       cursor: 'pointer',
@@ -221,7 +249,7 @@ export function AddContactPanel() {
                     }}
                   >
                     <Icon size={16} />
-                    <span style={{ textTransform: 'capitalize' as const }}>{type}</span>
+                    <span>{label}</span>
                   </button>
                 )
               })}
@@ -252,28 +280,28 @@ export function AddContactPanel() {
             />
           </div>
 
-          {/* Section 4a — Agent Type (agents only) */}
-          {contactType === 'agent' && (
+          {/* Section 4a — Realtor Type (realtors only) */}
+          {contactType === 'realtor' && (
             <div style={{ marginBottom: 20 }}>
-              <FieldLabel label="Agent Type" />
+              <FieldLabel label="Realtor Type" />
               <div
                 className="flex overflow-hidden rounded-[8px]"
                 style={{ border: '1px solid var(--border)', height: 44 }}
               >
-                {AGENT_TYPE_OPTIONS.map((opt, i) => {
-                  const active = agentType === opt
+                {REALTOR_SUBTYPE_OPTIONS.map((opt, i) => {
+                  const active = realtorSubtype === opt
                   return (
                     <button
                       key={opt}
                       type="button"
-                      onClick={() => setAgentType(opt)}
+                      onClick={() => setRealtorSubtype(opt)}
                       className="flex flex-1 items-center justify-center transition-colors"
                       style={{
                         fontSize: 13,
                         fontWeight: active ? 600 : 400,
                         backgroundColor: active ? '#c4a574' : 'var(--surface)',
                         color: active ? '#000000' : 'var(--muted)',
-                        borderRight: i < AGENT_TYPE_OPTIONS.length - 1 ? '1px solid var(--border)' : 'none',
+                        borderRight: i < REALTOR_SUBTYPE_OPTIONS.length - 1 ? '1px solid var(--border)' : 'none',
                       }}
                     >
                       {opt}
@@ -284,13 +312,15 @@ export function AddContactPanel() {
             </div>
           )}
 
-          {/* Section 4b — Industry (vendors only) */}
-          {contactType === 'vendor' && (
+          {/* Section 4b — Industry (lenders & vendors) */}
+          {contactType !== 'realtor' && (
             <div style={{ marginBottom: 20 }}>
               <FieldLabel label="Industry" />
               <input
                 type="text"
-                placeholder="e.g. Mortgage, Home Warranty, Inspection"
+                placeholder={contactType === 'lender'
+                  ? 'e.g. Mortgage, Refinance, Commercial Lending'
+                  : 'e.g. Home Warranty, Roofing, Inspection'}
                 value={industry}
                 onChange={e => setIndustry(e.target.value)}
                 style={inputStyle}
@@ -337,7 +367,8 @@ export function AddContactPanel() {
           <div style={{ marginBottom: 20 }}>
             <FieldLabel label="Tags" />
             <div className="flex flex-wrap gap-2">
-              {availableTags.map(tag => {
+              {/* Preset tags + any custom tags the user has added */}
+              {[...availableTags, ...selectedTags.filter(t => !availableTags.includes(t))].map(tag => {
                 const selected = selectedTags.includes(tag)
                 return (
                   <button
@@ -361,6 +392,21 @@ export function AddContactPanel() {
                 )
               })}
             </div>
+            {/* Custom tag input — agencies can add their own labels */}
+            <input
+              type="text"
+              placeholder="Add a custom tag, then press Enter"
+              value={tagInput}
+              onChange={e => setTagInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' || e.key === ',') {
+                  e.preventDefault()
+                  addCustomTag()
+                }
+              }}
+              onBlur={addCustomTag}
+              style={{ ...inputStyle, height: 40, marginTop: 10 }}
+            />
           </div>
 
           {/* Section 8 — Notes */}
