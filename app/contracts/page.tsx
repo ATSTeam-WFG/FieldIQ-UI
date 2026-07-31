@@ -351,15 +351,23 @@ function ContractsPageContent() {
                     <span className="truncate block" style={{ fontSize: 13, fontWeight: 500, color: 'var(--foreground)' }}>
                       {contract.property_address ?? '—'}
                     </span>
+                    {contract.city && (
+                      <span className="truncate block" style={{ fontSize: 11, color: 'var(--muted)' }}>
+                        {contract.city}
+                      </span>
+                    )}
                   </div>
 
                   {/* CONTACT — desktop */}
                   <div className="hidden md:flex flex-col justify-center" style={{ flex: 1.5, minWidth: 0, gap: 2 }}>
                     <span className="truncate" style={{ fontSize: 13, color: 'var(--body)' }}>
                       {contract.contact?.name ?? '—'}
+                      {contract.secondary_contact && (
+                        <span style={{ color: 'var(--muted)' }}> +1</span>
+                      )}
                     </span>
                     <span className="truncate" style={{ fontSize: 11, color: 'var(--muted)' }}>
-                      {contract.contact?.company ?? ''}
+                      {contract.secondary_contact?.name ?? contract.contact?.company ?? ''}
                     </span>
                   </div>
 

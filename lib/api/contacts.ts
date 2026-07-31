@@ -7,7 +7,8 @@ export interface Contact {
   initials: string
   company: string | null
   job_title: string | null
-  type: string
+  type: 'realtor' | 'lender' | 'vendor'
+  subtype: string | null
   email: string | null
   phone: string | null
   score: number
@@ -61,6 +62,7 @@ export async function createContact(payload: {
   company?: string | null
   job_title?: string | null
   type?: string
+  subtype?: string | null
   email?: string | null
   phone?: string | null
   address?: string | null
@@ -83,6 +85,7 @@ export async function updateContact(id: string, payload: Partial<{
   company: string | null
   job_title: string | null
   type: string
+  subtype: string | null
   email: string | null
   phone: string | null
   address: string | null

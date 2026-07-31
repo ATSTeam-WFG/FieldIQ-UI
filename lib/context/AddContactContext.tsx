@@ -10,6 +10,7 @@ export interface ContactRecord {
   company: string
   role: string
   type: string
+  subtype?: string | null
   email: string
   phone: string
   tags: string[]

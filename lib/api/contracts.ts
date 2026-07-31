@@ -1,20 +1,34 @@
 import { api } from './client'
 
+interface ContactRef {
+  id: string
+  name: string
+  company: string | null
+}
+
 export interface Contract {
   id: string
   agent_id: string
   contact_id: string | null
+  secondary_contact_id: string | null
+  referring_contact_id: string | null
+  lender_contact_id: string | null
   title: string | null
   transaction_type: string
   status: string
   amount: number | null
+  loan_amount: number | null
   property_address: string | null
+  city: string | null
   file_number: string | null
+  opening_date: string | null
   expected_closing_date: string | null
   actual_closing_date: string | null
   notes: string | null
   created_at: string
-  contact: { id: string; name: string; company: string | null } | null
+  contact: ContactRef | null
+  secondary_contact: ContactRef | null
+  lender_contact: ContactRef | null
 }
 
 interface Page<T> {
@@ -43,12 +57,18 @@ export async function getContracts(params?: {
 
 export async function createContract(payload: {
   contact_id?: string | null
+  secondary_contact_id?: string | null
+  referring_contact_id?: string | null
+  lender_contact_id?: string | null
   title?: string | null
   transaction_type?: string
   status?: string
   amount?: number | null
+  loan_amount?: number | null
   property_address?: string | null
+  city?: string | null
   file_number?: string | null
+  opening_date?: string | null
   expected_closing_date?: string | null
   actual_closing_date?: string | null
   notes?: string | null
@@ -62,12 +82,18 @@ export async function getContract(id: string): Promise<Contract> {
 
 export async function updateContract(id: string, payload: Partial<{
   contact_id: string | null
+  secondary_contact_id: string | null
+  referring_contact_id: string | null
+  lender_contact_id: string | null
   title: string | null
   transaction_type: string
   status: string
   amount: number | null
+  loan_amount: number | null
   property_address: string | null
+  city: string | null
   file_number: string | null
+  opening_date: string | null
   expected_closing_date: string | null
   actual_closing_date: string | null
   notes: string | null

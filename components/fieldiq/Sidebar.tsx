@@ -14,7 +14,7 @@ import {
   Settings,
   Info,
   BarChart2,
-  Download,
+  ArrowDownUp,
 } from 'lucide-react'
 import { useRole } from '@/lib/context/RoleContext'
 
@@ -34,8 +34,8 @@ const repMainNav: NavItemDef[] = [
 
 const repInsightNav: NavItemDef[] = [
   { label: 'My Relations',   icon: HeartHandshake, href: '/scores'      },
-  { label: 'My Performance', icon: TrendingUp,     href: '/performance' },
-  { label: 'Exports',        icon: Download,       href: '/exports'     },
+  { label: 'My Performance',  icon: TrendingUp, href: '/performance' },
+  { label: 'Imports/Exports', icon: ArrowDownUp, href: '/exports'    },
 ]
 
 const managerMainNav: NavItemDef[] = [
@@ -47,8 +47,8 @@ const managerMainNav: NavItemDef[] = [
 
 const managerInsightNav: NavItemDef[] = [
   { label: 'Performance', icon: TrendingUp, href: '/performance'  },
-  { label: 'Reports',     icon: BarChart2,  href: '/coming-soon'  },
-  { label: 'Exports',     icon: Download,   href: '/exports'      },
+  { label: 'Reports',         icon: BarChart2,  href: '/coming-soon' },
+  { label: 'Imports/Exports', icon: ArrowDownUp, href: '/exports'    },
 ]
 
 const settingsNavItems: NavItemDef[] = [

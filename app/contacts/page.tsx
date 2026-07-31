@@ -31,16 +31,13 @@ function ContactAvatar({ initials, size = 36 }: { initials: string; size?: numbe
 }
 
 const TYPE_LABEL: Record<string, string> = {
-  referral_agent: 'Agent',
-  sponsor:        'Sponsor',
-  lender:         'Lender',
-  attorney:       'Attorney',
-  inspector:      'Inspector',
-  other:          'Other',
+  realtor: 'Realtor',
+  lender:  'Lender',
+  vendor:  'Vendor',
 }
 
 function ScoreBadge({ score, type }: { score: number; type: string }) {
-  if (type !== 'referral_agent') return null
+  if (type === 'vendor') return null
   return (
     <span style={{ color: '#c4a574', fontWeight: 700, fontSize: 14, minWidth: 28, textAlign: 'right' }}>
       {score}
@@ -48,7 +45,11 @@ function ScoreBadge({ score, type }: { score: number; type: string }) {
   )
 }
 
-function TypeBadge({ type }: { type: string }) {
+function TypeBadge({ type, subtype }: { type: string; subtype?: string | null }) {
+  const label = TYPE_LABEL[type] ?? type
+  const suffix = type === 'realtor' && subtype
+    ? ` · ${subtype.charAt(0).toUpperCase()}${subtype.slice(1)}`
+    : ''
   return (
     <span
       style={{
@@ -60,7 +61,7 @@ function TypeBadge({ type }: { type: string }) {
         whiteSpace: 'nowrap',
       }}
     >
-      {TYPE_LABEL[type] ?? type}
+      {label}{suffix}
     </span>
   )
 }
@@ -167,7 +168,7 @@ function ContactRow({
         </span>
 
         {/* Type */}
-        <TypeBadge type={contact.type} />
+        <TypeBadge type={contact.type} subtype={contact.subtype} />
 
         {/* Score */}
         <div style={{ textAlign: 'right' }}>
