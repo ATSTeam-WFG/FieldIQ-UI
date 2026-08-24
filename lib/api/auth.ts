@@ -40,6 +40,7 @@ export async function signup(payload: {
   name: string
   account_type: 'individual' | 'manager'
   also_rep?: boolean
+  referral_code?: string
 }): Promise<LoginResponse> {
   const res = await api.post<LoginResponse>('/auth/signup', payload)
   setToken(res.access_token, res.refresh_token)

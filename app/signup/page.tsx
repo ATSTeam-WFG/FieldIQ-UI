@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -11,6 +11,7 @@ import {
 import { useTheme } from '@/lib/context/ThemeContext'
 import { signup } from '@/lib/api/auth'
 import { registerAgency, createInvites } from '@/lib/api/agencies'
+import { validateReferralCode } from '@/lib/api/referrals'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -186,6 +187,30 @@ function SignupContent() {
   const [loading, setLoading]         = useState(false)
   const [error, setError]             = useState<string | null>(null)
 
+  // WFG referral code — mandatory for solo reps (account step) and managers (agency step)
+  const [referralCode, setReferralCode]     = useState('')
+  const [referralStatus, setReferralStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle')
+  const [referralRepName, setReferralRepName] = useState<string | null>(null)
+
+  useEffect(() => {
+    const code = referralCode.trim()
+    if (code.length === 0) { setReferralStatus('idle'); setReferralRepName(null); return }
+    if (code.length < 4)   { setReferralStatus('invalid'); setReferralRepName(null); return }
+    setReferralStatus('checking')
+    let cancelled = false
+    const t = setTimeout(async () => {
+      try {
+        const res = await validateReferralCode(code)
+        if (cancelled) return
+        if (res.valid) { setReferralStatus('valid'); setReferralRepName(res.rep_name ?? null) }
+        else           { setReferralStatus('invalid'); setReferralRepName(null) }
+      } catch {
+        if (!cancelled) { setReferralStatus('invalid'); setReferralRepName(null) }
+      }
+    }, 400)
+    return () => { cancelled = true; clearTimeout(t) }
+  }, [referralCode])
+
   const inputStyle: React.CSSProperties = {
     height: 40,
     backgroundColor: theme === 'dark' ? 'var(--surface)' : 'var(--card)',
@@ -214,7 +239,29 @@ function SignupContent() {
   const activeTileBg = theme === 'dark' ? '#1f1a12' : '#fdf8f0'
 
   const canCreateAccount = fullName.trim() && email.trim() && password.length >= 8 && password === confirmPw
-  const canRegisterAgency = agencyName.trim() && agencyState
+    && (isManager || referralStatus === 'valid')
+  const canRegisterAgency = agencyName.trim() && agencyState && referralStatus === 'valid'
+
+  const referralField = (
+    <div className="flex flex-col" style={{ gap: 6, marginBottom: 24 }}>
+      <FieldLabel label="WFG Referral Code" required />
+      <input
+        type="text"
+        value={referralCode}
+        onChange={e => setReferralCode(e.target.value.toUpperCase())}
+        placeholder="e.g. WFGDEMO1"
+        autoCapitalize="characters"
+        className="focus:ring-1 focus:ring-[#c4a574]"
+        style={{ ...inputStyle, border: referralStatus === 'invalid' ? '1px solid #d97706' : '1px solid var(--border)', textTransform: 'uppercase' }}
+      />
+      {referralStatus === 'checking' && <span style={{ fontSize: 12, color: 'var(--muted)' }}>Checking…</span>}
+      {referralStatus === 'valid' && <span style={{ fontSize: 12, color: '#16a34a' }}>✓ Referred by {referralRepName}</span>}
+      {referralStatus === 'invalid' && <span style={{ fontSize: 12, color: '#d97706' }}>Referral code not found</span>}
+      <span style={{ fontSize: 11, color: 'var(--muted)' }}>
+        The code from your WFG representative. Required to activate your account.
+      </span>
+    </div>
+  )
 
   const REP_COUNT_MAP: Record<string, string> = {
     '1–5': '1-5', '6–15': '6-15', '16–50': '16-50', '50+': '50+',
@@ -235,6 +282,7 @@ function SignupContent() {
         name: fullName,
         account_type: isManager ? 'manager' : 'individual',
         also_rep: isManager ? alsoRep : undefined,
+        referral_code: isManager ? undefined : referralCode.trim().toUpperCase(),
       })
       if (isManager) {
         setAccountStep(2)
@@ -259,6 +307,7 @@ function SignupContent() {
         state: agencyState || null,
         rep_count_range: repCount ? (REP_COUNT_MAP[repCount] ?? repCount) : null,
         website: agencyUrl || null,
+        referral_code: referralCode.trim().toUpperCase(),
       })
       setAccountStep(3)
     } catch (err: any) {
@@ -459,6 +508,9 @@ function SignupContent() {
                 )}
               </div>
 
+              {/* Solo rep: mandatory WFG referral code */}
+              {!isManager && referralField}
+
               {/* Manager: also act as rep option */}
               {isManager && (
                 <div style={{ marginBottom: 24 }}>
@@ -620,6 +672,9 @@ function SignupContent() {
                   style={inputStyle}
                 />
               </div>
+
+              {/* Mandatory WFG referral code — stamps the agency's owning WFG Rep */}
+              {referralField}
 
               {error && (
                 <p style={{ fontSize: 13, color: '#d97706', marginBottom: 12 }}>{error}</p>

@@ -25,6 +25,7 @@ import { LoadingScreen } from './LoadingScreen'
 import { useInviteAgent } from '@/lib/context/InviteAgentContext'
 import { useTeamBroadcast } from '@/lib/context/TeamBroadcastContext'
 import { useRole } from '@/lib/context/RoleContext'
+import { trackEvent } from '@/lib/api/events'
 
 interface AppShellProps {
   activeItem?: string
@@ -71,6 +72,11 @@ export function AppShell({ activeItem, children }: AppShellProps) {
       router.replace('/login')
     }
   }, [loaded, isAuthenticated, router])
+
+  // Presence telemetry — record a page_view on navigation (authed pages only).
+  useEffect(() => {
+    if (loaded && isAuthenticated) trackEvent('page_view', pathname)
+  }, [pathname, loaded, isAuthenticated])
 
   if (!loaded) {
     return <LoadingScreen />

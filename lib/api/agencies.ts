@@ -5,6 +5,7 @@ export async function registerAgency(payload: {
   state?: string | null
   rep_count_range?: string | null
   website?: string | null
+  referral_code: string
 }): Promise<{ id: string }> {
   return api.post('/agencies', payload)
 }
