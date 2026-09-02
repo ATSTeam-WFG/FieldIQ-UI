@@ -1,8 +1,8 @@
-# FieldIQ
+# FieldMT
 
-AI-powered field sales intelligence platform for the title insurance industry. Helps title agents track relationship-building activity, manage follow-ups, and gives managers real-time visibility into team performance.
+The field management tool for a title rep’s book of business. Reps log relationship-building activity and work their follow-ups; managers get real-time visibility into team performance.
 
-![CI](https://github.com/anishtatke/FieldIQ/actions/workflows/frontend-ci.yml/badge.svg)
+![CI](https://github.com/anishtatke/FieldMT/actions/workflows/frontend-ci.yml/badge.svg)
 
 ---
 
@@ -43,7 +43,7 @@ app/                    # Next.js App Router pages
 
 components/
 ├── ui/                 # shadcn/ui primitives
-└── fieldiq/            # FieldIQ-specific components
+└── fieldmt/            # FieldMT-specific components
 
 lib/
 ├── api/                # Typed API client + per-domain fetch functions
@@ -59,7 +59,7 @@ tests/                  # Playwright E2E test suite (18 spec files)
 ## Prerequisites
 
 - Node.js 20+
-- The [FieldIQ API](https://github.com/anishtatke/FieldIQ-API) running at `http://localhost:8000`
+- The [FieldMT API](https://github.com/ATSTeam-WFG/FieldMT-API) running at `http://localhost:8000`
 
 ---
 
@@ -68,8 +68,8 @@ tests/                  # Playwright E2E test suite (18 spec files)
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/anishtatke/FieldIQ.git
-cd FieldIQ
+git clone https://github.com/ATSTeam-WFG/FieldMT-UI.git
+cd FieldMT
 npm install
 ```
 
@@ -93,7 +93,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-> The app requires the [FieldIQ API](https://github.com/anishtatke/FieldIQ-API) to be running for data to load. See that repo's README for setup instructions.
+> The app requires the [FieldMT API](https://github.com/ATSTeam-WFG/FieldMT-API) to be running for data to load. See that repo's README for setup instructions.
 
 ---
 
@@ -135,7 +135,7 @@ Role switching is available via the dropdown in the top navigation.
 
 ## E2E Testing
 
-Tests run against a live Next.js dev server and FieldIQ API.
+Tests run against a live Next.js dev server and FieldMT API.
 
 ### Setup
 
@@ -197,7 +197,7 @@ Two GitHub Actions workflows run on every push and pull request.
 - Spins up PostgreSQL + backend + frontend
 - Runs full Playwright suite
 - Requires Supabase secrets and `BACKEND_REPO_TOKEN` configured in GitHub repo secrets
-- See [CI/CD setup guide](https://github.com/anishtatke/FieldIQ/blob/main/.github/workflows/e2e.yml) for required secrets
+- See [CI/CD setup guide](https://github.com/anishtatke/FieldMT/blob/main/.github/workflows/e2e.yml) for required secrets
 
 ---
 

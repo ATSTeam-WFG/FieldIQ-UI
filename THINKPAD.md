@@ -1,7 +1,7 @@
 # Prompt
 ---
 
-The FieldIQ should start with an onboarding process. Any visiting user should see onboarding questionare for what kind of user they are, etc.
+The FieldMT should start with an onboarding process. Any visiting user should see onboarding questionare for what kind of user they are, etc.
 1. We should start with asking if they are individual title sales reps or small-mid size team of agency.
 2. If its a individual sales rep, we take them to a signup page. If its a agency, we ask them if they are a sales rep or a manager.
 3. If they are sales rep, should give them option to use this individually if they want to, for personal growth and field work tracking. Or else they can ask their manager to create a organization account here and send invites to all thier sales reps
