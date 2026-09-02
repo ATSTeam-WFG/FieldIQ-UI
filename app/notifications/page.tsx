@@ -5,8 +5,8 @@ import { AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { useNotifications } from '@/lib/context/NotificationContext'
 import { useActivityLog } from '@/lib/context/ActivityLogContext'
-import { NotifRow } from '@/components/fieldiq/NotificationPanel'
-import { LogActivityPanel } from '@/components/fieldiq/LogActivityPanel'
+import { NotifRow } from '@/components/app/NotificationPanel'
+import { LogActivityPanel } from '@/components/app/LogActivityPanel'
 
 export default function NotificationsPage() {
   const router = useRouter()

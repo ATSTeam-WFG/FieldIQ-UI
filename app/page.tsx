@@ -1,8 +1,9 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
-import { LogoAnimation } from '@/components/fieldiq/LogoAnimation'
-import { EarlyAccessModal } from '@/components/fieldiq/EarlyAccessModal'
+import { LogoAnimation } from '@/components/app/LogoAnimation'
+import { EarlyAccessModal } from '@/components/app/EarlyAccessModal'
+import { BRAND } from '@/lib/brand'
 import './splash.css'
 
 export default function SplashPage() {
@@ -58,7 +59,7 @@ export default function SplashPage() {
       <nav className="nav" id="nav" ref={navRef}>
         <div className="nav-inner">
           <a href="#" className="nav-logo">
-            <Image src="/images/logo/lockup_dark.svg" alt="FieldIQ" width={160} height={58} priority unoptimized style={{ width: 160, height: 'auto' }} />
+            <Image src="/images/logo/lockup_dark.svg" alt={BRAND.name} width={160} height={58} priority unoptimized style={{ width: 160, height: 'auto' }} />
             <span className="badge">Preview</span>
           </a>
           <div className="nav-links">
@@ -76,16 +77,16 @@ export default function SplashPage() {
         </div>
       
         <div className="container hero-content">
-          <div className="hero-eyebrow reveal delay-1">For the people behind every closing table</div>
+          <div className="hero-eyebrow reveal delay-1">{BRAND.eyebrow}</div>
 
           {/* Animated brand lockup — logo + wordmark */}
-          <div className="hero-brand reveal delay-2" aria-label="FieldIQ">
+          <div className="hero-brand reveal delay-2" aria-label={BRAND.name}>
             <div className="hero-brand-logo">
               <LogoAnimation size={140} />
             </div>
             <span className="hero-brand-wordmark-wrap">
               <span className="hero-brand-wordmark">
-                FIELD<span className="hero-brand-iq">IQ</span>
+                {BRAND.wordmark.stem}<span className="hero-brand-iq">{BRAND.wordmark.accent}</span>
               </span>
               <span className="hero-brand-wfg" aria-label="Built by WFG — Williston Financial Group">
                 <span className="hero-brand-wfg-label">Built by</span>
@@ -110,15 +111,15 @@ export default function SplashPage() {
               </span>
             </span>
           </div>
-          <p className="lead reveal delay-3">The title industry has never really been about transactions. It has always been about people, and the relationships that built your business. FieldIQ was built to protect them.</p>
+          <p className="lead reveal delay-3">The title industry has never really been about transactions. It has always been about people, and the relationships that built your book of business. {BRAND.name} is how you protect it.</p>
           <div className="hero-cta-group reveal delay-4">
             <a href="#request" className="btn btn-primary" onClick={(e) => { e.preventDefault(); setModalOpen(true) }}>Request early access →</a>
             <a href="#product" className="btn btn-secondary">See how it works</a>
           </div>
-          <div className="hero-trust reveal delay-5">Designed for the title industry</div>
+          <div className="hero-trust reveal delay-5">{BRAND.category}</div>
           <div className="hero-chips reveal delay-5">
             <span className="hero-chip">Built for the field, not the file</span>
-            <span className="hero-chip">Relationships, scored</span>
+            <span className="hero-chip">Your book, scored</span>
             <span className="hero-chip">Effort that connects to revenue</span>
           </div>
         </div>
@@ -137,7 +138,7 @@ export default function SplashPage() {
               <div className="preview-app-header">
                 <div className="preview-app-title">
                   <div className="preview-title">Dashboard</div>
-                  <div className="preview-subtitle">Good morning, Jane. Here&apos;s your activity summary.</div>
+                  <div className="preview-subtitle">Good morning, Sarah. Here&apos;s your activity summary.</div>
                 </div>
                 <div className="preview-cta-group">
                   <div className="preview-cta-fake">+ Add Contract</div>
@@ -147,7 +148,7 @@ export default function SplashPage() {
       
               <div className="preview-ai-card">
                 <div className="preview-ai-label">✦ AI · Daily Nudge</div>
-                <div className="preview-ai-text">David Okafor hasn&apos;t been contacted in 18 days. His score is dropping. A pop-by today would help.</div>
+                <div className="preview-ai-text">Derek Okafor hasn&apos;t been contacted in 18 days. His score is dropping. A pop-by today would help.</div>
               </div>
       
               <div className="preview-kpis">
@@ -192,7 +193,7 @@ export default function SplashPage() {
         <div className="container">
           <div className="feature-spotlight">
             <div className="spotlight-text scroll-reveal">
-              <div className="spotlight-eyebrow">Field-First Logging</div>
+              <div className="spotlight-eyebrow">AI-Assisted Logging</div>
               <h3>Log a pop-by in <span className="accent">under thirty seconds.</span></h3>
               <p>One tap to open. One tap to choose the type. Voice it in or type it. The follow-up sets itself. Built mobile-first because your office isn&apos;t an office.</p>
             </div>
@@ -205,7 +206,7 @@ export default function SplashPage() {
                   <div className="mock-log-header">
                     <div>
                       <h4>Log Activity</h4>
-                      <p>Fill in the details for your field activity</p>
+                      <p>Fill in the details for your activity</p>
                     </div>
                     <button type="button" className="mock-close" aria-label="Close">
                       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></svg>
@@ -343,9 +344,9 @@ export default function SplashPage() {
         <div className="container">
           <div className="feature-spotlight">
             <div className="spotlight-text scroll-reveal">
-              <div className="spotlight-eyebrow">Manager Intelligence</div>
+              <div className="spotlight-eyebrow">The Manager&apos;s View</div>
               <h3>The full team. <span className="accent">In a single glance.</span></h3>
-              <p>Leaderboards, heatmaps, MTD/QTD/YTD toggles, and per-rep deep dives. See who&apos;s on track, who needs a check-in, and where the team&apos;s collective effort is actually landing.</p>
+              <p>Leaderboards, heatmaps, MTD/QTD/YTD toggles, and per-rep deep dives. See where the team&apos;s collective effort is actually landing.</p>
             </div>
             <div className="scroll-reveal">
               <div className="mockup">
@@ -415,8 +416,8 @@ export default function SplashPage() {
       <section style={{ background: 'var(--surface)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
         <div className="container">
           <div className="section-header scroll-reveal centered">
-            <span className="section-label">Why FieldIQ is different</span>
-            <h2 className="section-heading">This was never about building <span className="accent">just another CRM.</span></h2>
+            <span className="section-label">What&apos;s missing</span>
+            <h2 className="section-heading">Your title software runs the deal. <span className="accent">Nothing manages your book.</span></h2>
           </div>
       
           <div className="compare scroll-reveal">
@@ -424,45 +425,45 @@ export default function SplashPage() {
               <thead>
                 <tr>
                   <th></th>
-                  <th>Every other tool</th>
-                  <th className="fieldiq-col">FieldIQ</th>
+                  <th>Everything else</th>
+                  <th className="highlight-col">{BRAND.name}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td className="row-label">Built for</td>
                   <td className="neg">The file</td>
-                  <td className="fieldiq-cell">The field</td>
+                  <td className="highlight-cell">The field</td>
                 </tr>
                 <tr>
                   <td className="row-label">Optimizes</td>
                   <td className="neg">Transactions</td>
-                  <td className="fieldiq-cell">Relationships</td>
+                  <td className="highlight-cell">Relationships</td>
                 </tr>
                 <tr>
                   <td className="row-label">Activity types</td>
                   <td className="neg">Generic</td>
-                  <td className="fieldiq-cell">Title-native</td>
+                  <td className="highlight-cell">Title-native</td>
                 </tr>
                 <tr>
                   <td className="row-label">Scores contacts</td>
                   <td className="neg">No</td>
-                  <td className="fieldiq-cell">Yes, on four dimensions</td>
+                  <td className="highlight-cell">Yes, on four dimensions</td>
                 </tr>
                 <tr>
                   <td className="row-label">Tracks spend per activity</td>
                   <td className="neg">No</td>
-                  <td className="fieldiq-cell">Yes</td>
+                  <td className="highlight-cell">Yes</td>
                 </tr>
                 <tr>
                   <td className="row-label">Connects effort to revenue</td>
                   <td className="neg">No</td>
-                  <td className="fieldiq-cell">Yes</td>
+                  <td className="highlight-cell">Yes</td>
                 </tr>
                 <tr>
                   <td className="row-label">Built for title agencies</td>
                   <td className="neg">No</td>
-                  <td className="fieldiq-cell">From day one</td>
+                  <td className="highlight-cell">From day one</td>
                 </tr>
               </tbody>
             </table>
@@ -471,23 +472,23 @@ export default function SplashPage() {
       </section>
       
       {/**/}
-      <section>
+      <section id="audiences">
         <div className="container">
           <div className="section-header scroll-reveal centered">
-            <span className="section-label">A day in FieldIQ</span>
+            <span className="section-label">A day in the field</span>
             <h2 className="section-heading">Two views. Same goal. <span className="accent">Stronger relationships.</span></h2>
           </div>
       
           <div className="day-grid scroll-reveal stagger-reveal">
             <div className="day-card">
-              <div className="day-card-label">For the title agent</div>
+              <div className="day-card-label">For the field rep</div>
               <h3>You stop chasing. You start showing up.</h3>
               <p>Two taps to log. Follow-ups set themselves. Tomorrow&apos;s relationships, ready.</p>
             </div>
             <div className="day-card">
               <div className="day-card-label">For the sales manager</div>
               <h3>You stop guessing. You start coaching.</h3>
-              <p>See who&apos;s in the field, who&apos;s coasting, who&apos;s at risk. Coach with data.</p>
+              <p>Every rep&apos;s book, in one view. Who&apos;s on track, who&apos;s coasting, who&apos;s at risk.</p>
             </div>
           </div>
         </div>
@@ -497,14 +498,14 @@ export default function SplashPage() {
       <section style={{ background: 'var(--surface)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
         <div className="container">
           <div className="section-header scroll-reveal centered">
-            <span className="section-label">Inside FieldIQ</span>
+            <span className="section-label">Inside {BRAND.name}</span>
             <h2 className="section-heading">Everything you need. <span className="accent">Nothing you don&apos;t.</span></h2>
           </div>
       
           <div className="feature-grid scroll-reveal stagger-reveal">
             <div className="feature-tile">
               <span className="feature-tile-num">01</span>
-              <h3>Field-First Activity Logging</h3>
+              <h3>Activity Logging</h3>
               <p>Title-native types. One screen. Built mobile-first.</p>
             </div>
             <div className="feature-tile">
@@ -519,7 +520,7 @@ export default function SplashPage() {
             </div>
             <div className="feature-tile">
               <span className="feature-tile-num">04</span>
-              <h3>Manager Intelligence</h3>
+              <h3>The Manager&apos;s View</h3>
               <p>Leaderboards, heatmaps, per-rep deep dives. MTD, QTD, YTD.</p>
             </div>
             <div className="feature-tile">
@@ -529,7 +530,7 @@ export default function SplashPage() {
             </div>
             <div className="feature-tile">
               <span className="feature-tile-num">06</span>
-              <h3>Built-in AI Insights</h3>
+              <h3>Built-in AI</h3>
               <p>Daily nudges, performance summaries, voice logging, coaching prompts.</p>
             </div>
           </div>
@@ -548,15 +549,15 @@ export default function SplashPage() {
             <p>The client who just needed someone to answer the phone and care.</p>
           </div>
       
-          <p className="story-tag scroll-reveal">FieldIQ was built to protect them.</p>
+          <p className="story-tag scroll-reveal">That&apos;s your book of business. {BRAND.name} is how you protect it.</p>
         </div>
       </section>
       
       {/**/}
-      <section>
+      <section id="status">
         <div className="container">
           <div className="wfg-banner scroll-reveal">
-            <div className="wfg-label">In partnership with</div>
+            <div className="wfg-label">Built by</div>
             <div className="wfg-banner-logo">
               <Image
                 className="wfg-logo for-dark"
@@ -577,8 +578,8 @@ export default function SplashPage() {
                 style={{ width: '100%', height: 'auto' }}
               />
             </div>
-            <h3>Distributed through Williston Financial Group.</h3>
-            <p>Launching first across WFG&apos;s network of affiliated agencies. If your agency is part of the network, you&apos;re already on the list.</p>
+            <h3>A Williston Financial Group product.</h3>
+            <p>In alpha with WFG field teams today. Beta opens next to a small group of affiliated agencies, by referral code. Request access and we&apos;ll add your agency to the beta waitlist.</p>
           </div>
         </div>
       </section>
@@ -587,10 +588,10 @@ export default function SplashPage() {
       <section className="closing" id="request">
         <div className="container closing-inner">
           <h2 className="scroll-reveal">Built for the people behind every <span className="accent">closing table.</span></h2>
-          <p className="closing-sub scroll-reveal">Be among the first agencies to bring FieldIQ to your team.</p>
+          <p className="closing-sub scroll-reveal">Be among the first agencies to put it in the field.</p>
           <div className="closing-cta-group scroll-reveal">
             <a href="#request" className="btn btn-primary" onClick={(e) => { e.preventDefault(); setModalOpen(true) }}>Request early access →</a>
-            <a href="#request" className="btn btn-secondary" onClick={(e) => { e.preventDefault(); setModalOpen(true) }}>Talk to the team</a>
+            <a href="#product" className="btn btn-secondary">See how it works</a>
           </div>
         </div>
       </section>
@@ -601,7 +602,7 @@ export default function SplashPage() {
           <div className="footer-grid">
             <div className="footer-brand">
               <a href="#" className="nav-logo">
-                <Image src="/images/logo/lockup_dark.svg" alt="FieldIQ" width={160} height={58} unoptimized style={{ width: 160, height: 'auto' }} />
+                <Image src="/images/logo/lockup_dark.svg" alt={BRAND.name} width={160} height={58} unoptimized style={{ width: 160, height: 'auto' }} />
               </a>
               <p>Because growth starts in the field. Built for the title industry. With the title industry.</p>
             </div>
@@ -616,24 +617,24 @@ export default function SplashPage() {
             <div className="footer-col">
               <h5>Audiences</h5>
               <ul>
-                <li><a href="#">For agencies</a></li>
-                <li><a href="#">For underwriters</a></li>
-                <li><a href="#">For managers</a></li>
+                <li><a href="#audiences">For field reps</a></li>
+                <li><a href="#audiences">For sales managers</a></li>
+                <li><a href="#request">For agencies</a></li>
               </ul>
             </div>
             <div className="footer-col">
               <h5>Company</h5>
               <ul>
                 <li><a href="#story">Our story</a></li>
-                <li><a href="#">Contact</a></li>
-                <li><a href="#">With WFG</a></li>
+                <li><a href="#request" onClick={(e) => { e.preventDefault(); setModalOpen(true) }}>Contact</a></li>
+                <li><a href="#status">With WFG</a></li>
               </ul>
             </div>
           </div>
           <div className="footer-bottom">
-            <div>© 2026 FieldIQ · Privacy · Terms</div>
+            <div>{BRAND.legal}</div>
             <div className="footer-wfg">
-              <span className="footer-wfg-label">An official</span>
+              <span className="footer-wfg-label">Built by</span>
               <Image
                 className="wfg-logo for-dark"
                 src="/images/logo/wfg_full_dark.png"

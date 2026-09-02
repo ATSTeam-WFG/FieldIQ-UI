@@ -42,7 +42,7 @@ test('panel has a Save Activity submit button', async ({ page }) => {
 })
 
 test('submitting the form shows a success toast (requires auth)', async ({ page }) => {
-  const hasToken = await page.evaluate(() => !!localStorage.getItem('fieldiq_token'))
+  const hasToken = await page.evaluate(() => !!localStorage.getItem('app_token'))
   if (!hasToken) {
     test.skip(true, 'Skipped — no auth token; toast requires a successful API call')
     return

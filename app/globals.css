@@ -150,7 +150,7 @@
 }
 
 @layer components {
-  .fieldiq-card {
+  .app-card {
     border-top: 2px solid #c4a574;
     border-right: 1px solid var(--border);
     border-bottom: 1px solid var(--border);

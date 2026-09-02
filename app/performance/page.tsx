@@ -2,17 +2,17 @@
 
 import { useState } from 'react'
 import { TrendingUp } from 'lucide-react'
-import { AICard } from '@/components/fieldiq/AICard'
-import { AppShell } from '@/components/fieldiq/AppShell'
-import { KPICard } from '@/components/fieldiq/KPICard'
+import { AICard } from '@/components/app/AICard'
+import { AppShell } from '@/components/app/AppShell'
+import { KPICard } from '@/components/app/KPICard'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useRole } from '@/lib/context/RoleContext'
 import { useAgentKpis } from '@/lib/hooks/useAgentKpis'
 import { useAgentNudge } from '@/lib/hooks/useAgentNudge'
 import { useAgentPerformance } from '@/lib/hooks/useAgentPerformance'
 import { useManagerPerformance } from '@/lib/hooks/useManagerPerformance'
-import { SponsorActivitySection } from '@/components/fieldiq/SponsorActivitySection'
-import { ActivityHeatmap } from '@/components/fieldiq/ActivityHeatmap'
+import { SponsorActivitySection } from '@/components/app/SponsorActivitySection'
+import { ActivityHeatmap } from '@/components/app/ActivityHeatmap'
 import { useActivityHeatmap } from '@/lib/hooks/useActivityHeatmap'
 import type { Period, SponsorSpendItem, AgentEfficiencyEntry } from '@/lib/api/analytics'
 import {
@@ -158,7 +158,7 @@ function SpendEfficiencySection({
                             'activities per closing'
 
   return (
-    <div className="fieldiq-card" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div className="app-card" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Desktop header: title + inline toggle */}
       <div className="hidden md:flex items-center justify-between" style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
         <span className="font-semibold" style={{ fontSize: 14, color: 'var(--foreground)' }}>Spend Efficiency</span>
@@ -240,7 +240,7 @@ function AgentEfficiencySection({ agents }: { agents: AgentEfficiencyEntry[] }) 
   })
 
   return (
-    <div className="fieldiq-card" style={{ marginTop: 16 }}>
+    <div className="app-card" style={{ marginTop: 16 }}>
       <div className="flex items-center justify-between" style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
         <span className="font-semibold" style={{ fontSize: 14, color: 'var(--foreground)' }}>Spend Efficiency by Agent</span>
         <SectionToggle options={EFF_OPTIONS} value={mode} onChange={setMode} />
@@ -315,7 +315,7 @@ function ManagerPerformancePage() {
         )}
 
         <div className="flex flex-col md:flex-row" style={{ gap: 16, marginTop: 16 }}>
-          <div className="fieldiq-card flex-1 min-w-0">
+          <div className="app-card flex-1 min-w-0">
             <div className="flex items-center" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
               <span className="font-semibold" style={{ fontSize: 14, color: 'var(--foreground)' }}>
                 Team Activities by Week
@@ -337,7 +337,7 @@ function ManagerPerformancePage() {
             </div>
           </div>
 
-          <div className="fieldiq-card shrink-0 w-full md:w-[300px]">
+          <div className="app-card shrink-0 w-full md:w-[300px]">
             <div className="flex items-center" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
               <span className="font-semibold" style={{ fontSize: 14, color: 'var(--foreground)' }}>
                 Activity Type Breakdown
@@ -363,7 +363,7 @@ function ManagerPerformancePage() {
           </div>
         </div>
 
-        <div className="fieldiq-card" style={{ marginTop: 16 }}>
+        <div className="app-card" style={{ marginTop: 16 }}>
           <div className="flex items-center" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', gap: 10 }}>
             <span className="font-semibold" style={{ fontSize: 14, color: 'var(--foreground)' }}>Rep Performance</span>
             <span style={{ backgroundColor: 'var(--surface)', borderRadius: 4, padding: '2px 8px', fontSize: 11, color: 'var(--muted)' }}>
@@ -520,7 +520,7 @@ function AgentPerformancePage() {
         )}
 
         {/* ── Spend & Activity Trend ────────────────────── */}
-        <div className="fieldiq-card" style={{ marginTop: 24 }}>
+        <div className="app-card" style={{ marginTop: 24 }}>
           {/* Card header with period toggle */}
           <div className="flex items-center justify-between" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', flexWrap: 'wrap', rowGap: 8 }}>
             <span className="font-semibold" style={{ fontSize: 14, color: 'var(--foreground)' }}>
@@ -607,7 +607,7 @@ function AgentPerformancePage() {
         </div>
 
         {/* ── Activity Type Breakdown — full width ─────── */}
-        <div className="fieldiq-card" style={{ marginTop: 16 }}>
+        <div className="app-card" style={{ marginTop: 16 }}>
           <div className="flex items-center justify-between" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
             <span className="font-semibold" style={{ fontSize: 14, color: 'var(--foreground)' }}>
               Activity Type Breakdown

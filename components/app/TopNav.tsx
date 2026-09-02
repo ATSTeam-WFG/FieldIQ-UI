@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Bell, Moon, Search, Sun } from 'lucide-react'
 import { useTheme } from '@/lib/context/ThemeContext'
 import { useRole } from '@/lib/context/RoleContext'
+import { BRAND } from '@/lib/brand'
 import { useNotifications } from '@/lib/context/NotificationContext'
 import { useSearch } from '@/lib/context/SearchContext'
 import { useIsMobile } from '@/lib/hooks/useIsMobile'
@@ -51,7 +52,7 @@ export function TopNav() {
           src={theme === 'dark'
             ? '/images/logo/lockup_dark.svg'
             : '/images/logo/lockup_light.svg'}
-          alt="FieldIQ"
+          alt={BRAND.name}
           width={133}
           height={48}
           priority

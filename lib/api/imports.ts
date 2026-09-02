@@ -1,3 +1,4 @@
+import { getToken } from '@/lib/api/client'
 // Import engine — client layer. Talks to the real backend:
 //   POST /import/contracts/preview  (multipart) → staged ImportPlan (nothing persisted)
 //   POST /import/contracts/commit   (json)      → CommitResult (writes rows, enqueues scoring)
@@ -85,7 +86,7 @@ export interface ImportHistoryItem {
 // ── API calls ─────────────────────────────────────────────────────────────────
 
 function authHeaders(): Record<string, string> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('fieldiq_token') : null
+  const token = getToken()
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
@@ -114,7 +115,7 @@ export async function commitImport(plan: ImportPlan): Promise<CommitResult> {
 
 // ── History (recent imports shown on the page) ───────────────────────────────────
 
-const HISTORY_KEY = 'fieldiq_import_history'
+const HISTORY_KEY = 'app_import_history'
 const MAX_HISTORY = 20
 
 export function getImportHistory(): ImportHistoryItem[] {

@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import { BRAND } from '@/lib/brand'
 import {
   Eye, EyeOff, Moon, Sun, UserPlus, Building2,
   ChevronRight, Plus, X, User, ShieldCheck, Check,
@@ -363,7 +364,7 @@ function SignupContent() {
       </div>
 
       {/* Card */}
-      <div className="fieldiq-card w-full max-w-[440px] p-8">
+      <div className="app-card w-full max-w-[440px] p-8">
 
         {/* Logo */}
         <div className="flex flex-col" style={{ gap: 6 }}>
@@ -371,7 +372,7 @@ function SignupContent() {
             src={theme === 'dark'
               ? '/images/logo/lockup_dark.svg'
               : '/images/logo/lockup_light.svg'}
-            alt="FieldIQ"
+            alt={BRAND.name}
             width={178}
             height={64}
             priority
@@ -379,7 +380,7 @@ function SignupContent() {
             style={{ width: 178, height: 'auto' }}
           />
           <span style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.4 }}>
-            Field Sales Intelligence for Title Professionals
+            {BRAND.category}
           </span>
         </div>
 
@@ -431,7 +432,7 @@ function SignupContent() {
                 {isManager ? 'Create Your Manager Account' : 'Create Your Account'}
               </h1>
               <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0 }}>
-                {isManager ? 'Set up your account to get started.' : 'Join FieldIQ and start tracking your sales.'}
+                {isManager ? 'Set up your account to get started.' : `Join ${BRAND.name} and start tracking your sales.`}
               </p>
             </div>
 
@@ -866,7 +867,7 @@ function SignupContent() {
               className="w-full rounded-[8px] font-semibold hover:opacity-90 active:opacity-80"
               style={{ ...goldBtn, opacity: loading ? 0.6 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
             >
-              {loading ? 'Launching…' : invitedReps.length > 0 ? `Launch FieldIQ (${invitedReps.length} invited)` : 'Launch FieldIQ'}
+              {loading ? 'Launching…' : invitedReps.length > 0 ? `Launch ${BRAND.name} (${invitedReps.length} invited)` : `Launch ${BRAND.name}`}
             </button>
 
             <div style={{ height: 12 }} />
@@ -886,7 +887,7 @@ function SignupContent() {
       {/* Page footer */}
       <div className="absolute bottom-6 left-0 right-0 flex justify-center">
         <span style={{ fontSize: 11, color: 'var(--muted)' }}>
-          © 2026 FieldIQ · Privacy · Terms
+          {BRAND.legal}
         </span>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { ComingSoon } from '@/components/fieldiq/ComingSoon'
+import { ComingSoon } from '@/components/app/ComingSoon'
 
 export default function ComingSoonPage() {
   return <ComingSoon />

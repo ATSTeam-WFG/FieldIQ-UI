@@ -1,3 +1,6 @@
+import { BRAND } from '@/lib/brand'
+import { getToken } from '@/lib/api/client'
+
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
 
 export type ExportType =
@@ -29,7 +32,7 @@ export interface ExportHistoryItem {
   generatedAt: string
 }
 
-const HISTORY_KEY = 'fieldiq_export_history'
+const HISTORY_KEY = 'app_export_history'
 const MAX_HISTORY = 20
 
 export function getExportHistory(): ExportHistoryItem[] {
@@ -63,7 +66,7 @@ export async function downloadCsv(
   dateTo?: string,
   filters?: ExportFilters,
 ): Promise<void> {
-  const token = localStorage.getItem('fieldiq_token')
+  const token = getToken()
   const params = new URLSearchParams({ period })
   if (dateFrom) params.set('date_from', dateFrom)
   if (dateTo) params.set('date_to', dateTo)
@@ -83,12 +86,17 @@ export async function downloadCsv(
   })
   if (!res.ok) throw new Error(`Export failed: ${res.statusText}`)
 
+  // The server names the file in Content-Disposition; reading it as a blob drops
+  // response headers, so pull the name off the response before converting.
+  const disposition = res.headers.get('Content-Disposition')
+  const serverName = disposition?.match(/filename="([^"]+)"/)?.[1]
+
   const blob = await res.blob()
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
   const today = new Date().toISOString().slice(0, 10)
-  a.download = `fieldiq-${type}-${period}-${today}.csv`
+  a.download = serverName ?? `${BRAND.slug}-${type}-${period}-${today}.csv`
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)

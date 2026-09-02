@@ -3,9 +3,9 @@
 import { useState, useMemo, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { UserPlus, Star, ChevronRight, Search } from 'lucide-react'
-import { AppShell } from '@/components/fieldiq/AppShell'
-import { FilterSearchBar } from '@/components/fieldiq/FilterBar'
-import { SkeletonRows } from '@/components/fieldiq/SkeletonRows'
+import { AppShell } from '@/components/app/AppShell'
+import { FilterSearchBar } from '@/components/app/FilterBar'
+import { SkeletonRows } from '@/components/app/SkeletonRows'
 import { useAddContact } from '@/lib/context/AddContactContext'
 import { useContacts } from '@/lib/hooks/useContacts'
 import type { Contact } from '@/lib/api/contacts'
@@ -253,7 +253,7 @@ export default function ContactsPage() {
   const [favorites, setFavorites] = useState<Set<string>>(() => {
     if (typeof window === 'undefined') return new Set()
     try {
-      const stored = localStorage.getItem('fieldiq_contact_favorites')
+      const stored = localStorage.getItem('app_contact_favorites')
       return stored ? new Set(JSON.parse(stored) as string[]) : new Set()
     } catch {
       return new Set()
@@ -268,7 +268,7 @@ export default function ContactsPage() {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
       else next.add(id)
-      localStorage.setItem('fieldiq_contact_favorites', JSON.stringify([...next]))
+      localStorage.setItem('app_contact_favorites', JSON.stringify([...next]))
       return next
     })
   }

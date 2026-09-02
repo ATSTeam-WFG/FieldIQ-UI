@@ -16,12 +16,12 @@ import {
   Activity,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { AppShell } from '@/components/fieldiq/AppShell'
-import { StatusBadge } from '@/components/fieldiq/StatusBadge'
-import type { ActivityStatus } from '@/components/fieldiq/StatusBadge'
-import { FilterSearchBar, FilterDropdown, FilterPills, RangeSlider } from '@/components/fieldiq/FilterBar'
-import type { FilterOption } from '@/components/fieldiq/FilterBar'
-import { SkeletonRows } from '@/components/fieldiq/SkeletonRows'
+import { AppShell } from '@/components/app/AppShell'
+import { StatusBadge } from '@/components/app/StatusBadge'
+import type { ActivityStatus } from '@/components/app/StatusBadge'
+import { FilterSearchBar, FilterDropdown, FilterPills, RangeSlider } from '@/components/app/FilterBar'
+import type { FilterOption } from '@/components/app/FilterBar'
+import { SkeletonRows } from '@/components/app/SkeletonRows'
 import { useActivityLog } from '@/lib/context/ActivityLogContext'
 import { useRole } from '@/lib/context/RoleContext'
 import { useActivities } from '@/lib/hooks/useActivities'
@@ -274,7 +274,7 @@ export default function ActivitiesPage() {
 
         {/* ── Activity log card ───────────────────────────────────────────── */}
         <div
-          className="fieldiq-card"
+          className="app-card"
           style={{ marginTop: 16 }}
         >
           {/* Card header */}

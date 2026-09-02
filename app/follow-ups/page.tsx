@@ -4,8 +4,8 @@ import { Suspense } from 'react'
 import { useState, useRef, useEffect } from 'react'
 import { Plus, Circle, CalendarPlus, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
-import { AppShell } from '@/components/fieldiq/AppShell'
-import { SkeletonRows } from '@/components/fieldiq/SkeletonRows'
+import { AppShell } from '@/components/app/AppShell'
+import { SkeletonRows } from '@/components/app/SkeletonRows'
 import { useActivityLog } from '@/lib/context/ActivityLogContext'
 import { useFollowUps, useUpdateFollowUp } from '@/lib/hooks/useFollowUps'
 import type { FollowUp } from '@/lib/api/follow-ups'
@@ -717,7 +717,7 @@ function FollowUpsPageContent() {
 
           {/* ── Calendar Panel ─────────────────────────────────────── */}
           <div
-            className={isMobile ? '' : 'fieldiq-card'}
+            className={isMobile ? '' : 'app-card'}
             style={{
               flex: isMobile ? undefined : '0 0 62%',
               // Full-bleed on mobile: break out of p-4 padding
@@ -876,7 +876,7 @@ function FollowUpsPageContent() {
 
             {/* Content */}
             {isLoading ? (
-              <div className="fieldiq-card"><SkeletonRows cols={3} rows={5} /></div>
+              <div className="app-card"><SkeletonRows cols={3} rows={5} /></div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
@@ -915,7 +915,7 @@ function FollowUpsPageContent() {
 
                 {/* Empty states */}
                 {sortedDateKeys.length === 0 && overdueItems.length === 0 && (
-                  <div className="fieldiq-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', gap: 8 }}>
+                  <div className="app-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', gap: 8 }}>
                     <span style={{ fontSize: 13, color: 'var(--muted)' }}>
                       No follow-ups for {viewMode === 'month' ? 'this month' : viewMode === 'week' ? 'this week' : 'today'}
                     </span>

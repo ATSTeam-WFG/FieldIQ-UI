@@ -1,9 +1,22 @@
-# CLAUDE.md — FieldIQ Prototype
+# CLAUDE.md — FieldMT Prototype
 
 ## What This Project Is
-FieldIQ is a high-fidelity interactive prototype of an AI-powered field sales
-intelligence platform for the title insurance industry. Built for investor and
-sales demos. Must feel production-ready.
+FieldMT is the field management tool for a title rep's book of business —
+logging field activity, scoring relationships, and connecting effort to
+revenue. Must feel production-ready.
+
+## Brand Language (do not violate)
+- **"Management" never appears without its object.** Write "manage your book",
+  "book management". Never bare "management", and never "management tool"
+  without "for your book of business". MT means managing your *book of
+  business*, not managing people — the product has a `manager` role, so the
+  misread is one word away.
+- **Core noun is "book of business."** Native industry language; replaced the
+  vaguer "relationships / contacts / people".
+- **Not a CRM, and never compared to one.** Position by gap, not by enemy.
+- **Never write the product name next to "empty"** — spoken aloud, FieldMT is
+  one phoneme from "field empty". Use "nothing logged yet" in empty states.
+- Brand strings live in `lib/brand.ts`. Never hardcode the product name.
 
 ## Tech Stack
 - Next.js 14 App Router
@@ -66,7 +79,7 @@ design before building it. Always read the design first — do not guess layout.
 ## Project Structure
 See PRD for full structure. Key paths:
 - /app — Next.js App Router pages
-- /components/fieldiq — custom FieldIQ components
+- /components/app — custom product components
 - /components/ui — shadcn primitives
 - /lib/mock-data — JSON mock data files
 - /lib/context — React Context providers

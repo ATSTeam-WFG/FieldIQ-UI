@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { AppShell } from '@/components/fieldiq/AppShell'
-import { SkeletonRows } from '@/components/fieldiq/SkeletonRows'
+import { AppShell } from '@/components/app/AppShell'
+import { SkeletonRows } from '@/components/app/SkeletonRows'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { useContacts } from '@/lib/hooks/useContacts'
 import { useScoreTrends } from '@/lib/hooks/useScoreTrends'
 import { useAgentPerformance } from '@/lib/hooks/useAgentPerformance'
-import { SponsorActivitySection } from '@/components/fieldiq/SponsorActivitySection'
+import { SponsorActivitySection } from '@/components/app/SponsorActivitySection'
 import type { Contact } from '@/lib/api/contacts'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -202,7 +202,7 @@ export default function MyRelationsPage() {
           ].map(({ label, value, color }) => (
             <div
               key={label}
-              className="fieldiq-card"
+              className="app-card"
               style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 4 }}
             >
               <span style={{ fontSize: 10, fontWeight: 500, letterSpacing: '0.06em', color: 'var(--muted)', textTransform: 'uppercase' }}>
@@ -218,7 +218,7 @@ export default function MyRelationsPage() {
         {/* ── Health distribution bar ─────────────────────────────── */}
         {!isLoading && allContacts.length > 0 && (
           <div
-            className="fieldiq-card"
+            className="app-card"
             style={{ marginTop: 12, padding: '16px 20px' }}
           >
             <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', marginBottom: 12 }}>
@@ -229,7 +229,7 @@ export default function MyRelationsPage() {
         )}
 
         {/* ── Contacts table ──────────────────────────────────────── */}
-        <div className="fieldiq-card" style={{ marginTop: 12 }}>
+        <div className="app-card" style={{ marginTop: 12 }}>
 
           {/* Card header with sort toggle */}
           <div

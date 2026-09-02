@@ -45,11 +45,11 @@ test('stale token with failed refresh redirects to /login?expired=1', async ({ p
   // Navigate to a public page first to establish the origin, then seed fake tokens
   await page.goto('/login')
   await page.evaluate(() => {
-    localStorage.setItem('fieldiq_token', 'fake.stale.token')
-    localStorage.setItem('fieldiq_refresh_token', 'fake-refresh-token')
+    localStorage.setItem('app_token', 'fake.stale.token')
+    localStorage.setItem('app_refresh_token', 'fake-refresh-token')
   })
   await page.context().addCookies([{
-    name: 'fieldiq_has_token',
+    name: 'app_has_token',
     value: '1',
     domain: 'localhost',
     path: '/',

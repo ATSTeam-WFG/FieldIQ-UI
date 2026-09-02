@@ -7,13 +7,13 @@ import {
   AlertTriangle, Calendar, Trash2, ChevronRight, ChevronLeft,
   Database, HardDrive,
 } from 'lucide-react'
-import { AppShell } from '@/components/fieldiq/AppShell'
+import { AppShell } from '@/components/app/AppShell'
 import { useRole } from '@/lib/context/RoleContext'
 import { useExportHistory } from '@/lib/hooks/useExports'
 import { useImportHistory } from '@/lib/hooks/useImports'
 import { useManagerPerformance } from '@/lib/hooks/useManagerPerformance'
-import { ExportPanel, type ExportCard } from '@/components/fieldiq/ExportPanel'
-import { ImportPanel, type PlatformCard } from '@/components/fieldiq/ImportPanel'
+import { ExportPanel, type ExportCard } from '@/components/app/ExportPanel'
+import { ImportPanel, type PlatformCard } from '@/components/app/ImportPanel'
 
 const GOLD = '#c4a574'
 const PAGE_SIZE = 5
@@ -192,7 +192,7 @@ function ImportsExportsPage() {
             return (
               <div
                 key={p.platform}
-                className="fieldiq-card"
+                className="app-card"
                 onClick={() => { if (!soon) setOpenPlatform(p) }}
                 style={{
                   display: 'flex', flexDirection: 'column', padding: '16px 20px', gap: 12,
@@ -234,7 +234,7 @@ function ImportsExportsPage() {
         </div>
 
         {/* Import history */}
-        <div className="fieldiq-card" style={{ marginBottom: 32 }}>
+        <div className="app-card" style={{ marginBottom: 32 }}>
           <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span className="font-semibold" style={{ fontSize: 14, color: 'var(--foreground)' }}>Import History</span>
             {importHistory.length > 0 && (
@@ -295,7 +295,7 @@ function ImportsExportsPage() {
             return (
               <div
                 key={card.type}
-                className="fieldiq-card"
+                className="app-card"
                 onClick={() => setOpenCard(card)}
                 style={{ display: 'flex', flexDirection: 'column', padding: '16px 20px', gap: 12, cursor: 'pointer', transition: 'border-color 0.15s' }}
                 onMouseEnter={e => (e.currentTarget.style.borderTopColor = '#d4b584')}
@@ -322,7 +322,7 @@ function ImportsExportsPage() {
         </div>
 
         {/* Export history */}
-        <div className="fieldiq-card">
+        <div className="app-card">
           <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span className="font-semibold" style={{ fontSize: 14, color: 'var(--foreground)' }}>Export History</span>
             {exportHistory.length > 0 && (

@@ -51,7 +51,7 @@ test('signup page renders required fields', async ({ page }) => {
 })
 
 test('individual signup redirects to /dashboard and stores token', async ({ page, request }) => {
-  const testEmail = `playwright.signup.${Date.now()}@test.fieldiq.io`
+  const testEmail = `playwright.signup.${Date.now()}@example.com`
 
   await page.goto('/signup')
   await page.fill('#fullName', TEST_NAME)
@@ -65,12 +65,12 @@ test('individual signup redirects to /dashboard and stores token', async ({ page
   await expect(page).toHaveURL(/\/dashboard/, { timeout: 20_000 })
 
   // Token stored in localStorage + /auth/me confirms user
-  const token = await page.evaluate(() => localStorage.getItem('fieldiq_token'))
+  const token = await page.evaluate(() => localStorage.getItem('app_token'))
   await assertMe(request, token, { email: testEmail, role: 'agent', also_rep: false })
 })
 
 test('manager signup (single role) → registers agency → redirects to /manager', async ({ page, request }) => {
-  const testEmail = `playwright.manager.${Date.now()}@test.fieldiq.io`
+  const testEmail = `playwright.manager.${Date.now()}@example.com`
 
   await page.goto('/signup?role=manager&type=agency')
 
@@ -99,12 +99,12 @@ test('manager signup (single role) → registers agency → redirects to /manage
 
   await expect(page).toHaveURL(/\/manager/, { timeout: 20_000 })
 
-  const token = await page.evaluate(() => localStorage.getItem('fieldiq_token'))
+  const token = await page.evaluate(() => localStorage.getItem('app_token'))
   await assertMe(request, token, { email: testEmail, role: 'manager', also_rep: false })
 })
 
 test('manager signup (dual role) → registers agency → redirects to /manager with also_rep', async ({ page, request }) => {
-  const testEmail = `playwright.manager-rep.${Date.now()}@test.fieldiq.io`
+  const testEmail = `playwright.manager-rep.${Date.now()}@example.com`
 
   await page.goto('/signup?role=manager&type=agency')
 
@@ -132,6 +132,6 @@ test('manager signup (dual role) → registers agency → redirects to /manager 
 
   await expect(page).toHaveURL(/\/manager/, { timeout: 20_000 })
 
-  const token = await page.evaluate(() => localStorage.getItem('fieldiq_token'))
+  const token = await page.evaluate(() => localStorage.getItem('app_token'))
   await assertMe(request, token, { email: testEmail, role: 'manager', also_rep: true })
 })

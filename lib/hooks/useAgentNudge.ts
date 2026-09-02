@@ -1,9 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { getNudge } from '@/lib/api/agents'
-
-function hasToken() {
-  return typeof window !== 'undefined' && !!localStorage.getItem('fieldiq_token')
-}
+import { hasToken } from '@/lib/api/client'
 
 export function useAgentNudge() {
   return useQuery({

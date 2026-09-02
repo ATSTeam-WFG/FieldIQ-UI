@@ -7,11 +7,11 @@ import { FieldLabel } from './FieldLabel'
 import { useContract } from '@/lib/context/ContractContext'
 import { useRole } from '@/lib/context/RoleContext'
 import { useAddContact } from '@/lib/context/AddContactContext'
-import { useSuccessToast } from '@/components/fieldiq/SuccessToast'
+import { useSuccessToast } from '@/components/app/SuccessToast'
 import { useContacts } from '@/lib/hooks/useContacts'
 import { useCreateContract } from '@/lib/hooks/useContracts'
-import { DatePickerInput } from '@/components/fieldiq/DatePickerInput'
-import { TimePickerInput } from '@/components/fieldiq/TimePickerInput'
+import { DatePickerInput } from '@/components/app/DatePickerInput'
+import { TimePickerInput } from '@/components/app/TimePickerInput'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

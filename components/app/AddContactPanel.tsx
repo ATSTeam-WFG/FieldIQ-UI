@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { X, Users, Building2, Landmark } from 'lucide-react'
 import { useAddContact } from '@/lib/context/AddContactContext'
-import { useSuccessToast } from '@/components/fieldiq/SuccessToast'
+import { useSuccessToast } from '@/components/app/SuccessToast'
 import { useTheme } from '@/lib/context/ThemeContext'
 import { SlideOverPanel } from './SlideOverPanel'
 import { useCreateContact } from '@/lib/hooks/useContacts'

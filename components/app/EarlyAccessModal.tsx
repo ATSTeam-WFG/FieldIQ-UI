@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { BRAND } from '@/lib/brand'
 
 interface EarlyAccessModalProps {
   open: boolean
@@ -101,7 +102,7 @@ export function EarlyAccessModal({ open, onClose }: EarlyAccessModalProps) {
             <h3>One last step{form.name ? `, ${form.name.split(' ')[0]}` : ''}.</h3>
             <p>
               We&apos;ve opened a short form in a new tab with your details filled in — just hit{' '}
-              <strong>Submit</strong> there to lock in your spot. Didn&apos;t see it? Pop-up blockers can hide it.
+              <strong>Submit</strong> there to join the beta waitlist. Didn&apos;t see it? Pop-up blockers can hide it.
             </p>
             <div className="ea-success-actions">
               <a
@@ -121,8 +122,8 @@ export function EarlyAccessModal({ open, onClose }: EarlyAccessModalProps) {
           <>
             <div className="ea-header">
               <div className="ea-eyebrow">Early access</div>
-              <h3>Bring FieldIQ to your team.</h3>
-              <p>Tell us a little about yourself and we&apos;ll be in touch as we roll out across the network.</p>
+              <h3>Put {BRAND.name} in the field.</h3>
+              <p>Tell us a little about your agency and we&apos;ll add you to the beta waitlist.</p>
             </div>
 
             <form className="ea-form" onSubmit={handleSubmit}>
@@ -163,7 +164,7 @@ export function EarlyAccessModal({ open, onClose }: EarlyAccessModalProps) {
               </div>
 
               <button type="submit" className="btn btn-primary ea-submit">Request early access →</button>
-              <p className="ea-fineprint">We&apos;ll only use this to reach out about FieldIQ early access.</p>
+              <p className="ea-fineprint">We&apos;ll only use this to reach out about {BRAND.name} early access.</p>
             </form>
           </>
         )}

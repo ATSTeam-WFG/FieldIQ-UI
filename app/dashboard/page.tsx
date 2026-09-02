@@ -18,14 +18,14 @@ import {
   FileText,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { AppShell } from '@/components/fieldiq/AppShell'
-import { KPICard } from '@/components/fieldiq/KPICard'
-import { AICard } from '@/components/fieldiq/AICard'
-import { StatusBadge } from '@/components/fieldiq/StatusBadge'
-import { WelcomeBanner } from '@/components/fieldiq/WelcomeBanner'
-import { SkeletonRows } from '@/components/fieldiq/SkeletonRows'
+import { AppShell } from '@/components/app/AppShell'
+import { KPICard } from '@/components/app/KPICard'
+import { AICard } from '@/components/app/AICard'
+import { StatusBadge } from '@/components/app/StatusBadge'
+import { WelcomeBanner } from '@/components/app/WelcomeBanner'
+import { SkeletonRows } from '@/components/app/SkeletonRows'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { ActivityStatus } from '@/components/fieldiq/StatusBadge'
+import type { ActivityStatus } from '@/components/app/StatusBadge'
 import { useRole } from '@/lib/context/RoleContext'
 import { useActivityLog } from '@/lib/context/ActivityLogContext'
 import { useContract } from '@/lib/context/ContractContext'
@@ -245,7 +245,7 @@ export default function DashboardPage() {
         {/* ── Two-column row ────────────────────────────── */}
         {isLoading ? (
           <div className="flex flex-col md:flex-row" style={{ gap: 16, marginTop: 24 }}>
-            <Skeleton className="fieldiq-card min-w-0 flex-1 h-64 rounded-lg" />
+            <Skeleton className="app-card min-w-0 flex-1 h-64 rounded-lg" />
             <Skeleton className="w-full md:w-[310px] h-64 rounded-lg" />
           </div>
         ) : (
@@ -254,7 +254,7 @@ export default function DashboardPage() {
           style={{ gap: 16, marginTop: 24 }}
         >
           {/* ─ Recent Activity card ───────────────────── */}
-          <div className="fieldiq-card min-w-0 flex-1">
+          <div className="app-card min-w-0 flex-1">
             {/* Card header */}
             <div
               className="flex items-center justify-between"
@@ -406,7 +406,7 @@ export default function DashboardPage() {
           </div>
 
           {/* ─ Activity Streak card ───────────────────── */}
-          <div className="fieldiq-card w-full shrink-0 md:w-[310px]">
+          <div className="app-card w-full shrink-0 md:w-[310px]">
             {/* Card header */}
             <div
               className="flex items-center justify-between"

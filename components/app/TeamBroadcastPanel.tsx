@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { X, Radio, Sparkles } from 'lucide-react'
 import { useTeamBroadcast } from '@/lib/context/TeamBroadcastContext'
 import { useNotifications } from '@/lib/context/NotificationContext'
-import { useSuccessToast } from '@/components/fieldiq/SuccessToast'
+import { useSuccessToast } from '@/components/app/SuccessToast'
 import { SlideOverPanel } from './SlideOverPanel'
 
 export function TeamBroadcastPanel() {

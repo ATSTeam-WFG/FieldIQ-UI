@@ -1,4 +1,4 @@
-# FieldIQ frontend — Next.js standalone production image.
+# FieldMT frontend — Next.js standalone production image.
 # Deployed to Azure Container App <env>-fieldiq-web; also used by the local
 # full-stack docker-compose so local matches prod.
 

@@ -17,5 +17,5 @@
       <path d="M100,248 C72,198 28,150 28,88 A72,72,0,1,1,172,88 C172,150 128,198 100,248Z" fill="none" stroke="#c4a574" stroke-width="3.5" stroke-linejoin="round"></path>
     </svg>
   </g>
-  <text x="112" y="59" font-family="Inter, system-ui, sans-serif" font-size="28" font-weight="600" letter-spacing="3" fill="#ffffff">FIELD<tspan font-weight="700" fill="#c4a574">IQ</tspan></text>
+  <text x="112" y="59" font-family="Inter, system-ui, sans-serif" font-size="28" font-weight="600" letter-spacing="3.2" fill="#ffffff">FIELD<tspan font-weight="700" fill="#c4a574" dx="0.7">M</tspan><tspan font-weight="700" fill="#c4a574" dx="-1.1" letter-spacing="0">T</tspan></text>
 </svg>
