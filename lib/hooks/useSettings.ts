@@ -1,10 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getSettings, updateSettings, UserSettings } from '@/lib/api/settings'
 import { useRole } from '@/lib/context/RoleContext'
-
-function hasToken() {
-  return typeof window !== 'undefined' && !!localStorage.getItem('fieldiq_token')
-}
+import { hasToken } from '@/lib/api/client'
 
 export function useSettings() {
   const { role } = useRole()

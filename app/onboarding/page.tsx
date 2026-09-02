@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronLeft, User, UserCog, TrendingUp, Mail, Moon, Sun, CheckCircle2, ArrowRight, Copy, Check } from 'lucide-react'
 import { useTheme } from '@/lib/context/ThemeContext'
+import { BRAND } from '@/lib/brand'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -132,7 +133,7 @@ export default function OnboardingPage() {
   const [joinCodeError, setJoinCodeError] = useState<string | null>(null)
   const [promptCopied, setPromptCopied] = useState(false)
 
-  const MANAGER_PROMPT = 'Sign up on FieldIQ as a Manager, create your agency, and share your agency code with me.'
+  const MANAGER_PROMPT = `Sign up on ${BRAND.name} as a Manager, create your agency, and share your agency code with me.`
 
   function handleCopyPrompt() {
     navigator.clipboard.writeText(MANAGER_PROMPT)
@@ -215,7 +216,7 @@ export default function OnboardingPage() {
       </div>
 
       {/* Card */}
-      <div className="fieldiq-card w-full max-w-[440px] p-8">
+      <div className="app-card w-full max-w-[440px] p-8">
 
         {/* Logo */}
         <div className="flex flex-col" style={{ gap: 6 }}>
@@ -223,7 +224,7 @@ export default function OnboardingPage() {
             src={theme === 'dark'
               ? '/images/logo/lockup_dark.svg'
               : '/images/logo/lockup_light.svg'}
-            alt="FieldIQ"
+            alt={BRAND.name}
             width={178}
             height={64}
             priority
@@ -231,7 +232,7 @@ export default function OnboardingPage() {
             style={{ width: 178, height: 'auto' }}
           />
           <span style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.4 }}>
-            Field Sales Intelligence for Title Professionals
+            {BRAND.category}
           </span>
         </div>
 
@@ -277,7 +278,7 @@ export default function OnboardingPage() {
           <>
             <div className="flex flex-col" style={{ gap: 4, marginBottom: 24 }}>
               <h1 className="font-semibold" style={{ fontSize: 20, color: 'var(--foreground)', margin: 0 }}>
-                How will you use FieldIQ?
+                How will you use {BRAND.name}?
               </h1>
               <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0 }}>
                 Let&apos;s set up the right experience for you.
@@ -460,7 +461,7 @@ export default function OnboardingPage() {
                 {promptCopied ? <Check size={13} /> : <Copy size={13} />}
               </button>
               <p style={{ fontSize: 13, color: 'var(--foreground)', margin: 0, lineHeight: 1.6, paddingRight: 20 }}>
-                &ldquo;Sign up on FieldIQ as a Manager, create your agency, and share your agency code with me.&rdquo;
+                &ldquo;{MANAGER_PROMPT}&rdquo;
               </p>
             </div>
 
@@ -481,7 +482,7 @@ export default function OnboardingPage() {
       {/* Page footer */}
       <div className="absolute bottom-6 left-0 right-0 flex justify-center">
         <span style={{ fontSize: 11, color: 'var(--muted)' }}>
-          © 2026 FieldIQ · Privacy · Terms
+          {BRAND.legal}
         </span>
       </div>
     </div>

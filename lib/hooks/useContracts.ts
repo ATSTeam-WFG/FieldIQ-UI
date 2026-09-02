@@ -1,9 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createContract, getContracts } from '@/lib/api/contracts'
-
-function hasToken() {
-  return typeof window !== 'undefined' && !!localStorage.getItem('fieldiq_token')
-}
+import { hasToken } from '@/lib/api/client'
 
 export function useContracts(params?: Parameters<typeof getContracts>[0]) {
   return useQuery({

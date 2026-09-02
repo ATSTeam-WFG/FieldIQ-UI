@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
+import { BRAND } from '@/lib/brand'
 
 export function ComingSoon() {
   const router = useRouter()
@@ -16,7 +17,7 @@ export function ComingSoon() {
         className="mb-8 text-2xl font-bold tracking-tight"
         style={{ color: '#c4a574' }}
       >
-        FieldIQ
+        {BRAND.name}
       </p>
 
       {/* Heading */}
@@ -32,7 +33,7 @@ export function ComingSoon() {
         className="mb-8 max-w-sm text-center text-sm"
         style={{ color: 'var(--muted)' }}
       >
-        This feature is part of the full FieldIQ platform. We&apos;re building it out now.
+        This feature is part of the full {BRAND.name} product. We&apos;re building it out now.
       </p>
 
       {/* Back button */}

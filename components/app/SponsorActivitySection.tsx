@@ -16,7 +16,7 @@ function InitialsAvatar({ initials, size = 32 }: { initials: string; size?: numb
 
 export function SponsorActivitySection({ items }: { items: SponsorSpendItem[] }) {
   return (
-    <div className="fieldiq-card">
+    <div className="app-card">
       <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
         <span className="font-semibold" style={{ fontSize: 14, color: 'var(--foreground)' }}>
           Sponsor Activity

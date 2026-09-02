@@ -1,9 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { getManagerDashboard, type Period } from '@/lib/api/analytics'
-
-function hasToken() {
-  return typeof window !== 'undefined' && !!localStorage.getItem('fieldiq_token')
-}
+import { hasToken } from '@/lib/api/client'
 
 export function useManagerDashboard(period: Period = 'mtd') {
   return useQuery({

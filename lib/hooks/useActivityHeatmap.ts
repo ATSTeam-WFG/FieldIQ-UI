@@ -3,10 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { getActivityDays } from '@/lib/api/analytics'
 import type { Period } from '@/lib/api/analytics'
-
-function hasToken() {
-  return typeof window !== 'undefined' && !!localStorage.getItem('fieldiq_token')
-}
+import { hasToken } from '@/lib/api/client'
 
 export function useActivityHeatmap(period: Period = 'mtd') {
   return useQuery({

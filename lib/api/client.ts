@@ -7,25 +7,35 @@ export class ApiError extends Error {
   }
 }
 
-const PRESENCE_COOKIE = 'fieldiq_has_token'
+// Storage keys are deliberately brand-free: renaming the product must never
+// invalidate live sessions. Defined once here — middleware.ts must use the
+// same PRESENCE_COOKIE value or route protection and the client disagree.
+export const PRESENCE_COOKIE = 'app_has_token'
+const TOKEN_KEY = 'app_token'
+const REFRESH_TOKEN_KEY = 'app_refresh_token'
 
-function getToken(): string | null {
+export function getToken(): string | null {
   if (typeof window === 'undefined') return null
-  return localStorage.getItem('fieldiq_token')
+  return localStorage.getItem(TOKEN_KEY)
+}
+
+/** Cheap client-side check used to gate react-query fetches before hydration. */
+export function hasToken(): boolean {
+  return typeof window !== 'undefined' && !!localStorage.getItem(TOKEN_KEY)
 }
 
 export function setToken(token: string, refreshToken?: string): void {
-  localStorage.setItem('fieldiq_token', token)
+  localStorage.setItem(TOKEN_KEY, token)
   // max-age matches Supabase's default refresh token lifetime (60 days)
   document.cookie = `${PRESENCE_COOKIE}=1; path=/; SameSite=Lax; max-age=5184000`
   if (refreshToken) {
-    localStorage.setItem('fieldiq_refresh_token', refreshToken)
+    localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken)
   }
 }
 
 export function clearToken(): void {
-  localStorage.removeItem('fieldiq_token')
-  localStorage.removeItem('fieldiq_refresh_token')
+  localStorage.removeItem(TOKEN_KEY)
+  localStorage.removeItem(REFRESH_TOKEN_KEY)
   document.cookie = `${PRESENCE_COOKIE}=; path=/; max-age=0`
 }
 
@@ -35,7 +45,7 @@ let _refreshPromise: Promise<string> | null = null
 export async function attemptRefresh(): Promise<string> {
   if (_refreshPromise) return _refreshPromise
   _refreshPromise = (async () => {
-    const rt = localStorage.getItem('fieldiq_refresh_token')
+    const rt = localStorage.getItem(REFRESH_TOKEN_KEY)
     if (!rt) throw new Error('No refresh token')
     // Use raw fetch to avoid re-entering the request() 401 handler
     const res = await fetch(`${BASE_URL}/auth/refresh`, {

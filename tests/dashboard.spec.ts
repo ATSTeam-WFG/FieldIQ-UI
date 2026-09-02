@@ -59,7 +59,7 @@ test('Recent Activity section has rows', async ({ page }) => {
   // First-time users see WelcomeBanner instead of Recent Activity
   const hasRecent = await page.getByText('Recent Activity').isVisible().catch(() => false)
   if (hasRecent) {
-    const rows = page.locator('.fieldiq-card').filter({ hasText: 'Recent Activity' })
+    const rows = page.locator('.app-card').filter({ hasText: 'Recent Activity' })
     await expect(rows).toBeVisible()
     await expect(page.getByText('View all →')).toBeVisible()
   } else {

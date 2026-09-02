@@ -5,11 +5,11 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, FileText } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
-import { AppShell } from '@/components/fieldiq/AppShell'
-import { FilterSearchBar, FilterDropdown } from '@/components/fieldiq/FilterBar'
-import type { FilterOption } from '@/components/fieldiq/FilterBar'
-import { SkeletonRows } from '@/components/fieldiq/SkeletonRows'
-import { ContractDetailPanel } from '@/components/fieldiq/ContractDetailPanel'
+import { AppShell } from '@/components/app/AppShell'
+import { FilterSearchBar, FilterDropdown } from '@/components/app/FilterBar'
+import type { FilterOption } from '@/components/app/FilterBar'
+import { SkeletonRows } from '@/components/app/SkeletonRows'
+import { ContractDetailPanel } from '@/components/app/ContractDetailPanel'
 import { useContract } from '@/lib/context/ContractContext'
 import { useRole } from '@/lib/context/RoleContext'
 import { useContracts } from '@/lib/hooks/useContracts'
@@ -243,7 +243,7 @@ function ContractsPageContent() {
         </div>
 
         {/* ── Contracts table card ─────────────────────── */}
-        <div className="fieldiq-card" style={{ marginTop: 16 }}>
+        <div className="app-card" style={{ marginTop: 16 }}>
 
           {/* Card header */}
           <div

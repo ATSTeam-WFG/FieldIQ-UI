@@ -123,7 +123,7 @@ export function ActivityHeatmap({ data, period, isLoading }: Props) {
   const gridCols = `${GUTTER}px repeat(${weeks.length}, ${cellSize}px)`
 
   return (
-    <div className="fieldiq-card" style={{ overflow: 'hidden', minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
+    <div className="app-card" style={{ overflow: 'hidden', minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <div className="flex items-center justify-between" style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
         <span className="font-semibold" style={{ fontSize: 14, color: 'var(--foreground)' }}>

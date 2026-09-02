@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { PRESENCE_COOKIE } from '@/lib/api/client'
 
-const PUBLIC_PATHS = new Set(['/', '/login', '/signup', '/onboarding', '/coming-soon'])
+const PUBLIC_PATHS = new Set(['/', '/login', '/signup', '/onboarding', '/coming-soon', '/manifest.webmanifest'])
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -15,7 +16,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  if (!request.cookies.has('fieldiq_has_token')) {
+  if (!request.cookies.has(PRESENCE_COOKIE)) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 

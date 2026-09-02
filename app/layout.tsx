@@ -2,10 +2,11 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { Providers } from '@/lib/context/Providers'
 import { Toaster } from '@/components/ui/toaster'
+import { BRAND } from '@/lib/brand'
 
 export const metadata: Metadata = {
-  title: 'FieldIQ — Field Sales Intelligence',
-  description: 'AI-powered field sales intelligence for the title insurance industry.',
+  title: `${BRAND.name} — ${BRAND.categoryTitle}`,
+  description: BRAND.description,
   manifest: '/manifest.webmanifest',
   icons: {
     icon: [

@@ -1,9 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createActivity, getActivities, type CreateActivityPayload } from '@/lib/api/activities'
-
-function hasToken() {
-  return typeof window !== 'undefined' && !!localStorage.getItem('fieldiq_token')
-}
+import { hasToken } from '@/lib/api/client'
 
 export function useActivities(params?: Parameters<typeof getActivities>[0]) {
   return useQuery({

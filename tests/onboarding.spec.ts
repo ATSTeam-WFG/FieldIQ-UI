@@ -21,7 +21,7 @@ test('root redirects to /onboarding', async ({ page }) => {
 
 test('step 1: displays user-type selection', async ({ page }) => {
   await page.goto('/onboarding')
-  await expect(page.getByText('How will you use FieldIQ?')).toBeVisible()
+  await expect(page.getByText('How will you use FieldMT?')).toBeVisible()
   await expect(page.getByText("I'm a Sales Rep")).toBeVisible()
   await expect(page.getByText("I'm a Manager")).toBeVisible()
 })

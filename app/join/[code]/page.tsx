@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Eye, EyeOff, Moon, Sun, AlertCircle } from 'lucide-react'
 import { useTheme } from '@/lib/context/ThemeContext'
+import { BRAND } from '@/lib/brand'
 import { getAgencyByCode, joinByCode } from '@/lib/api/agencies'
 import { setToken, ApiError } from '@/lib/api/client'
 
@@ -116,7 +117,7 @@ export default function JoinByCodePage() {
         <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
       </div>
 
-      <div className="fieldiq-card w-full max-w-[440px] p-8">
+      <div className="app-card w-full max-w-[440px] p-8">
 
         {/* Logo */}
         <div className="flex flex-col" style={{ gap: 6, marginBottom: 28 }}>
@@ -124,7 +125,7 @@ export default function JoinByCodePage() {
             src={theme === 'dark'
               ? '/images/logo/lockup_dark.svg'
               : '/images/logo/lockup_light.svg'}
-            alt="FieldIQ"
+            alt={BRAND.name}
             width={178}
             height={64}
             priority
@@ -132,7 +133,7 @@ export default function JoinByCodePage() {
             style={{ width: 178, height: 'auto' }}
           />
           <span style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.4 }}>
-            Field Sales Intelligence for Title Professionals
+            {BRAND.category}
           </span>
         </div>
 
@@ -309,7 +310,7 @@ export default function JoinByCodePage() {
 
       <div className="absolute bottom-6 left-0 right-0 flex justify-center">
         <span style={{ fontSize: 11, color: 'var(--muted)' }}>
-          © 2026 FieldIQ · Privacy · Terms
+          {BRAND.legal}
         </span>
       </div>
     </div>

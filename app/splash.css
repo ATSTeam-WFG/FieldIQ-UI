@@ -1233,7 +1233,7 @@ html { scroll-behavior: smooth; }
     text-transform: uppercase;
     border-bottom: 1px solid var(--border);
   }
-  .compare-table thead th.fieldiq-col {
+  .compare-table thead th.highlight-col {
     color: var(--gold);
     font-weight: 600;
   }
@@ -1250,7 +1250,7 @@ html { scroll-behavior: smooth; }
   .compare-table tbody tr:hover td {
     background: rgba(255, 255, 255, 0.015);
   }
-  .compare-table tbody tr:hover .fieldiq-cell {
+  .compare-table tbody tr:hover .highlight-cell {
     background: rgba(196, 165, 116, 0.1);
   }
   .compare-table tbody tr {
@@ -1259,7 +1259,7 @@ html { scroll-behavior: smooth; }
   .compare-table tbody tr:hover td {
     background: rgba(255, 255, 255, 0.015);
   }
-  .compare-table tbody tr:hover .fieldiq-cell {
+  .compare-table tbody tr:hover .highlight-cell {
     background: rgba(196, 165, 116, 0.1);
   }
   .compare-table .row-label {
@@ -1269,7 +1269,7 @@ html { scroll-behavior: smooth; }
     letter-spacing: 0.06em;
     text-transform: uppercase;
   }
-  .compare-table .fieldiq-cell {
+  .compare-table .highlight-cell {
     color: var(--foreground);
     font-weight: 600;
     background: var(--gold-soft);
@@ -1838,13 +1838,13 @@ html { scroll-behavior: smooth; }
       letter-spacing: 0.05em;
     }
 
-    /* Day in FieldIQ cards */
+    /* A day in the field — cards */
     .day-card { padding: 28px 22px; }
     .day-card h3 { font-size: 19px; }
     .day-card p { font-size: 14.5px; }
     .day-card-label { font-size: 10px; letter-spacing: 0.1em; margin-bottom: 12px; }
 
-    /* Inside FieldIQ tiles */
+    /* Inside FieldMT — feature tiles */
     .feature-tile { padding: 22px 20px; }
     .feature-tile h3 { font-size: 15.5px; }
     .feature-tile p { font-size: 13px; }

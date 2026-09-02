@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { AppShell } from '@/components/fieldiq/AppShell'
+import { AppShell } from '@/components/app/AppShell'
 import { useRole } from '@/lib/context/RoleContext'
 import { useTheme } from '@/lib/context/ThemeContext'
 import { useSettings } from '@/lib/hooks/useSettings'
@@ -41,7 +41,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div
-      className="fieldiq-card"
+      className="app-card"
       style={{ overflow: 'hidden' }}
     >
       <div

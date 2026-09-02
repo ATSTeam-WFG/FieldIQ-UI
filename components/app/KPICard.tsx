@@ -27,7 +27,7 @@ export function KPICard({
   const isClickable = !!(href || onClick)
   const inner = (
     <div
-      className={cn('fieldiq-card p-3 md:p-5', isClickable && 'hover:opacity-90 transition-opacity', className)}
+      className={cn('app-card p-3 md:p-5', isClickable && 'hover:opacity-90 transition-opacity', className)}
       style={isClickable ? { cursor: 'pointer' } : undefined}
       onClick={onClick}
     >

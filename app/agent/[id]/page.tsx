@@ -1,8 +1,8 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { AppShell } from '@/components/fieldiq/AppShell'
-import { KPICard } from '@/components/fieldiq/KPICard'
+import { AppShell } from '@/components/app/AppShell'
+import { KPICard } from '@/components/app/KPICard'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAgentDetail } from '@/lib/hooks/useAgentDetail'
 import {
@@ -200,7 +200,7 @@ export default function AgentDetailPage({ params }: { params: { id: string } }) 
         </div>
 
         {/* Monthly Spend & Activity Trend */}
-        <div className="fieldiq-card">
+        <div className="app-card">
           <div className="flex items-center justify-between" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
             <span className="font-semibold" style={{ fontSize: 14, color: 'var(--foreground)' }}>
               Spend &amp; Activity Trend · Last 6 Months
@@ -229,7 +229,7 @@ export default function AgentDetailPage({ params }: { params: { id: string } }) 
         </div>
 
         {/* Activity Type Breakdown */}
-        <div className="fieldiq-card">
+        <div className="app-card">
           <div className="flex items-center justify-between" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
             <span className="font-semibold" style={{ fontSize: 14, color: 'var(--foreground)' }}>Activity Type Breakdown</span>
           </div>

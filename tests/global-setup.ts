@@ -2,10 +2,10 @@
  * Global setup: log in once and save auth state to tests/.auth/user.json
  *
  * Required env vars (or set defaults below):
- *   TEST_EMAIL    – e.g. sarah@fieldiq.demo
+ *   TEST_EMAIL    – e.g. ci-test@example.com
  *   TEST_PASSWORD – e.g. demo1234
  *
- * The saved storageState (fieldiq_token in localStorage) is reused by all
+ * The saved storageState (app_token in localStorage) is reused by all
  * specs that include `storageState: 'tests/.auth/user.json'` in their test
  * fixture, or globally via the `use` block in playwright.config.ts.
  */

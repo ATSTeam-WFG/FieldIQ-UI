@@ -28,8 +28,8 @@ const TONE: Record<Status, { c: string; bg: string; bd: string }> = {
   existing: { c: 'var(--muted)', bg: 'var(--surface)', bd: 'var(--border)' },
 }
 
-const CONTACT_LABEL: Record<Status, string> = { new: 'New', review: 'Possible match', existing: 'Already in FieldIQ' }
-const CONTACT_GROUP: Record<Status, string> = { new: 'New contacts', review: 'Needs review', existing: 'Already in FieldIQ' }
+const CONTACT_LABEL: Record<Status, string> = { new: 'New', review: 'Possible match', existing: 'Already imported' }
+const CONTACT_GROUP: Record<Status, string> = { new: 'New contacts', review: 'Needs review', existing: 'Already imported' }
 const CONTRACT_LABEL: Record<Status, string> = { new: 'New', review: 'Needs Review', existing: 'Already imported' }
 const CONTRACT_GROUP: Record<Status, string> = { new: 'New contracts', review: 'Needs Review', existing: 'Already imported' }
 
@@ -38,7 +38,7 @@ const IMPORTED: { icon: React.ElementType; title: string; desc: string; bullets:
     icon: FileText, title: 'Contracts',
     desc: 'Each closed order becomes a contract with its property address, amount and close date.',
     bullets: [
-      { tone: 'new', label: 'New', text: 'orders not yet in FieldIQ, selected to import by default.' },
+      { tone: 'new', label: 'New', text: 'orders not yet imported, selected to import by default.' },
       { tone: 'existing', label: 'Already imported', text: 'orders you brought in before, skipped unless you choose to update them.' },
     ],
   },
@@ -48,7 +48,7 @@ const IMPORTED: { icon: React.ElementType; title: string; desc: string; bullets:
     bullets: [
       { tone: 'new', label: 'New', text: 'agents not in your book yet, selected to import by default.' },
       { tone: 'review', label: 'Needs review', text: 'same name as a contact you already have but different details, so you decide.' },
-      { tone: 'existing', label: 'Already in FieldIQ', text: 'matched to an existing contact, linked to the deal and never duplicated.' },
+      { tone: 'existing', label: 'Already imported', text: 'matched to an existing contact, linked to the deal and never duplicated.' },
     ],
   },
 ]
@@ -180,7 +180,7 @@ function ContractCard({ ct, nameOf, onToggle, onAction }: {
           <Role label="Referred by" name={nameOf(ct.referringKey)} tone="gold" />
           {ct.duplicate && (
             <div style={{ marginTop: 12 }}>
-              <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 8 }}>This order already exists in FieldIQ:</div>
+              <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 8 }}>This order has already been imported:</div>
               <Segmented
                 options={[{ value: 'skip', label: 'Skip it' }, { value: 'update', label: 'Update it' }]}
                 value={ct.duplicateAction}

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { X, UserPlus, User, ShieldCheck } from 'lucide-react'
 import { useInviteAgent } from '@/lib/context/InviteAgentContext'
-import { useSuccessToast } from '@/components/fieldiq/SuccessToast'
+import { useSuccessToast } from '@/components/app/SuccessToast'
 import { useTheme } from '@/lib/context/ThemeContext'
 import { SlideOverPanel } from './SlideOverPanel'
 import { createInvites } from '@/lib/api/agencies'

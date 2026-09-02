@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { getMe } from '@/lib/api/auth'
-import { attemptRefresh } from '@/lib/api/client'
+import { attemptRefresh, getToken } from '@/lib/api/client'
 
 function getTokenExp(token: string): number | null {
   try {
@@ -51,7 +51,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   const [alsoRep, setAlsoRep] = useState(false)
 
   useEffect(() => {
-    const token = typeof window !== 'undefined' && localStorage.getItem('fieldiq_token')
+    const token = getToken()
     if (!token) {
       setLoaded(true)
       return
@@ -81,7 +81,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     if (!loaded) return
     let timer: ReturnType<typeof setTimeout>
     function schedule() {
-      const token = typeof window !== 'undefined' && localStorage.getItem('fieldiq_token')
+      const token = getToken()
       if (!token) return
       const exp = getTokenExp(token)
       if (!exp) return

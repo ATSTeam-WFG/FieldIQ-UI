@@ -4,13 +4,13 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { TriangleAlert, ChevronRight, Users, BarChart2, UserPlus } from 'lucide-react'
-import { AICard } from '@/components/fieldiq/AICard'
-import { AppShell } from '@/components/fieldiq/AppShell'
-import { StatusBadge } from '@/components/fieldiq/StatusBadge'
-import { WelcomeBanner } from '@/components/fieldiq/WelcomeBanner'
-import { SkeletonRows } from '@/components/fieldiq/SkeletonRows'
+import { AICard } from '@/components/app/AICard'
+import { AppShell } from '@/components/app/AppShell'
+import { StatusBadge } from '@/components/app/StatusBadge'
+import { WelcomeBanner } from '@/components/app/WelcomeBanner'
+import { SkeletonRows } from '@/components/app/SkeletonRows'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { ActivityStatus } from '@/components/fieldiq/StatusBadge'
+import type { ActivityStatus } from '@/components/app/StatusBadge'
 import { useTheme } from '@/lib/context/ThemeContext'
 import { useManagerDashboard } from '@/lib/hooks/useManagerDashboard'
 import { useInviteAgent } from '@/lib/context/InviteAgentContext'
@@ -289,7 +289,7 @@ export default function ManagerPage() {
         {/* ── Two-column row ──────────────────────────────── */}
         {isLoading && (
           <div className="flex flex-col gap-4 lg:flex-row">
-            <div className="fieldiq-card min-w-0 flex-1">
+            <div className="app-card min-w-0 flex-1">
               <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
                 <Skeleton className="h-5 w-32" />
               </div>

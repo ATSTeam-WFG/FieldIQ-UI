@@ -1,9 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createContact, getContact, getContacts } from '@/lib/api/contacts'
-
-function hasToken() {
-  return typeof window !== 'undefined' && !!localStorage.getItem('fieldiq_token')
-}
+import { hasToken } from '@/lib/api/client'
 
 export function useContacts(params?: Parameters<typeof getContacts>[0]) {
   return useQuery({

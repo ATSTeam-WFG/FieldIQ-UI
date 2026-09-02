@@ -1,9 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getFollowUps, updateFollowUp } from '@/lib/api/follow-ups'
-
-function hasToken() {
-  return typeof window !== 'undefined' && !!localStorage.getItem('fieldiq_token')
-}
+import { hasToken } from '@/lib/api/client'
 
 export function useFollowUps(params?: Parameters<typeof getFollowUps>[0]) {
   return useQuery({

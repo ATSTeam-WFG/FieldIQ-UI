@@ -1,10 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { getMyAgency, type AgencyData } from '@/lib/api/agencies'
 import { ApiError } from '@/lib/api/client'
-
-function hasToken() {
-  return typeof window !== 'undefined' && !!localStorage.getItem('fieldiq_token')
-}
+import { hasToken } from '@/lib/api/client'
 
 export function useMyAgency() {
   return useQuery<AgencyData | null>({

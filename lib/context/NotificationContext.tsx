@@ -2,10 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { getNotifications, markAllRead as apiMarkAllRead, markRead as apiMarkRead } from '@/lib/api/notifications'
-
-function hasToken() {
-  return typeof window !== 'undefined' && !!localStorage.getItem('fieldiq_token')
-}
+import { hasToken } from '@/lib/api/client'
 
 export interface Notification {
   id: string
