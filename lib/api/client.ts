@@ -1,3 +1,6 @@
+import * as Sentry from '@sentry/nextjs'
+import { PRESENCE_COOKIE, TOKEN_KEY, REFRESH_TOKEN_KEY } from '@/lib/storage-keys'
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
 export class ApiError extends Error {
@@ -7,12 +10,7 @@ export class ApiError extends Error {
   }
 }
 
-// Storage keys are deliberately brand-free: renaming the product must never
-// invalidate live sessions. Defined once here — middleware.ts must use the
-// same PRESENCE_COOKIE value or route protection and the client disagree.
-export const PRESENCE_COOKIE = 'app_has_token'
-const TOKEN_KEY = 'app_token'
-const REFRESH_TOKEN_KEY = 'app_refresh_token'
+export { PRESENCE_COOKIE } from '@/lib/storage-keys'
 
 export function getToken(): string | null {
   if (typeof window === 'undefined') return null
@@ -37,6 +35,9 @@ export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY)
   localStorage.removeItem(REFRESH_TOKEN_KEY)
   document.cookie = `${PRESENCE_COOKIE}=; path=/; max-age=0`
+  // Without this a shared machine attributes the next person's errors to
+  // whoever logged in before them.
+  Sentry.setUser(null)
 }
 
 // Deduplication — one refresh flight at a time across concurrent 401s

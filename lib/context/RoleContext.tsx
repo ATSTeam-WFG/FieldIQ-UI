@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { getMe } from '@/lib/api/auth'
+import * as Sentry from '@sentry/nextjs'
 import { attemptRefresh, getToken } from '@/lib/api/client'
 
 function getTokenExp(token: string): number | null {
@@ -59,6 +60,11 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     getMe()
       .then(user => {
         const r: Role = user.role === 'manager' ? 'manager' : 'rep'
+        // Errors should say *who* hit them. Email is deliberately omitted:
+        // alpha runs on demo accounts so it carries no triage value, and it
+        // would be real customer PII once external agencies sign up.
+        Sentry.setUser({ id: user.id, username: user.name })
+        Sentry.setTag('user.role', r)
         setRole(r)
         setUserType(r as UserType)
         setAlsoRep(user.also_rep ?? false)
