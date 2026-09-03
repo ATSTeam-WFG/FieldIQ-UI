@@ -6,6 +6,10 @@ if (dsn) {
   Sentry.init({
     dsn,
     tracesSampleRate: 0.1,
-    environment: process.env.NODE_ENV,
+    // NODE_ENV is 'production' for every deployed build, which would make
+    // alpha and prod indistinguishable in Sentry. Mirrors the backend's
+    // ENVIRONMENT setting; falls back so local dev still tags correctly.
+    environment: process.env.NEXT_PUBLIC_ENVIRONMENT ?? process.env.NODE_ENV,
+    initialScope: { tags: { app: 'web' } },
   })
 }
