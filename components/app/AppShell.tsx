@@ -13,6 +13,7 @@ import { LogContractPanel } from './LogContractPanel'
 import { AddContactPanel } from './AddContactPanel'
 import { NotificationPanel } from './NotificationPanel'
 import { FeedbackPanel } from './FeedbackPanel'
+import { FeedbackButton } from './FeedbackButton'
 import { CommandPalette } from './CommandPalette'
 import { MobileMoreSheet } from './MobileMoreSheet'
 import { useActivityLog } from '@/lib/context/ActivityLogContext'
@@ -125,6 +126,9 @@ export function AppShell({ activeItem, children }: AppShellProps) {
       <AnimatePresence>{inviteOpen && <InviteAgentPanel />}</AnimatePresence>
       <AnimatePresence>{broadcastOpen && <TeamBroadcastPanel />}</AnimatePresence>
       <AnimatePresence>{feedbackOpen && <FeedbackPanel />}</AnimatePresence>
+
+      {/* Floating feedback trigger — every authed page, both breakpoints */}
+      <FeedbackButton />
 
       {/* Command palette (fixed, full-screen overlay) */}
       <AnimatePresence>{searchOpen && <CommandPalette />}</AnimatePresence>

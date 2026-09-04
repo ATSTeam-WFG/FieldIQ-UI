@@ -3,13 +3,12 @@
 import { useEffect } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Bell, MessageSquare, Moon, Search, Sun } from 'lucide-react'
+import { Bell, Moon, Search, Sun } from 'lucide-react'
 import { useTheme } from '@/lib/context/ThemeContext'
 import { useRole } from '@/lib/context/RoleContext'
 import { BRAND } from '@/lib/brand'
 import { useNotifications } from '@/lib/context/NotificationContext'
 import { useSearch } from '@/lib/context/SearchContext'
-import { useFeedback } from '@/lib/context/FeedbackContext'
 import { useIsMobile } from '@/lib/hooks/useIsMobile'
 import { RoleSwitcher } from './RoleSwitcher'
 
@@ -24,7 +23,6 @@ export function TopNav() {
   const { role } = useRole()
   const { openNotifications, unreadCount } = useNotifications()
   const { openSearch } = useSearch()
-  const { openFeedback } = useFeedback()
   const isMobile = useIsMobile()
   const router = useRouter()
 
@@ -114,16 +112,6 @@ export function TopNav() {
 
       {/* Right: controls */}
       <div className="flex flex-1 md:flex-none items-center justify-end gap-1 shrink-0">
-        {/* Feedback — in the shell so it is reachable from every authed page */}
-        <button
-          onClick={openFeedback}
-          className="flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors hover:bg-[var(--surface)] focus:outline-none"
-          aria-label="Send feedback"
-          title="Send feedback"
-        >
-          <MessageSquare className="h-4 w-4" style={{ color: 'var(--muted)' }} />
-        </button>
-
         {/* Theme toggle — desktop only */}
         <button
           onClick={toggleTheme}
