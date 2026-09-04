@@ -10,6 +10,12 @@ const nextConfig = {
   experimental: {
     instrumentationHook: true,
   },
+  // Surfaced on feedback submissions so a report names the build it came from.
+  // Read from package.json rather than a host-specific variable so it resolves
+  // the same way on every deploy target.
+  env: {
+    NEXT_PUBLIC_APP_VERSION: require('./package.json').version,
+  },
   images: {
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',

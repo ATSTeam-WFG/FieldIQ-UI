@@ -12,11 +12,13 @@ import { LogActivityPanel } from './LogActivityPanel'
 import { LogContractPanel } from './LogContractPanel'
 import { AddContactPanel } from './AddContactPanel'
 import { NotificationPanel } from './NotificationPanel'
+import { FeedbackPanel } from './FeedbackPanel'
 import { CommandPalette } from './CommandPalette'
 import { MobileMoreSheet } from './MobileMoreSheet'
 import { useActivityLog } from '@/lib/context/ActivityLogContext'
 import { useAddContact } from '@/lib/context/AddContactContext'
 import { useNotifications } from '@/lib/context/NotificationContext'
+import { useFeedback } from '@/lib/context/FeedbackContext'
 import { useSearch } from '@/lib/context/SearchContext'
 import { useContract } from '@/lib/context/ContractContext'
 import { InviteAgentPanel } from './InviteAgentPanel'
@@ -62,6 +64,7 @@ export function AppShell({ activeItem, children }: AppShellProps) {
   const { isOpen: addOpen } = useAddContact()
   const { isOpen: contractOpen } = useContract()
   const { isOpen: notifOpen } = useNotifications()
+  const { isOpen: feedbackOpen } = useFeedback()
   const { isOpen: inviteOpen } = useInviteAgent()
   const { isOpen: broadcastOpen } = useTeamBroadcast()
   const { isOpen: searchOpen } = useSearch()
@@ -121,6 +124,7 @@ export function AppShell({ activeItem, children }: AppShellProps) {
       <AnimatePresence>{notifOpen && <NotificationPanel />}</AnimatePresence>
       <AnimatePresence>{inviteOpen && <InviteAgentPanel />}</AnimatePresence>
       <AnimatePresence>{broadcastOpen && <TeamBroadcastPanel />}</AnimatePresence>
+      <AnimatePresence>{feedbackOpen && <FeedbackPanel />}</AnimatePresence>
 
       {/* Command palette (fixed, full-screen overlay) */}
       <AnimatePresence>{searchOpen && <CommandPalette />}</AnimatePresence>

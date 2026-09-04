@@ -11,6 +11,7 @@ import { SearchProvider } from './SearchContext'
 import { ContractProvider } from './ContractContext'
 import { InviteAgentProvider } from './InviteAgentContext'
 import { TeamBroadcastProvider } from './TeamBroadcastContext'
+import { FeedbackProvider } from './FeedbackContext'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -28,7 +29,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
                   <TeamBroadcastProvider>
                     <NotificationProvider>
                       <SearchProvider>
-                        {children}
+                        <FeedbackProvider>
+                          {children}
+                        </FeedbackProvider>
                       </SearchProvider>
                     </NotificationProvider>
                   </TeamBroadcastProvider>
