@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PRESENCE_COOKIE } from '@/lib/api/client'
+import { PRESENCE_COOKIE } from '@/lib/storage-keys'
 
 const PUBLIC_PATHS = new Set(['/', '/login', '/signup', '/onboarding', '/coming-soon', '/manifest.webmanifest'])
 
